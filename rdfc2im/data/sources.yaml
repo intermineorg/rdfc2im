@@ -66,7 +66,9 @@ gwascatalog:
   replaces: [huge-gwas]
   data_source_name: GWAS Catalog
   data_set_title: GWAS Catalog (TogoVar)
-  consts: {Organism.taxonId: "9606"}
+  # No source-level Organism constant: nothing on the root, GWASResult, can hold an organism, so it
+  # loaded unlinked.  The organism is declared where it belongs - SNP.organism and Gene.organism -
+  # on the terms:snps and terms:mapped_genes entries in knowledge.yaml.
   scope: good
 clinvar:
   replaces: [clinvar]

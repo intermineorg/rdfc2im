@@ -218,14 +218,15 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 |---|---|---|---|---|
 | Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 
-**gwascatalog** - 4 guesses:
+**gwascatalog** - 5 guesses:
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| GWASAssociation | `terms:mapped_genes` | `mapped_genes` | `Gene.symbol` | converter links associatedGenes by symbol; comma-separated list needs splitting (transform split:,) |
+| GWASAssociation | `terms:mapped_genes` | `mapped_genes` | `Gene.symbol` | MAPPED_GENE symbols, split on commas.  (This note used to say the converter links associatedGenes by symbol; it does not - it uses SNP_GENE_IDS, line[17]; see s |
 | GWASAssociation | `terms:mapped_trait_uri` | `mapped_trait_uri` | `GWASResult.mappedTraitUri` | new attribute approved in spec section 8 |
 | GWASStudy | `dct:identifier` | `study_identifier` | `GWAS.name` | GCST accession as the study name (GWAS has no identifier attribute) |
 | GWASStudy | `dct:date` | `study_date` | `GWAS.year` | spec D12 - year is denormalised from the publication in the converter |
+| GWASAssociation | `-const-` | `const_Organism_taxonId_Gene_organism` | `Organism.taxonId` | constant for mapped_genes |
 
 **hgnc** - 24 guesses:
 
