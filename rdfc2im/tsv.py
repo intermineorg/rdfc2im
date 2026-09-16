@@ -145,7 +145,9 @@ def clean_table(raw_path: str, out_path: str, columns: List[dict]) -> dict:
     header, data = raw[0], raw[1:]
     idx = {h: i for i, h in enumerate(header)}
     missing = [c["variable"] for c in columns if c.get("kind") != "const" and c["variable"] not in idx]
-    stats = {"rows_in": len(data), "rows_out": 0, "filtered": 0, "empty": 0, "missing_vars": missing}
+    stats = {"rows_in": len(data), "rows_out": 0, "filtered": 0, "empty": 0, "no_key": 0,
+             "missing_vars": missing}
+    required = [i for i, c in enumerate(columns) if c.get("required") == "yes" and c.get("kind") != "const"]
     if missing:
         print(f"  WARNING {os.path.basename(raw_path)}: variables not in the raw header {missing}; header is {header}")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -179,6 +181,9 @@ def clean_table(raw_path: str, out_path: str, columns: List[dict]) -> dict:
                 if not any(v for c, v in zip(columns, row) if c.get("kind") != "const"):
                     stats["empty"] += 1
                     continue          # no data at all in this row
+                if any(not row[i] for i in required):
+                    stats["no_key"] += 1
+                    continue          # an item without its identifier cannot merge: never write one
                 if key in seen:
                     continue
                 seen.add(key)

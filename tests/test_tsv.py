@@ -107,3 +107,20 @@ def test_required_column_filter_drops_owl_property_pseudo_terms(tmp_path):
     ids = [l.split("\t")[0] for l in out.read_text().rstrip("\n").split("\n")[1:]]
     assert ids == ["GO:0000016", "UBERON:0000955", "HP:0000001"], ids
     assert st["rows_out"] == 3 and st["filtered"] == 2
+
+def test_a_row_without_its_required_key_is_dropped(tmp_path):
+    """A raw file fetched by an older query lacked the new key variable; every row became an
+    Allele with no primaryIdentifier.  Such an item can never merge, so no row may lack its key."""
+    raw = tmp_path / "raw.tsv"
+    raw.write_text('?id\t?name\n"1"\t"a"\n\t"b"\n"3"\t\n')
+    cols = [dict(column="id", variable="id", im_class="Allele", im_field="primaryIdentifier", transform="", filter="", value="", kind="literal", required="yes"),
+            dict(column="name", variable="name", im_class="Allele", im_field="name", transform="", filter="", value="", kind="literal", required="no")]
+    out = tmp_path / "out.tsv"
+    st = clean_table(str(raw), str(out), cols)
+    assert out.read_text().splitlines()[1:] == ["1\ta", "3\t"]
+    assert st["no_key"] == 1
+
+    missing = tmp_path / "old.tsv"
+    missing.write_text('?name\n"a"\n')
+    st = clean_table(str(missing), str(out), cols)
+    assert st["rows_out"] == 0 and st["missing_vars"] == ["id"]
