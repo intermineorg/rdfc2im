@@ -1583,9 +1583,14 @@ predicates:
   - source: clinvar
     pred: cvo:variation_name
     class: Allele
-    im: Allele.name
-    status: sure
-    basis: java:ClinvarConverter
+    im: ""
+    status: drop
+    basis: knowledge
+    note: >-
+      Identical to rdfs:label in every fetched row, and both wrote Allele.name on the same object.
+      Of the two, rdfs:label keeps the mapping because its evidence is real (it is the model term
+      of BioEntity.name); this entry claimed basis java:ClinvarConverter, which is false - the
+      converter never writes Allele.name.
   - source: clinvar
     pred: cvo:variation_type
     class: Allele
