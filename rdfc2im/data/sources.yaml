@@ -24,7 +24,11 @@ hgnc:
 uniprot:
   replaces: [uniprot]
   data_source_name: UniProt
-  data_set_title: Swiss-Prot data set (RDF Portal)
+  # Not "Swiss-Prot": these queries do not filter on up:reviewed, so they return TrEMBL too
+  # (20,431 reviewed vs 190,278 unreviewed human entries), which matches stock HumanMine - see
+  # core:reviewed in knowledge.yaml.  Stock names two datasets, "Swiss-Prot data set" and
+  # "TrEMBL data set", by input file; one query cannot, so the title says what it holds.
+  data_set_title: UniProtKB, Swiss-Prot and TrEMBL (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   scope: good
 go:
@@ -83,7 +87,12 @@ homologene:
   scope: structural
   note: not in project.xml (panther is); needs the cluster->pairwise transform (D7)
 expressionatlas:
-  replaces: [atlas-express]
+  # NOT [atlas-express] until spec D10 lands.  This source currently loads only DataSet name and
+  # description; the stock atlas-express loads every AtlasExpression (type, condition,
+  # expression, gene) and declares that class.  Replacing it would silently delete HumanMine's
+  # expression data and remove AtlasExpression from the model.  Restore the replacement once the
+  # experiment -> assay -> expression hierarchy maps onto AtlasExpression.
+  replaces: []
   data_source_name: Expression Atlas
   data_set_title: Expression Atlas (RDF Portal)
   scope: structural
