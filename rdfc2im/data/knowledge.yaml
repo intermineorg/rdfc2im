@@ -1249,9 +1249,15 @@ predicates:
   - source: uniprot
     subject: SimpleSequence
     pred: rdf:value
-    im: Sequence.residues
-    status: sure
-    basis: term
+    im: ""
+    status: drop
+    basis: java:UniprotConverter
+    note: >-
+      Sequence.residues is a genuine term match, but uniprot loads alongside stock uniprot, which
+      stores every residue string (UniprotConverter, "sequence" -> residues), and uniprot-fasta
+      does too.  Sequence has no integration key, so ours never merge: Protein.sequence resolves
+      to stock's by priority and ours are left as orphaned duplicates.  core:mass still loads -
+      Protein.molecularWeight is an attribute and merges by priority.
   - source: uniprot
     subject: SimpleSequence
     pred: core:mass
