@@ -39,7 +39,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | mp | good | mammalian-phenotype-ontology | 1/0/0 | 16/2/0/1/13 | 0 | 8 | 0 | yes (8) | yes |
 | ncbigene | good | ncbi-gene | 1/0/0 | 11/2/0/1/5 | 0 | 5 | 0 | yes (5) | yes |
 | pubmed | good | - | 4/0/0 | 9/4/0/1/23 | 0 | 3 | 0 | yes (3) | yes |
-| reactome | good | reactome | 2/3/0 | 7/2/0/1/16 | 374 | 2 | 0 | yes (2) | yes |
+| reactome | good | reactome | 2/2/0 | 5/1/0/1/11 | 382 | 1 | 0 | yes (2) | yes |
 | uberon | good | - | 1/0/0 | 16/2/0/1/47 | 0 | 8 | 0 | yes (8) | yes |
 | uniprot | good | uniprot | 4/5/0 | 12/15/0/2/108 | 400 | 13 | 0 | yes (13) | yes |
 
@@ -98,7 +98,6 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `pubmed/main_mesh_subject_term`: `Publication.pubMedId`, `MeshTerm.identifier`
 - `pubmed/main_slot`: `Publication.pubMedId`, `Author.lastName`, `Author.firstName`, `Author.name`
 - `reactome/main`: `Pathway.identifier`, `Organism.taxonId`, `Pathway.description`, `Pathway.name`, `Organism.name`, `Organism.taxonId`
-- `reactome/main_pathway_xref_publicationxref`: `Pathway.identifier`, `Organism.taxonId`, `Publication.pubMedId`, `Publication.title`, `Publication.year`, `Organism.taxonId`
 - `uberon/main`: `AnatomyTerm.identifier`, `AnatomyTerm.name`, `AnatomyTerm.description`, `AnatomyTerm.namespace`, `AnatomyTerm.obsolete`, `Ontology.name`
 - `uberon/main_has_alternative_id`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `uberon/main_has_broad_synonym`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`

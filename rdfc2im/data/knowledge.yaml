@@ -420,6 +420,17 @@ subjects:
     status: sure
     basis: model:Pathway
     note: "Pathway has no crossReferences and is not a BioEntity, so CrossReference.subject cannot point at it"
+  - source: reactome
+    subject: PublicationXref
+    role: skip
+    status: sure
+    basis: model:Pathway
+    note: >-
+      Nothing to attach a pathway's publication to: Pathway is not Annotatable, so
+      Publication.entities cannot hold it, and it has no publications field - not in the live
+      model, not in the approved extensions.  The Publications were created unlinked.  Stock
+      ReactomeConverter never loads publications either.  Loading them would need a model
+      extension (Pathway.publications), which needs approval like the section-8 ones.
 
 predicates:
   # ---------------------------------------------------------------------------------------
