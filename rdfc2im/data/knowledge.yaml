@@ -706,8 +706,16 @@ predicates:
     im: OntologyTerm.parents
     status: guess
     basis: java:OboConverter
+    filter: "regex:^https?://purl\\.obolibrary\\.org/obo/"
     transform: "iri_localname,replace:_:\\:"
-    note: "is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted"
+    note: >-
+      is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term,
+      before the transform, and is not optional: in OWL, rdfs:subClassOf also points at anonymous
+      class expressions (owl:Restriction, "part_of some X").  A full GO extract returns 92,208
+      superclass rows of which 16,178 are blank nodes and 3 are owl:Thing; without the filter
+      iri_localname turned each blank node into a GOTerm whose identifier was its node id, adding
+      16k junk parents.  Restricting to the OBO namespace keeps legitimate cross-ontology parents
+      (BFO, CARO), which still arrive as identifier-only stub items - filter harder if unwanted.
   - pred: rdfs:comment
     class: OntologyTerm
     im: ""

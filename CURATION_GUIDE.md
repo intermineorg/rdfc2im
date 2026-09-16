@@ -409,7 +409,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted |
+| Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 
 **gwascatalog** - 4 guesses:
 
@@ -453,7 +453,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted |
+| Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 
 **mesh** - 1 guesses:
 
@@ -465,7 +465,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted |
+| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 | Class | `owl:deprecated` | `deprecated` | `MammalianPhenotypeTerm.obsolete` | knowledge |
 
 **ncbigene** - 2 guesses:
@@ -498,7 +498,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted |
+| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 | Class | `owl:deprecated` | `deprecated` | `AnatomyTerm.obsolete` | knowledge |
 
 **uniprot** - 13 guesses:

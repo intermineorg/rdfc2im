@@ -43,3 +43,37 @@ def test_virtuoso_header_and_crlf(tmp_path):
     raw.write_bytes(b'"id"\t"label"\r\n"GO:1"\t"x"\r\n')
     rows = read_sparql_tsv(str(raw))
     assert rows[0] == ["id", "label"] and rows[1] == ["GO:1", "x"]
+
+
+def test_filter_runs_before_transform_and_blanks_optional_columns(tmp_path):
+    """A blank-node parent must be dropped before iri_localname invents an identifier.
+
+    GO's rdfs:subClassOf also points at anonymous OWL class expressions; at full scale
+    16,178 of 92,208 rows were blank nodes.  The filter sees the raw term, so it can
+    reject `_:nodeID://b123` that `iri_localname` would otherwise turn into `b123`.
+    """
+    raw = tmp_path / "raw.tsv"
+    raw.write_text(
+        "?id\t?superclass\n"
+        '"GO:0000001"\t<http://purl.obolibrary.org/obo/GO_0044237>\n'
+        '"GO:0000002"\t_:nodeID://b2225461165\n'
+        '"GO:0000003"\t<http://www.w3.org/2002/07/owl#Thing>\n'
+        '"GO:0000004"\t<http://purl.obolibrary.org/obo/BFO_0000050>\n')
+    cols = [
+        {"column": "id", "variable": "id", "im_class": "GOTerm", "im_field": "identifier",
+         "transform": "", "filter": "", "value": "", "kind": "iri", "required": "yes", "position": "0"},
+        {"column": "superclass", "variable": "superclass", "im_class": "OntologyTerm",
+         "im_field": "identifier", "transform": "iri_localname,replace:_:\\:",
+         "filter": "regex:^https?://purl\\.obolibrary\\.org/obo/", "value": "", "kind": "iri",
+         "required": "no", "position": "1"},
+    ]
+    out = tmp_path / "clean.tsv"
+    st = clean_table(str(raw), str(out), cols)
+    rows = [l.split("\t") for l in out.read_text().rstrip("\n").split("\n")[1:]]
+    got = {r[0]: r[1] for r in rows}
+    assert got["GO:0000001"] == "GO:0044237"
+    assert got["GO:0000004"] == "BFO:0000050", "cross-ontology OBO parents are legitimate"
+    # rejected: blanked, not dropped - the term itself still loads
+    assert got["GO:0000002"] == "", "blank node must not become an identifier"
+    assert got["GO:0000003"] == "", "owl:Thing is not a parent term"
+    assert st["rows_out"] == 4 and st["filtered"] == 0
