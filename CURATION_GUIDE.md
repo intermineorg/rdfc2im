@@ -68,53 +68,49 @@ Set `im_class` to a concrete model class (or `role` to `skip`). A subject with n
 
 Each `todo` row's `comment` says why it is open. Set `object_id` to `intermine:Class.field` and `ext_status` to `human`, or set `ext_status` to `drop`.
 
-**clinvar** - 44 active rows (rows under a pruned branch are not listed):
+**clinvar** - 22 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Clinvar | `cvo:date_created` | `date_created` | 2015-09-29 | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:date_last_updated` | `date_last_updated` | 2024-11-03 | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:most_recent_submission` | `most_recent_submission` | 2015-09-29 | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:number_of_submissions` | `number_of_submissions` | 1 | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:number_of_submitters` | `number_of_submitters` | 1 | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:record_status` | `recode_status` | current | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:record_type` | `record_type` | classified | no match on Allele - choose a field, or set status=drop |
 | Clinvar | `cvo:variation_id` | `id` | 209597 | ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession |
-| Clinvar | `cvo:version` | `version` | 3 | no match on Allele - choose a field, or set status=drop |
 | Clinvar/classified_record/SIO_000628 | `cvo:allele_id` | `allele_id` | 205807 | the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession |
-| Clinvar/classified_record/SIO_000628 | `cvo:canonical_spdi` | `spdi` | NC_000013.11:32314942:A:G | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628 | `cvo:cytogenetic_location` | `variant_location` | 13q13.1 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/rcv_list/rcv_accession | `cvo:accession` | `rcv_accession` | RCV000191543 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/rcv_list/rcv_accession | `cvo:title` | `rcv_title` | NM_000059.3(BRCA2):c.-764A>G AND Breast-ovarian cancer, fami | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/rcv_list/rcv_accession | `cvo:version` | `rcv_version` | 10 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/rcv_list/rcv_accession | `dct:identifier` | `rcv_id` | RCV000191543 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `faldo:position` | `position` | 32889080 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:accession` | `refseq` | NC_000013.10 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:assembly` | `assembly` | GRCh37 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:assembly_accession_version` | `assembly_accession_version` | GCF_000001405.25 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:assembly_status` | `assembly_status` | previous | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:chr` | `chromosome` | 13 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628/location | `cvo:variant_length` | `variant_length` | 1 | no match on Allele - choose a field, or set status=drop |
-| Ncbigene | `cvo:cytogenetic_location` | `gene_location` | 13q13.1 | no match on Gene - choose a field, or set status=drop |
-| Ncbigene | `cvo:full_name` | `gene_name` | BRCA2 promoter/silencer region | no match on Gene - choose a field, or set status=drop |
-| ... | | | | 19 more in the file |
+| Clinvar/classified_record/SIO_000628 | `cvo:canonical_spdi` | `spdi` | NC_000013.11:32314942:A:G | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628 | `cvo:cytogenetic_location` | `variant_location` | 13q13.1 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `faldo:position` | `position` | 32889080 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:accession` | `refseq` | NC_000013.10 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:assembly` | `assembly` | GRCh37 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:assembly_accession_version` | `assembly_accession_version` | GCF_000001405.25 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:assembly_status` | `assembly_status` | previous | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:chr` | `chromosome` | 13 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/SIO_000628/location | `cvo:variant_length` | `variant_length` | 1 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:accession` | `chromosome_accession` | NC_000013.11 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:assembly` | `gene_assembly` | GRCh38 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:assembly_accession_version` | `gene_assembly_accession` | GCF_000001405.38 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:assembly_status` | `gene_assembly_status` | current | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:chr` | `gene_chromosome` | 13 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location | `cvo:strand` | `gene_strand` | + | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition | `dct:identifier` | `disease_id` | C2675520 | spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier |
+| Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition | `dct:references` | `disease_reference` | medgen:C2675520 | spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier |
+| Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition | `dct:source` | `disease_source` | MedGen | spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier |
+| Ncbigene/location/begin | `faldo:position` | `gene_begin` | 32314559 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
+| Ncbigene/location/end | `faldo:position` | `gene_end` | 32315789 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
 
 Example - in `out/clinvar/mapping_predicates.sssom.tsv` the line (column order: subject_id, subject_label, predicate_id, object_id, object_label, mapping_justification, confidence, comment, ext_...)
 
 ```
-http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:date_created	main	todo					no		literal	no	2015-09-29
+http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession	Clinvar	cvo:variation_id	main	todo	knowledge				no		literal	no	209597
 ```
 
 becomes (mapping it to an attribute - change `object_id` and `ext_status`):
 
 ```
-http://purl.jp/bio/10/clinvar/date_created	date_created	skos:exactMatch	intermine:<Class>.<field>	<Class>.<field>	semapv:ManualMappingCuration	1.0	your reason	Clinvar	cvo:date_created	main	human					no		literal	no	2015-09-29
+http://purl.jp/bio/10/clinvar/variation_id	id	skos:exactMatch	intermine:<Class>.<field>	<Class>.<field>	semapv:ManualMappingCuration	1.0	your reason	Clinvar	cvo:variation_id	main	human	knowledge				no		literal	no	209597
 ```
 
 or (not loading it - change `ext_status`):
 
 ```
-http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:date_created	main	drop					no		literal	no	2015-09-29
+http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:UnspecifiedMatching		ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession	Clinvar	cvo:variation_id	main	drop	knowledge				no		literal	no	209597
 ```
 
 **ensembl** - 2 active rows (rows under a pruned branch are not listed):

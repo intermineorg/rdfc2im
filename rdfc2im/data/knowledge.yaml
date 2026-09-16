@@ -1385,6 +1385,65 @@ predicates:
   # med2rdf:reference_allele, which the converter's line[21] matches and which stays mapped.
   - {source: clinvar, pred: "faldo:reference", column: reference, im: "", status: drop, basis: java:ClinvarConverter, note: "reference sequence IRI, not the allele base; name-match false positive. Allele.reference comes from med2rdf:reference_allele (converter line[21])"}
 
+  # Record bookkeeping: the converter writes none of it and Allele has no field for it.
+  - {source: clinvar, pred: "cvo:date_created", column: date_created, im: "", status: drop, basis: java:ClinvarConverter, note: "record creation date; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:date_last_updated", column: date_last_updated, im: "", status: drop, basis: java:ClinvarConverter, note: "record update date; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:most_recent_submission", column: most_recent_submission, im: "", status: drop, basis: java:ClinvarConverter, note: "submission date; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:number_of_submitters", column: number_of_submitters, im: "", status: drop, basis: java:ClinvarConverter, note: "submitter count; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:record_status", column: recode_status, im: "", status: drop, basis: java:ClinvarConverter, note: "record status; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:record_type", column: record_type, im: "", status: drop, basis: java:ClinvarConverter, note: "record type; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:version", column: version, im: "", status: drop, basis: java:ClinvarConverter, note: "record version; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:date_last_evaluated", column: rcv_date_last_evaluated, im: "", status: drop, basis: java:ClinvarConverter, note: "RCV evaluation date; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:trait_set_id", column: trait_set_id, im: "", status: drop, basis: java:ClinvarConverter, note: "trait set id; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:source", column: source, im: "", status: drop, basis: java:ClinvarConverter, note: "gene-relationship source; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:relationship_type", column: relationship_type, im: "", status: drop, basis: java:ClinvarConverter, note: "variant/gene relationship type; the converter never writes it and Allele has no field"}
+  - {source: clinvar, pred: "cvo:number_of_submissions", column: number_of_submissions, im: "", status: drop, basis: knowledge, note: "duplicates cvo:submission_count, already mapped to Allele.submissionCount"}
+
+  # RCV records (one per submitted condition).  The converter builds one Allele per AlleleID and
+  # never loads RCV accessions, titles or versions.
+  - {source: clinvar, pred: "cvo:accession", column: rcv_accession, im: "", status: drop, basis: java:ClinvarConverter, note: "RCV accession; the converter never loads RCV records"}
+  - {source: clinvar, pred: "dct:identifier", column: rcv_id, im: "", status: drop, basis: java:ClinvarConverter, note: "RCV id; the converter never loads RCV records"}
+  - {source: clinvar, pred: "cvo:title", column: rcv_title, im: "", status: drop, basis: java:ClinvarConverter, note: "RCV title; the converter never loads RCV records"}
+  - {source: clinvar, pred: "cvo:version", column: rcv_version, im: "", status: drop, basis: java:ClinvarConverter, note: "RCV version; the converter never loads RCV records"}
+
+  # Global minor allele frequency: not loaded by the converter; no Allele field.
+  - {source: clinvar, pred: "cvo:minor_allele", column: minor_allele, im: "", status: drop, basis: java:ClinvarConverter, note: "minor allele; the converter never loads allele frequency"}
+  - {source: clinvar, pred: "cvo:value", column: frequency, im: "", status: drop, basis: java:ClinvarConverter, note: "MAF value; the converter never loads allele frequency"}
+  - {source: clinvar, pred: "cvo:source", column: frequency_source, im: "", status: drop, basis: java:ClinvarConverter, note: "MAF source; the converter never loads allele frequency"}
+
+  # Gene attributes seen from ClinVar.  The converter writes only Gene.primaryIdentifier; name,
+  # cytoLocation and xrefs belong to ncbi-gene and hgnc, and loading them here too would only
+  # create priority conflicts.
+  - {source: clinvar, pred: "cvo:cytogenetic_location", column: gene_location, im: "", status: drop, basis: java:ClinvarConverter, note: "gene cytoLocation; the converter writes only Gene.primaryIdentifier, ncbi-gene/hgnc own this"}
+  - {source: clinvar, pred: "cvo:full_name", column: gene_name, im: "", status: drop, basis: java:ClinvarConverter, note: "gene name; the converter writes only Gene.primaryIdentifier, ncbi-gene/hgnc own this"}
+  - {source: clinvar, pred: "rdfs:seeAlso", column: hgnc, im: "", status: drop, basis: java:ClinvarConverter, note: "HGNC xref; the converter writes only Gene.primaryIdentifier, ncbi-gene/hgnc own this"}
+
+  # Coordinates - spec D13, still open.  Narrower than it looks: the stock converter loads no
+  # coordinates at all (it only uses line[16] to skip non-GRCh38 rows), so dropping these matches
+  # HumanMine today.  The open question is only whether to go beyond stock and model locations.
+  - {source: clinvar, pred: "faldo:position", column: position, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "faldo:position", column: gene_begin, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "faldo:position", column: gene_end, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:accession", column: refseq, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:accession", column: chromosome_accession, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly", column: assembly, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly", column: gene_assembly, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly_accession_version", column: assembly_accession_version, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly_accession_version", column: gene_assembly_accession, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly_status", column: assembly_status, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:assembly_status", column: gene_assembly_status, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:chr", column: chromosome, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:chr", column: gene_chromosome, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:variant_length", column: variant_length, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:strand", column: gene_strand, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:canonical_spdi", column: spdi, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+  - {source: clinvar, pred: "cvo:cytogenetic_location", column: variant_location, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
+
+  # Disease identifiers - spec D5, still open (MedGen here, OMIM in the converter).
+  - {source: clinvar, pred: "dct:identifier", column: disease_id, im: "", status: todo, basis: spec-D5, note: "spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier"}
+  - {source: clinvar, pred: "dct:references", column: disease_reference, im: "", status: todo, basis: spec-D5, note: "spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier"}
+  - {source: clinvar, pred: "dct:source", column: disease_source, im: "", status: todo, basis: spec-D5, note: "spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier"}
+
   # Other identifiers - part of the AlleleID/VCV decision on cvo:accession above.
   - {source: clinvar, pred: "cvo:allele_id", column: allele_id, im: "", status: todo, basis: java:ClinvarConverter, note: "the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession"}
   - {source: clinvar, pred: "cvo:variation_id", column: id, im: "", status: todo, basis: knowledge, note: "ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession"}

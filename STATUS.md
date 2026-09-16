@@ -27,7 +27,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 
 | source | scope | replaces | subjects sure/guess/todo | rows sure/guess/human/todo/drop | pruned | tables | new fields | fetched | items |
 |---|---|---|---|---|---|---|---|---|---|
-| clinvar | good | clinvar | 17/0/0 | 12/2/0/44/6 | 0 | 3 | 2 | yes (3) | yes |
+| clinvar | good | clinvar | 17/0/0 | 12/2/0/22/28 | 0 | 3 | 2 | yes (3) | yes |
 | ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
 | expressionatlas | structural | - | 1/0/0 | 1/1/0/3/0 | 33 | 1 | 0 | yes (1) | yes |
 | go | good | go | 1/0/0 | 8/1/0/1/1 | 0 | 4 | 0 | yes (4) | yes |
