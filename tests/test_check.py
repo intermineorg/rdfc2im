@@ -200,3 +200,66 @@ def test_definitions_from_replaced_sources_are_carried(tmp_path):
     assert {f.get("name") for f in classes["GOTerm"]} == {"identifier", "namespace"}
     # OntologyTerm is core - every mine has it, so do not re-declare it
     assert "OntologyTerm" not in classes
+
+
+# ------------------------------------------------ replaced-source coverage
+def test_replacing_a_source_flags_what_only_it_declared(tmp_path):
+    """reactome's whole value is gene/pathway membership; a replacement without it deletes it.
+
+    `rdfc2im project` drops every source named in `replaces`, so a class or field only that
+    source declared - and ours never writes - is flagged.  Inferred links and their reverses
+    count as written, so a correctly linked replacement stays quiet.
+    """
+    from rdfc2im.model import InterMineModel as IM
+    from rdfc2im.project import replaced_coverage
+    core = ('<model name="genomic" package="org.intermine.model.bio">'
+            '<class name="Gene" is-interface="true"><attribute name="primaryIdentifier" type="java.lang.String"/></class>'
+            '<class name="Pathway" is-interface="true"><attribute name="identifier" type="java.lang.String"/>'
+            '<attribute name="name" type="java.lang.String"/></class></model>')
+    stock_dir = tmp_path / "sources" / "reactome"
+    stock_dir.mkdir(parents=True)
+    stock = stock_dir / "reactome_additions.xml"
+    stock.write_text(
+        '<classes>'
+        '<class name="Pathway" is-interface="true">'
+        '<attribute name="identifier" type="java.lang.String"/>'
+        '<collection name="genes" referenced-type="Gene" reverse-reference="pathways"/></class>'
+        '<class name="Gene" is-interface="true">'
+        '<collection name="pathways" referenced-type="Pathway" reverse-reference="genes"/></class>'
+        '</classes>')
+    (tmp_path / "core.xml").write_text(core)
+    m = IM()
+    m.load_xml(str(tmp_path / "core.xml"))
+    m.load_xml(str(stock))
+    m.finalize()
+
+    out_root = tmp_path / "out"
+    (out_root / "reactome").mkdir(parents=True)
+
+    # 1. ours loads pathway identity only: the membership links are lost
+    write_tsv(str(out_root / "reactome" / "columns.tsv"), [
+        _col(0, "Pathway", "identifier", required="yes"),
+        _col(1, "Pathway", "name"),
+    ], COL_COLUMNS)
+    got = {cls: (missing, whole) for cls, missing, whole in replaced_coverage(m, str(out_root), "reactome", "reactome")}
+    assert got["Gene"] == (["pathways"], True), got
+    assert got["Pathway"] == (["genes"], False), got
+
+    # 2. ours links pathways to genes: the link AND its reverse count as written
+    write_tsv(str(out_root / "reactome" / "columns.tsv"), [
+        _col(0, "Pathway", "identifier", required="yes"),
+        _col(1, "Gene", "primaryIdentifier", via="Pathway.genes"),
+    ], COL_COLUMNS)
+    assert replaced_coverage(m, str(out_root), "reactome", "reactome") == []
+
+
+def test_replacing_a_source_with_no_additions_is_silent(tmp_path):
+    from rdfc2im.model import InterMineModel as IM
+    from rdfc2im.project import replaced_coverage
+    (tmp_path / "core.xml").write_text(
+        '<model name="genomic" package="org.intermine.model.bio">'
+        '<class name="Gene" is-interface="true"><attribute name="symbol" type="java.lang.String"/></class></model>')
+    m = IM(); m.load_xml(str(tmp_path / "core.xml")); m.finalize()
+    out_root = tmp_path / "out"; (out_root / "hgnc").mkdir(parents=True)
+    write_tsv(str(out_root / "hgnc" / "columns.tsv"), [_col(0, "Gene", "symbol", required="yes")], COL_COLUMNS)
+    assert replaced_coverage(m, str(out_root), "hgnc", "hgnc") == []

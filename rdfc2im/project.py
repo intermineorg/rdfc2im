@@ -351,6 +351,13 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
         for orig in sources_cfg.get(src, {}).get("replaces") or []:
             if orig in active:
                 soft.append(f"{name}: original source '{orig}' is still active - duplicate load")
+            for cls, missing, whole in replaced_coverage(model, out_root, src, orig):
+                if whole:
+                    soft.append(f"{name}: replaces '{orig}', which declares {cls} ({', '.join(missing)}); "
+                                f"this source writes none of it - loading it may delete that data")
+                else:
+                    soft.append(f"{name}: replaces '{orig}', which declares {cls}.{{{', '.join(missing)}}}; "
+                                f"this source never writes those - check whether '{orig}' populated them")
     hard, soft = list(dict.fromkeys(hard)), list(dict.fromkeys(soft))
     for h in hard:
         log("HARD  " + h)
@@ -358,6 +365,59 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
         log("note  " + s)
     log(f"check: {len(hard)} hard problems, {len(soft)} notes")
     return 1 if hard else 0
+
+
+def replaced_coverage(model: InterMineModel, out_root: str, src: str, replaced: str):
+    """What a replaced stock source declares that this source never writes.
+
+    Returns [(class, missing_fields, whole_class_missing)].  `rdfc2im project` removes every
+    source named in `replaces` from project.xml, so anything only it loaded is gone.  That is
+    how expressionatlas came to replace atlas-express while loading nothing but DataSet
+    metadata, and reactome to replace a source whose whole purpose is gene/pathway membership.
+
+    This is a PROXY: it compares against the fields the replaced source *declares* in its
+    _additions.xml, which is not proof it *populates* them - hence `check` reports it as a
+    note.  "What this source writes" counts explicit columns, the link items.py infers when a
+    column has no `via`, and the reverse reference it writes for every link.
+    """
+    from .items import _via_from
+    declared: Dict[str, set] = {}
+    for path in getattr(model, "files", []):
+        norm = path.replace(os.sep, "/")
+        if f"/{replaced}/" in norm and norm.endswith(f"{replaced}_additions.xml") and "/test/" not in norm:
+            for c in etree.parse(path).getroot().iter("class"):
+                declared.setdefault(c.get("name"), set()).update(
+                    f.get("name") for f in c if isinstance(f.tag, str))
+    if not declared:
+        return []
+
+    written: Dict[str, set] = {}
+
+    def add(cls, fld):
+        written.setdefault(cls, set()).add(fld)
+
+    def add_link(via):
+        cls, _, fld = via.partition(".")
+        add(cls, fld)
+        fd = model.field(cls, fld)
+        if fd is not None and fd.reverse:
+            add(fd.type, fd.reverse)
+
+    for table, cols in load_columns(out_root, src).items():
+        root = next((c["im_class"] for c in cols if c.get("required") == "yes"), cols[0]["im_class"])
+        for c in cols:
+            if c["im_class"] and c["im_field"]:
+                add(c["im_class"], c["im_field"])
+            via = c.get("via") or (_via_from(model, root, c["im_class"]) if c["im_class"] != root else "")
+            if via:
+                add_link(via)
+
+    out = []
+    for cls, fields in sorted(declared.items()):
+        missing = sorted(fields - written.get(cls, set()))
+        if missing:
+            out.append((cls, missing, not written.get(cls)))
+    return out
 
 
 def _generated_keys(path: str) -> Dict[str, str]:
