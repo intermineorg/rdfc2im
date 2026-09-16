@@ -79,7 +79,7 @@ per source with literal example lines.
 
 ## Delivering to HumanMine
 
-1. `make fork-sync`; copy `humanmine-items/` into `humanmine-bio-sources/`, add `include 'humanmine-items'` to `settings.gradle`, `./gradlew :humanmine-items:install`.
+1. `make fork-sync`; copy `humanmine-items/` into `humanmine-bio-sources/`, register it as `':bio-source-humanmine-items'` with `projectDir` `./humanmine-items` in `settings.gradle` (the `bio-source-` prefix is how the mine resolves the artifact - see `humanmine-items/README.md`), then `./gradlew :bio-source-humanmine-items:install`.
 2. Use `out/_mine/project.xml` (HumanMine's project.xml with `humanmine-<source>` sources inserted; superseded originals are in `replaced_sources.xml`).
 3. Put each `out/<source>/items/<source>.xml` at the `src.data.file` path (`src_data_dir` in `rdfc2im.yaml`).
 4. Review `out/_mine/humanmine-items_keys.properties` (DRAFT keys are marked) and `genomic_priorities.properties` before building.

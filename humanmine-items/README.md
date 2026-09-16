@@ -39,10 +39,27 @@ full UniProt or ncbi-gene extract. Switch the properties line back only for smal
 ## Install
 
 1. `make fork-sync` in the rdfc2im workspace (fills `resources/`).
-2. Copy this directory into `humanmine-bio-sources/`, add `include 'humanmine-items'` to
-   `settings.gradle`, then `./gradlew :humanmine-items:install`.
-3. Use `out/_mine/project.xml`, and put each `out/<source>/items/<source>.xml` where its
-   `src.data.file` points (`src_data_dir` in `rdfc2im.yaml`).
-4. Merge `out/_mine/genomic_priorities.properties` into the mine's own - it lists only the
+2. Copy this directory into `humanmine-bio-sources/` and register it under the **`bio-source-`
+   prefixed** project name that every source there uses - the directory keeps its own name:
+
+   ```groovy
+   // settings.gradle
+   include ':bio-source-humanmine-items'
+   project(':bio-source-humanmine-items').projectDir = new File(settingsDir, './humanmine-items')
+   ```
+
+   The prefix is not cosmetic. The mine's dbmodel plugin resolves each source as
+   `org.intermine:bio-source-<type>:<version>` (`DBModelUtils.addBioSourceDependency`), so a
+   project registered as plain `humanmine-items` installs an artifact the mine can never find -
+   `:dbmodel:generateKeys` fails with *Could not find
+   org.intermine:bio-source-humanmine-items:4.3.0*. `BioSourceDBModelPlugin` strips the prefix
+   again to derive the additions filename, so `humanmine-items_additions.xml` stays correct.
+
+3. `./gradlew :bio-source-humanmine-items:install`.
+4. Use `out/_mine/project.xml`, and put each `out/<source>/items/<source>.xml` where its
+   `src.data.file` points (`src_data_dir` in `rdfc2im.yaml`).  Each `<source>` carries
+   `version="4.3.0"` (`source_version` in `rdfc2im.yaml`) to match humanmine-bio-sources'
+   gradle project version; without it the mine resolves `bioVersion` (5.0.+) and fails.
+5. Merge `out/_mine/genomic_priorities.properties` into the mine's own - it lists only the
    `humanmine-*` writers, and every legacy source that still writes the same field must be added
    or the build will reject the ambiguity.
