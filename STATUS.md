@@ -30,17 +30,17 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | clinvar | good | clinvar | 17/0/0 | 13/2/0/44/5 | 0 | 3 | 2 | yes (3) | yes |
 | ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
 | expressionatlas | structural | - | 1/0/0 | 1/1/0/3/0 | 33 | 1 | 0 | yes (1) | yes |
-| go | good | go | 1/0/0 | 7/1/0/2/1 | 0 | 3 | 0 | yes (4) | yes |
+| go | good | go | 1/0/0 | 8/1/0/1/1 | 0 | 4 | 0 | yes (4) | yes |
 | gwascatalog | good | huge-gwas | 2/0/0 | 9/4/0/31/3 | 0 | 1 | 1 | yes (1) | yes |
 | hgnc | good | hgnc | 4/12/0 | 7/24/0/1/16 | 0 | 16 | 0 | yes (16) | yes |
 | homologene | structural | - | 0/1/0 | 0/0/0/3/1 | 8 | 0 | 0 | no | no |
-| hpo | good | hpo | 1/0/0 | 9/1/0/3/2 | 0 | 4 | 0 | yes (6) | yes |
+| hpo | good | hpo | 1/0/0 | 12/1/0/1/2 | 0 | 6 | 0 | yes (6) | yes |
 | mesh | good | - | 9/0/0 | 1/1/0/12/4 | 64 | 1 | 1 | yes (1) | yes |
-| mp | good | mammalian-phenotype-ontology | 1/0/0 | 13/2/0/12/4 | 0 | 6 | 0 | yes (8) | yes |
+| mp | good | mammalian-phenotype-ontology | 1/0/0 | 16/2/0/10/4 | 0 | 8 | 0 | yes (8) | yes |
 | ncbigene | good | ncbi-gene | 1/0/0 | 11/2/0/4/2 | 0 | 5 | 1 | yes (5) | yes |
 | pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
 | reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
-| uberon | good | - | 1/0/0 | 13/2/0/47/3 | 0 | 6 | 0 | yes (8) | yes |
+| uberon | good | - | 1/0/0 | 16/2/0/45/3 | 0 | 8 | 0 | yes (8) | yes |
 | uniprot | good | uniprot | 4/5/0 | 11/13/0/17/96 | 400 | 10 | 0 | yes (10) | yes |
 
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)
@@ -54,6 +54,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `ensembl/main_ensg_xref`: `Gene.secondaryIdentifier`, `Gene.primaryIdentifier`, `CrossReference.identifier`, `Organism.taxonId`
 - `expressionatlas/main`: `DataSet.name`, `DataSet.description`
 - `go/main`: `GOTerm.identifier`, `GOTerm.name`, `GOTerm.description`, `GOTerm.namespace`, `Ontology.name`
+- `go/main_xref`: `GOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `go/main_synonym`: `GOTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `go/main_superclass`: `GOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `gwascatalog/main`: `Gene.symbol`, `GWASResult.associatedVariantRiskAllele`, `SNP.primaryIdentifier`, `GWASResult.riskAlleleFreqInControls`, `GWASResult.pValue`, `GWASResult.phenotype`, `GWASResult.mappedTraitUri`, `GWAS.name`, `GWAS.year`, `Publication.pubMedId`, `GWAS.initialSample`, `GWAS.replicateSample`, `Organism.taxonId`
@@ -74,13 +75,17 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `hgnc/main_see_also_ec`: `Gene.primaryIdentifier`, `CrossReference.identifier`, `DataSource.name`, `Organism.taxonId`
 - `hgnc/main_reference`: `Gene.primaryIdentifier`, `Publication.pubMedId`, `Organism.taxonId`
 - `hpo/main`: `HPOTerm.identifier`, `HPOTerm.description`, `HPOTerm.namespace`, `HPOTerm.name`, `Ontology.name`
+- `hpo/main_alternativeid`: `HPOTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
+- `hpo/main_snomedct`: `HPOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `hpo/main_exactsynonym`: `HPOTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `hpo/main_relatedsynonym`: `HPOTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `hpo/main_superclass`: `HPOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `mesh/main`: `MeshTerm.name`, `MeshTerm.identifier`
 - `mp/main`: `MammalianPhenotypeTerm.identifier`, `MammalianPhenotypeTerm.name`, `MammalianPhenotypeTerm.description`, `MammalianPhenotypeTerm.namespace`, `MammalianPhenotypeTerm.obsolete`, `Ontology.name`
+- `mp/main_database_cross_reference`: `MammalianPhenotypeTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `mp/main_has_exact_synonym`: `MammalianPhenotypeTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `mp/main_subclass_of`: `MammalianPhenotypeTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
+- `mp/main_has_alternative_id`: `MammalianPhenotypeTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `mp/main_has_broad_synonym`: `MammalianPhenotypeTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `mp/main_has_narrow_synonym`: `MammalianPhenotypeTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `mp/main_has_related_synonym`: `MammalianPhenotypeTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
@@ -94,7 +99,9 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `reactome/main`: `Pathway.identifier`, `Organism.taxonId`, `Pathway.description`, `Pathway.name`, `Organism.name`, `Organism.taxonId`
 - `reactome/main_pathway_xref_publicationxref`: `Pathway.identifier`, `Organism.taxonId`, `Publication.pubMedId`, `Publication.title`, `Publication.year`, `Organism.taxonId`
 - `uberon/main`: `AnatomyTerm.identifier`, `AnatomyTerm.name`, `AnatomyTerm.description`, `AnatomyTerm.namespace`, `AnatomyTerm.obsolete`, `Ontology.name`
+- `uberon/main_has_alternative_id`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `uberon/main_has_broad_synonym`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
+- `uberon/main_database_cross_reference`: `AnatomyTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `uberon/main_has_exact_synonym`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `uberon/main_has_narrow_synonym`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `uberon/main_has_related_synonym`: `AnatomyTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`

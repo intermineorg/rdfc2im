@@ -132,11 +132,10 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | DataSet | `obo:RO_0002162` | `taxon` | obo:NCBITaxon_9606 | no match on DataSet - choose a field, or set status=drop |
 | DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | no match on DataSet - choose a field, or set status=drop |
 
-**go** - 2 active rows (rows under a pruned branch are not listed):
+**go** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Class | `oboinowl:hasDbXref` | `xref` | Reactome:REACT_28392 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `oboinowl:inSubset` | `subset` | go:goslim_pir | spec D2 - GO slim subsets; extend the model or exclude |
 
 **gwascatalog** - 31 active rows (rows under a pruned branch are not listed):
@@ -184,12 +183,10 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | no match on Homologue - choose a field, or set status=drop |
 | Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
 
-**hpo** - 3 active rows (rows under a pruned branch are not listed):
+**hpo** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Class | `oboinowl:hasAlternativeId` | `alternativeid` | HP:0003136 | secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id |
-| Class | `oboinowl:hasDbXref` | `snomedct` | SNOMEDCT_US:271737000 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `rdfs:comment` | `comment` | Anemia is not a specific entity but can result from many und | free-text comment; no field (description already used for the definition) |
 
 **mesh** - 12 active rows (rows under a pruned branch are not listed):
@@ -209,12 +206,11 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Descriptor | `meshv:previousIndexing` | `descriptor_previous_indexing` | Nerve Tissue Proteins (1995-2015) | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:considerAlso` | `descriptor_consider_also` | consider also terms at MYEL- | no match on MeshTerm - choose a field, or set status=drop |
 
-**mp** - 12 active rows (rows under a pruned branch are not listed):
+**mp** - 10 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Class | `metadata:treeView` | `tree_view` | Class | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `oboinowl:hasDbXref` | `database_cross_reference` | GO:0042472 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `obo:IAO_0100001` | `term_replaced_by` | Class | term replaced by; obsolete-term bookkeeping - probably drop |
 | Class | `dc:contributor` | `contributor` | <https://orcid.org/0000-0002-6490-7723> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
 | Class | `dc:creator` | `creator` | <https://orcid.org/0000-0002-6490-7723> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
@@ -222,7 +218,6 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `dcterms:contributor` | `terms_contributor` | <https://orcid.org/0000-0003-3691-0324> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
 | Class | `oboinowl:created_by` | `created_by` | csmith | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
 | Class | `oboinowl:creation_date` | `creation_date` | 2010-07-05T10:00:46Z | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `oboinowl:hasAlternativeId` | `has_alternative_id` | MP:0000014 | secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id |
 | Class | `oboinowl:inSubset` | `in_subset` | obo:mp#CvDC_Terms | spec D2 - GO slim subsets; extend the model or exclude |
 | Class | `rdfs:comment` | `comment` | Heart rate variability (HRV) is the variation of beat-to-bea | free-text comment; no field (description already used for the definition) |
 
@@ -263,7 +258,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | UnificationXref | `biopax:comment` | `unification_xref_description` | Reactome stable identifier. Use this URL to connect to the w | no match on Pathway - choose a field, or set status=drop |
 | UnificationXref | `biopax:idVersion` | `pathway_ver` | 1 | no match on Pathway - choose a field, or set status=drop |
 
-**uberon** - 47 active rows (rows under a pruned branch are not listed):
+**uberon** - 45 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
@@ -292,7 +287,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `obo:UBPROP_0000013` | `terminology_notes` | Gilbert uses visceral endoderm as a synonym for primitive en | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000014` | `actions_notes` | In some mammals these muscles can adjust the direction of th | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000015` | `location_notes` | Bounded medially by the Lamina orbitalis of the Os ethmoidal | no match on AnatomyTerm - choose a field, or set status=drop |
-| ... | | | | 22 more in the file |
+| ... | | | | 20 more in the file |
 
 **uniprot** - 17 active rows (rows under a pruned branch are not listed):
 

@@ -760,16 +760,24 @@ predicates:
     const: {OntologyTermSynonym.type: narrow}
   - pred: oboinowl:hasDbXref
     class: OntologyTerm
-    im: ""
-    status: todo
-    basis: knowledge
-    note: OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide or drop
+    im: OntologyTerm.crossReferences
+    status: sure
+    basis: java:OboConverter
+    note: >-
+      Exactly what stock HumanMine loads: OboParser reads `xref`, and OboConverter.createXref
+      builds an OntologyTerm with that identifier and adds it to crossReferences.  The collection
+      holds OntologyTerm, not CrossReference, so xref ids like Reactome:REACT_28392 become
+      identifier-only OntologyTerms - that is the stock behaviour this replaces, not a side effect.
   - pred: oboinowl:hasAlternativeId
     class: OntologyTerm
-    im: ""
-    status: todo
-    basis: knowledge
-    note: secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id
+    im: OntologyTermSynonym.name
+    status: sure
+    basis: java:OboParser
+    const: {OntologyTermSynonym.type: alt_id}
+    note: >-
+      OboParser loads each alt_id twice - addSynonyms(term, altIds, "alt_id") and
+      addXrefs(term, altIds).  This maps the synonym, which is how a secondary id becomes
+      searchable; the duplicate xref is not reproduced (one predicate maps to one field).
   - pred: oboinowl:inSubset
     class: OntologyTerm
     im: ""
