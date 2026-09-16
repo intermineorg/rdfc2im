@@ -116,7 +116,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `uniprot/main_recommended_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Protein.name`, `Synonym.value`, `ECNumber.identifier`, `Organism.taxonId`
 - `uniprot/main_submitted_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Protein.name`, `ECNumber.identifier`, `Organism.taxonId`
 - `uniprot/main_alternative_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Synonym.value`, `Synonym.value`, `Organism.taxonId`
-- `uniprot/main_citation`: `Organism.taxonId`, `Protein.primaryAccession`, `Publication.pubMedId`, `Publication.title`, `Publication.volume`, `Publication.pages`, `Publication.pubMedId`, `Organism.taxonId`
+- `uniprot/main_citation`: `Organism.taxonId`, `Protein.primaryAccession`, `Publication.doi`, `Publication.title`, `Publication.volume`, `Publication.pages`, `Publication.pubMedId`, `Organism.taxonId`
 
 ### Sources in the spec's scope that are not translated
 

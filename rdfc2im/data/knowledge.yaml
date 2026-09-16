@@ -429,6 +429,7 @@ predicates:
   # uniprot.  UniprotConverter creates Publication with ONLY pubMedId (update-publications fills
   # the rest from PubMed); creates every Synonym on the protein, never the gene; and collects
   # every EC attribute into Protein.ecNumbers (entry.addECNumber).
+  - {source: uniprot, pred: "dct:identifier", column: citation_doi, im: "Publication.doi", status: guess, basis: knowledge, transform: "strip_prefix:doi:", note: "values are doi:10.1016/...; previously mapped to Publication.pubMedId, where it collided with the real PubMed id and would have become a bogus Publication once the collision was split. Stock stores only pubMedId, so this goes beyond it"}
   - {source: uniprot, pred: "core:ecName", column: submitted_ec, im: "ECNumber.identifier", status: sure, basis: java:UniprotConverter, note: "every EC attribute goes to Protein.ecNumbers; this node is bound to Protein, so the link resolves"}
   - {source: uniprot, pred: "core:ecName", column: altanative_ec, im: "", status: todo, basis: java:UniprotConverter, note: "a genuine stock EC, but this node is bound to Synonym and Synonym has no link to ECNumber, so it would load unlinked; move it onto a Protein-bound path"}
   - {source: uniprot, pred: "core:cdAntigenName", column: altanative_antigen, im: "", status: todo, basis: knowledge, note: "an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so a second value here silently replaces the first - fix that before mapping this"}
