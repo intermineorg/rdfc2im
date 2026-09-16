@@ -98,7 +98,7 @@ def _write_status(ddir, per, ws, sources_cfg, out):
          "| `check` | runs (mapping vs model, `via` ranges, items ref_ids, keys); passes with 0 hard problems |",
          "| `humanmine-items` source | done: stock intermine-items-**large**-xml-file under its own type name + generated keys/additions; no Java |",
          "| `linkml` (HumanMine LinkML schema with corrected field terms) | done - `curation/linkml/humanmine.yaml`; not yet used by `check` |",
-         "| InterMine build + load | not attempted here |", "",
+         "| InterMine build + load | **done for `go`** - full extract loaded into a real mine; see LOAD-TRIAL.md |", "",
          "## Per-source status", "",
          "Row statuses: **sure** = evidence in the uploads (term URI / Java converter / .properties / exact name); "
          "**guess** = my proposal from general knowledge; **todo** = you decide; **human** = your edit; "
