@@ -1,0 +1,110 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/hgnc
+#mapping_set_title: rdf-config hgnc -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  dct: http://purl.org/dc/terms/
+#  hgnc: http://identifiers.org/hgnc/
+#  idt: http://identifiers.org/
+#  m2r: http://med2rdf.org/ontology/med2rdf#
+#  obo: http://purl.obolibrary.org/obo/
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://www.w3.org/2000/01/rdf-schema#label	gene_id	skos:exactMatch	intermine:Gene.symbol	Gene.symbol	semapv:UnspecifiedMatching	1.0		HGNC	rdfs:label	main	sure	java:HgncConverter				no		literal	no	TP53
+http://purl.org/dc/terms/identifier	hgnc_id	skos:exactMatch	intermine:Synonym.value	Synonym.value	semapv:UnspecifiedMatching	1.0	"converter createSynonym(hgncId); rdf value is the bare number, HGNC file has ""HGNC:11998"""	HGNC	dct:identifier	main	sure	java:HgncConverter	prefix:HGNC:			no	Gene.synonyms	literal	no	11998
+http://purl.org/dc/terms/description	description	skos:closeMatch	intermine:Gene.name	Gene.name	semapv:UnspecifiedMatching	0.5	e.g. tumor protein p53 - the approved name; HgncConverter does not set name (ncbi-gene does)	HGNC	dct:description	main	guess	knowledge				no		literal	no	tumor protein p53
+http://purl.obolibrary.org/obo/so_part_of	location	skos:closeMatch	intermine:Gene.cytoLocation	Gene.cytoLocation	semapv:UnspecifiedMatching	0.5	e.g. 17p13.1 cytoband; ncbi-gene also writes cytoLocation - genomic_priorities decides	HGNC	obo:so_part_of	main	guess	knowledge				no		literal	yes	17p13.1
+http://www.w3.org/2000/01/rdf-schema#seeAlso	see_also	sssom:NoMapping			semapv:UnspecifiedMatching			HGNC	rdfs:seeAlso	main_see_also	link	structure				no		link	yes	NCBIGene | Ensembl | ENA
+http://purl.org/dc/terms/references	reference	sssom:NoMapping			semapv:UnspecifiedMatching			HGNC	dct:references	main_reference	link	structure				no		link	yes	PubMed
+http://www.w3.org/2004/02/skos/core#altLabel	alt_label	skos:exactMatch	intermine:Synonym.value	Synonym.value	semapv:UnspecifiedMatching	1.0	alias symbols/names -> Synonym	HGNC	skos:altLabel	main_alt_label	sure	java:HgncConverter				no	Gene.synonyms	literal	yes	p53
+http://www.w3.org/2004/02/skos/core#historyNote	history_note	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	HGNC	skos:historyNote	main	todo					no		literal	no	Approved
+http://purl.org/dc/terms/identifier	ncbigene_id	skos:exactMatch	intermine:Gene.primaryIdentifier	Gene.primaryIdentifier	semapv:UnspecifiedMatching	1.0	line[18] entrez id is the Gene key; HgncConverter skips rows without one	NCBIGene	dct:identifier	main_see_also_ncbigene	sure	java:HgncConverter				yes		literal	no	7157
+http://purl.org/dc/terms/identifier	ensembl_id	skos:exactMatch	intermine:Gene.secondaryIdentifier	Gene.secondaryIdentifier	semapv:UnspecifiedMatching	1.0		Ensembl	dct:identifier	main_see_also_ensembl	sure	java:HgncConverter				no		literal	no	ENSG00000141510
+http://purl.org/dc/terms/identifier	ena_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		ENA	dct:identifier	main_see_also_ena	guess	knowledge+java:NcbiGeneConverter				no		literal	no	AF307851
+http://purl.org/dc/terms/identifier	insdc_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		INSDC	dct:identifier	main_see_also_insdc	guess	knowledge+java:NcbiGeneConverter				no		literal	no	AF307851
+http://purl.org/dc/terms/identifier	refseq_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		RefSeq	dct:identifier	main_see_also_refseq	guess	knowledge+java:NcbiGeneConverter				no		literal	no	NM_000546
+http://purl.org/dc/terms/identifier	ccds_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		CCDS	dct:identifier	main_see_also_ccds	guess	knowledge+java:NcbiGeneConverter				no		literal	no	CCDS45605
+http://purl.org/dc/terms/identifier	uniprot_id	skos:closeMatch	intermine:Protein.primaryAccession	Protein.primaryAccession	semapv:UnspecifiedMatching	0.5		UniProt	dct:identifier	main_see_also_uniprot	guess	knowledge				no		literal	no	P04637
+http://purl.org/dc/terms/identifier	mgi_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		MGI	dct:identifier	main_see_also_mgi	guess	knowledge+java:NcbiGeneConverter				no		literal	no	98834
+http://purl.org/dc/terms/identifier	rgd_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		RGD	dct:identifier	main_see_also_rgd	guess	knowledge+java:NcbiGeneConverter				no		literal	no	3889
+http://purl.org/dc/terms/identifier	lrg_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		LRG	dct:identifier	main_see_also_lrg	guess	knowledge+java:NcbiGeneConverter				no		literal	no	LRG_321
+http://purl.org/dc/terms/identifier	omim_id	skos:closeMatch	intermine:Disease.primaryIdentifier	Disease.primaryIdentifier	semapv:UnspecifiedMatching	0.5		OMIM	dct:identifier	main_see_also_omim	guess	knowledge	prefix:OMIM:			no		literal	no	191170
+http://purl.org/dc/terms/identifier	mirbase_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		MiRBase	dct:identifier	main_see_also_mirbase	guess	knowledge+java:NcbiGeneConverter				no		literal	no	MI0000651
+http://purl.org/dc/terms/identifier	orphanet_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		Orphanet	dct:identifier	main_see_also_orphanet	guess	knowledge+java:NcbiGeneConverter				no		literal	no	120204
+http://purl.org/dc/terms/identifier	ec_id	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		EC	dct:identifier	main_see_also_ec	guess	knowledge+java:NcbiGeneConverter				no		literal	no	2.3.2.27
+http://purl.org/dc/terms/identifier	pubmed_id	skos:exactMatch	intermine:Publication.pubMedId	Publication.pubMedId	semapv:UnspecifiedMatching	1.0		PubMed	dct:identifier	main_reference	sure	knowledge				no		literal	no	20498374
+rdfc2im:self	HGNC	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	HGNC	-self-	main	drop	subject-iri				no		iri	no	hgnc:11998
+rdfc2im:self	see_also_NCBIGene	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	NCBIGene	-self-	main_see_also_ncbigene	drop	subject-iri				no		iri	no	<http://identifiers.org/ncbigene/7157>
+rdfc2im:self	see_also_Ensembl	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Ensembl	-self-	main_see_also_ensembl	drop	subject-iri				no		iri	no	<http://identifiers.org/ensembl/ENSG00000141510>
+rdfc2im:self	see_also_ENA	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	ENA	-self-	main_see_also_ena	drop	subject-iri				no		iri	no	<http://identifiers.org/ena.embl/AF307851>
+rdfc2im:self	see_also_INSDC	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	INSDC	-self-	main_see_also_insdc	drop	subject-iri				no		iri	no	<http://identifiers.org/insdc/AF307851>
+rdfc2im:self	see_also_RefSeq	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	RefSeq	-self-	main_see_also_refseq	drop	subject-iri				no		iri	no	<http://identifiers.org/refseq/NM_000546>
+rdfc2im:self	see_also_CCDS	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	CCDS	-self-	main_see_also_ccds	drop	subject-iri				no		iri	no	<http://identifiers.org/ccds/CCDS45605>
+rdfc2im:self	see_also_UniProt	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	UniProt	-self-	main_see_also_uniprot	drop	subject-iri				no		iri	no	<http://identifiers.org/uniprot/P04637>
+rdfc2im:self	see_also_MGI	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	MGI	-self-	main_see_also_mgi	drop	subject-iri				no		iri	no	<http://identifiers.org/mgi/MGI:98834>
+rdfc2im:self	see_also_RGD	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	RGD	-self-	main_see_also_rgd	drop	subject-iri				no		iri	no	<http://identifiers.org/rgd/3889>
+rdfc2im:self	see_also_LRG	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	LRG	-self-	main_see_also_lrg	drop	subject-iri				no		iri	no	<http://identifiers.org/lrg/LRG_321>
+rdfc2im:self	see_also_OMIM	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	OMIM	-self-	main_see_also_omim	drop	subject-iri				no		iri	no	<http://identifiers.org/omim/191170>
+rdfc2im:self	see_also_MiRBase	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	MiRBase	-self-	main_see_also_mirbase	drop	subject-iri				no		iri	no	<http://identifiers.org/mirbase/MI0000651>
+rdfc2im:self	see_also_Orphanet	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Orphanet	-self-	main_see_also_orphanet	drop	subject-iri				no		iri	no	<http://identifiers.org/orphanet/120204>
+rdfc2im:self	see_also_EC	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	EC	-self-	main_see_also_ec	drop	subject-iri				no		iri	no	<http://identifiers.org/ec-code/2.3.2.27>
+rdfc2im:self	reference	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	PubMed	-self-	main_reference	drop	subject-iri				no		iri	no	<http://identifiers.org/pubmed/20498374>
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for ena_id	ENA	-const-	main_see_also_ena	guess	knowledge+java:NcbiGeneConverter			ENA	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for insdc_id	INSDC	-const-	main_see_also_insdc	guess	knowledge+java:NcbiGeneConverter			INSDC	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for refseq_id	RefSeq	-const-	main_see_also_refseq	guess	knowledge+java:NcbiGeneConverter			RefSeq	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for ccds_id	CCDS	-const-	main_see_also_ccds	guess	knowledge+java:NcbiGeneConverter			CCDS	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for mgi_id	MGI	-const-	main_see_also_mgi	guess	knowledge+java:NcbiGeneConverter			MGI	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for rgd_id	RGD	-const-	main_see_also_rgd	guess	knowledge+java:NcbiGeneConverter			RGD	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for lrg_id	LRG	-const-	main_see_also_lrg	guess	knowledge+java:NcbiGeneConverter			LRG	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for mirbase_id	MiRBase	-const-	main_see_also_mirbase	guess	knowledge+java:NcbiGeneConverter			miRBase	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for orphanet_id	Orphanet	-const-	main_see_also_orphanet	guess	knowledge+java:NcbiGeneConverter			Orphanet	no		const	no	
+rdfc2im:const	const_DataSource_name	skos:closeMatch	intermine:DataSource.name	DataSource.name	semapv:UnspecifiedMatching	0.5	constant for ec_id	EC	-const-	main_see_also_ec	guess	knowledge+java:NcbiGeneConverter			Enzyme Nomenclature	no		const	no	
+rdfc2im:const	const_Organism_taxonId	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	constant on every table	HGNC	-const-	*	sure	sources.yaml			9606	no		const	no	

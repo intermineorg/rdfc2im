@@ -1,0 +1,3 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+GWASAssociation	GWASResult	root	sure	term+java:HugeGwasConverter	gwas:Association	(root)		
+GWASStudy	GWAS	node	sure	term+java:HugeGwasConverter	gwas:Study	terms:study	study:GCST004495	

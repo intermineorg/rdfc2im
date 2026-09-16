@@ -5,11 +5,13 @@
 ## Setup
 
 ```
-tar xzf rdfc2im.tar.gz && cd rdfc2im
+git clone <this repo> && cd rdfc2im
 pip install -r requirements.txt        # pyyaml, lxml (a venv is fine)
+make inputs                            # clone/refresh upstream into in/  (~150 MB, gitignored)
 ```
 
-Place the inputs under `in/` (edit `rdfc2im.yaml` if your paths differ):
+`make inputs` (= `tools/make-inputs.sh`) assembles this layout; place the files yourself instead
+if you already have the checkouts (edit `rdfc2im.yaml` if your paths differ):
 
 ```
 in/config/<source>/model.yaml ...        rdf-config configs      config_root
@@ -36,7 +38,7 @@ in/humanmine_model.json                  model_json (only for `rdfc2im linkml`)
 | `make docs` | status + curation guide | everything above | `_docs/STATUS.md`, `_docs/CURATION_GUIDE.md` |
 | `make all` | one process running allow → translate → tsv → items → project → check → docs; add `FETCH=1` to include fetch | | |
 | `make linkml` | HumanMine LinkML schema with corrected field terms | `model_json`, `live_model` | `curation/linkml/humanmine.yaml` |
-| `make fork-sync` | copy generated keys/additions into `humanmine-items/` | `_mine/` | `humanmine-items/src/main/resources/` |
+| `make fork-sync` | copy generated keys/additions into `humanmine-items/` | `_mine/` | `humanmine-items/resources/` |
 | `make test` | unit tests (pytest if present, else `tests/run.py`) | | |
 
 Variables: `SRC=ncbigene` (repeatable) restricts to sources; `LIMIT=0` removes the SPARQL LIMIT (default 20) - it applies to `translate` (written into `queries/`) and to `fetch` (overrides at send time, so `make fetch LIMIT=0 FORCE=1` does a full extract);

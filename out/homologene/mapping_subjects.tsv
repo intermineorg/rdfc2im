@@ -1,0 +1,6 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Group	Homologue	root	guess	knowledge	orth:OrthologsCluster	(root)	homologene:3	n-ary cluster; Homologue is pairwise - needs the all-pairs transform (spec D7)
+Dataset		node	todo		orth:OrthologyDataset	orth:inDataset	<https://ncbi.nlm.nih.gov/homologene/>	no term/knowledge/name match - bind by hand or set role=skip
+Gene	Gene	node	sure	java:HomologeneConverter	orth:Gene	orth:hasHomologousMember+	ncbigene:34	
+Taxon	Organism	node	sure	knowledge	taxon:Taxon	orth:hasHomologousMember+ / obo:RO_0002162	taxonomy:9606	
+Protein	Protein	node	guess	knowledge	orth:Protein	orth:hasHomologousMember+ / sio:SIO_010078	ncbiprotein:NP_000007.1	

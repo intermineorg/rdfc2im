@@ -2,12 +2,13 @@
 
 Map DBCLS **rdf-config** sources onto the **HumanMine/InterMine** model, generate the SPARQL,
 fetch, clean, and emit **InterMine Items XML** plus everything HumanMine needs to load it through the
-stock items-xml source.  Implements `SPECIFICATION_15sep26.md` (v0.2: Items XML route, SSSOM mapping).
+stock items-xml loader.  Implements `SPECIFICATION_15sep26.md` (v0.2: Items XML route, SSSOM mapping),
+which is **not in this repository** - `SPEC-DECISIONS.md` indexes every surviving citation of it.
 
 Requires Python 3.9+ with `pyyaml` and `lxml` (`pip install -r requirements.txt`).
 
 ```
-in/   <- the uploads, extracted; see "in/ layout" below
+in/                  the upstream inputs; `make inputs` builds it - see "in/ layout" below
 curation/            what you maintain by hand (extra allow tokens, approved schema extensions)
 rdfc2im/             the package  (python3 -m rdfc2im <cmd>;  no dependencies beyond lxml + pyyaml)
 rdfc2im/data/        knowledge.yaml (my mappings, reviewable) + sources.yaml (per-source settings)
@@ -16,7 +17,7 @@ out/<source>/items/  <source>.xml - the Items XML HumanMine loads          (rdfc
 out/_mine/           project.xml, keys, additions, priorities, links_report (rdfc2im project)
 out/_docs/           STATUS.md, CURATION_GUIDE.md                           (rdfc2im docs)
 curation/linkml/     humanmine.yaml - LinkML schema of HumanMine            (rdfc2im linkml)
-humanmine-items/     the loader source: stock intermine-items-xml-file + generated keys/additions (no Java)
+humanmine-items/     the loader source: stock intermine-items-large-xml-file + generated keys/additions (no Java)
 tests/               unit tests on synthetic fixtures (make test; runs without pytest too)
 ```
 
@@ -24,7 +25,8 @@ See `USAGE.md` for the command reference and workflow.
 
 ## in/ layout
 
-`rdfc2im.yaml` expects (edit it if your extraction differs):
+`make inputs` builds the whole tree from the upstream projects (and refreshes it on a re-run);
+`in/` is gitignored. `rdfc2im.yaml` expects (edit it if your extraction differs):
 
 ```
 in/config/<source>/model.yaml ...        rdf-config configs      (config_root)
@@ -35,9 +37,14 @@ in/humanmine_model.xml                   (live_model)
 in/humanmine_model.json                  (model_json, only for `rdfc2im linkml`)
 ```
 
+Upstream: `dbcls/rdf-config` (config/), `intermine/intermine` (bio/), `intermine/humanmine`
+(project.xml), `intermine/humanmine-bio-sources`, and `humanmine.org/humanmine/service/model`
+for the two live-model files. See `tools/make-inputs.sh`.
+
 ## Quick start
 
 ```
+make inputs         # build in/ from rdf-config + intermine + humanmine (once)
 make all            # allow -> translate (all good/structural sources) -> tsv -> items -> project -> check -> docs
 $EDITOR out/ncbigene/mapping_predicates.sssom.tsv   # fix a mapping (see out/_docs/CURATION_GUIDE.md)
 make translate SRC=ncbigene                 # re-run one source; your edits survive

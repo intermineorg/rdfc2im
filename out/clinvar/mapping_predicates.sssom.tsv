@@ -1,0 +1,149 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/clinvar
+#mapping_set_title: rdf-config clinvar -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  idcv: 'http://identifiers.org/clinvar.record:'
+#  refseq: http://identifiers.org/refseq/
+#  med2rdf: http://med2rdf.org/ontology/med2rdf#
+#  clinvar: http://ncbi.nlm.nih.gov/clinvar/variation/
+#  ncbigene: http://ncbi.nlm.nih.gov/gene/
+#  medgen: http://ncbi.nlm.nih.gov/medgen/
+#  omim: http://omim.org/entry/
+#  cvo: http://purl.jp/bio/10/clinvar/
+#  bibo: http://purl.org/ontology/bibo/
+#  faldo: http://biohackathon.org/resource/faldo#
+#  dct: http://purl.org/dc/terms/
+#  sio: http://semanticscience.org/resource/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  hco: http://identifiers.org/hco/
+#  hgnc: 'http://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/HGNC:HGNC:'
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://purl.jp/bio/10/clinvar/accession	vcv	skos:exactMatch	intermine:Allele.primaryIdentifier	Allele.primaryIdentifier	semapv:UnspecifiedMatching	1.0		Clinvar	cvo:accession	main	sure	java:ClinvarConverter				yes		literal	no	VCV000209597
+http://purl.jp/bio/10/clinvar/classified_record	_bn1	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar	cvo:classified_record	main	link	structure				no		bnode	no	[]
+http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:date_created	main	todo					no		literal	no	2015-09-29
+http://purl.jp/bio/10/clinvar/date_last_updated	date_last_updated	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:date_last_updated	main	todo					no		literal	no	2024-11-03
+http://purl.jp/bio/10/clinvar/most_recent_submission	most_recent_submission	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:most_recent_submission	main	todo					no		literal	no	2015-09-29
+http://purl.jp/bio/10/clinvar/number_of_submissions	number_of_submissions	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:number_of_submissions	main	todo					no		literal	no	1
+http://purl.jp/bio/10/clinvar/number_of_submitters	number_of_submitters	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:number_of_submitters	main	todo					no		literal	no	1
+http://purl.jp/bio/10/clinvar/record_status	recode_status	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:record_status	main	todo					no		literal	no	current
+http://purl.jp/bio/10/clinvar/record_type	record_type	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:record_type	main	todo					no		literal	no	classified
+http://purl.jp/bio/10/clinvar/species	species	sssom:NoMapping			semapv:UnspecifiedMatching		always Homo sapiens; add a const Organism.taxonId=9606 column instead	Clinvar	cvo:species	main	drop	knowledge				no		literal	no	Homo sapiens
+http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:variation_id	main	todo					no		literal	no	209597
+http://purl.jp/bio/10/clinvar/variation_name	name	skos:exactMatch	intermine:Allele.name	Allele.name	semapv:UnspecifiedMatching	1.0		Clinvar	cvo:variation_name	main	sure	java:ClinvarConverter				no		literal	no	NM_000059.3(BRCA2):c.-764A>G
+http://purl.jp/bio/10/clinvar/variation_type	type	skos:exactMatch	intermine:Allele.type	Allele.type	semapv:UnspecifiedMatching	1.0		Clinvar	cvo:variation_type	main	sure	java:ClinvarConverter				no		literal	no	single nucleotide variant
+http://purl.jp/bio/10/clinvar/version	version	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar	cvo:version	main	todo					no		literal	no	3
+http://purl.org/dc/terms/created	create_date	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar	dct:created	main	drop	knowledge				no		literal	no	2015-09-29
+http://purl.org/dc/terms/modified	modified_date	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar	dct:modified	main	drop	knowledge				no		literal	no	2024-11-03
+http://www.w3.org/2000/01/rdf-schema#label	label	skos:exactMatch	intermine:Allele.name	Allele.name	semapv:MappingChaining	1.0	term match: BioEntity.name	Clinvar	rdfs:label	main	sure	term				no		literal	no	NM_000059.3(BRCA2):c.-764A>G
+http://purl.jp/bio/10/clinvar/rcv_list	_bn2	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record	cvo:rcv_list	main	link	structure				no		bnode	no	[]
+http://semanticscience.org/resource/SIO_000628	_bn9	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record	sio:SIO_000628	main__bn9	link	structure				no		bnode	yes	[]
+http://purl.jp/bio/10/clinvar/rcv_accession	_bn3	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list	cvo:rcv_accession	main__bn3	link	structure				no		bnode	yes	[]
+http://biohackathon.org/resource/faldo#location	_bn10	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/SIO_000628	faldo:location	main__bn10	link	structure				no		bnode	yes	[]
+http://med2rdf.org/ontology/med2rdf#alternative_allele	alternative_allele	skos:exactMatch	intermine:Allele.alternate	Allele.alternate	semapv:UnspecifiedMatching	1.0		Clinvar/classified_record/SIO_000628	med2rdf:alternative_allele	main_SIO_000628	sure	java:ClinvarConverter				no		literal	yes	G
+http://med2rdf.org/ontology/med2rdf#gene	ncbigene	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/SIO_000628	med2rdf:gene	main_ncbigene	link	structure				no		link	yes	Ncbigene
+http://med2rdf.org/ontology/med2rdf#reference_allele	reference_allele	skos:exactMatch	intermine:Allele.reference	Allele.reference	semapv:UnspecifiedMatching	1.0		Clinvar/classified_record/SIO_000628	med2rdf:reference_allele	main_SIO_000628	sure	java:ClinvarConverter				no		literal	yes	A
+http://purl.jp/bio/10/clinvar/allele_frequency	_bn11	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/SIO_000628	cvo:allele_frequency	main__bn11	link	structure				no		bnode	yes	[]
+http://purl.jp/bio/10/clinvar/allele_id	allele_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628	cvo:allele_id	main_SIO_000628	todo					no		literal	no	205807
+http://purl.jp/bio/10/clinvar/canonical_spdi	spdi	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628	cvo:canonical_spdi	main_SIO_000628	todo					no		iri	no	NC_000013.11:32314942:A:G
+http://purl.jp/bio/10/clinvar/cytogenetic_location	variant_location	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628	cvo:cytogenetic_location	main_variant_location	todo					no		literal	yes	13q13.1
+http://purl.jp/bio/10/clinvar/global_minor_allele_frequency	_bn12	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/SIO_000628	cvo:global_minor_allele_frequency	main_SIO_000628	link	structure				no		bnode	no	[]
+http://purl.jp/bio/10/clinvar/accession	rcv_accession	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession	cvo:accession	main_rcv_accession	todo					no		literal	no	RCV000191543
+http://purl.jp/bio/10/clinvar/classified_condition_list	_bn4	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list/rcv_accession	cvo:classified_condition_list	main_rcv_accession	link	structure				no		bnode	no	[]
+http://purl.jp/bio/10/clinvar/rcv_classifications	_bn6	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list/rcv_accession	cvo:rcv_classifications	main_rcv_accession	link	structure				no		bnode	no	[]
+http://purl.jp/bio/10/clinvar/title	rcv_title	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession	cvo:title	main_rcv_accession	todo					no		literal	no	NM_000059.3(BRCA2):c.-764A>G AND Breast-ovarian cancer, fami
+http://purl.jp/bio/10/clinvar/version	rcv_version	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession	cvo:version	main_rcv_accession	todo					no		literal	no	10
+http://purl.org/dc/terms/identifier	rcv_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession	dct:identifier	main_rcv_accession	todo					no		literal	no	RCV000191543
+http://biohackathon.org/resource/faldo#position	position	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	faldo:position	main_SIO_000628	todo					no		literal	no	32889080
+http://biohackathon.org/resource/faldo#reference	reference	skos:exactMatch	intermine:Allele.reference	Allele.reference	semapv:LexicalMatching	1.0	field name matches (reference)	Clinvar/classified_record/SIO_000628/location	faldo:reference	main_SIO_000628	sure	name				no		iri	yes	hco:13\#GRCh37
+http://purl.jp/bio/10/clinvar/accession	refseq	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:accession	main_SIO_000628	todo					no		literal	no	NC_000013.10
+http://purl.jp/bio/10/clinvar/assembly	assembly	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:assembly	main_SIO_000628	todo					no		literal	no	GRCh37
+http://purl.jp/bio/10/clinvar/assembly_accession_version	assembly_accession_version	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:assembly_accession_version	main_SIO_000628	todo					no		literal	no	GCF_000001405.25
+http://purl.jp/bio/10/clinvar/assembly_status	assembly_status	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:assembly_status	main_SIO_000628	todo					no		literal	no	previous
+http://purl.jp/bio/10/clinvar/chr	chromosome	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:chr	main_SIO_000628	todo					no		literal	no	13
+http://purl.jp/bio/10/clinvar/variant_length	variant_length	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/location	cvo:variant_length	main_SIO_000628	todo					no		literal	no	1
+http://www.w3.org/2000/01/rdf-schema#label	exact_position_bnode_label	skos:exactMatch	intermine:Allele.name	Allele.name	semapv:MappingChaining	1.0	term match: BioEntity.name	Clinvar/classified_record/SIO_000628/location	rdfs:label	main_SIO_000628	sure	term				no		literal	no	13:32889080:GRCh37
+http://biohackathon.org/resource/faldo#location	_bn13	sssom:NoMapping			semapv:UnspecifiedMatching			Ncbigene	faldo:location	main__bn13	link	structure				no		bnode	yes	[]
+http://purl.jp/bio/10/clinvar/cytogenetic_location	gene_location	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene	cvo:cytogenetic_location	main_gene_location	todo					no		literal	yes	13q13.1
+http://purl.jp/bio/10/clinvar/full_name	gene_name	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene	cvo:full_name	main_gene_name	todo					no		literal	yes	BRCA2 promoter/silencer region
+http://purl.jp/bio/10/clinvar/gene_id	ncbigene_id	skos:exactMatch	intermine:Gene.primaryIdentifier	Gene.primaryIdentifier	semapv:UnspecifiedMatching	1.0		Ncbigene	cvo:gene_id	main_SIO_000628	sure	java:ClinvarConverter				no		literal	no	106721785
+http://purl.jp/bio/10/clinvar/relationship_type	relationship_type	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene	cvo:relationship_type	main_relationship_type	todo					no		literal	yes	genes overlapped by variant
+http://purl.jp/bio/10/clinvar/source	source	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene	cvo:source	main_source	todo					no		literal	yes	calculated
+http://purl.jp/bio/10/clinvar/symbol	symbol	skos:exactMatch	intermine:Gene.symbol	Gene.symbol	semapv:UnspecifiedMatching	1.0		Ncbigene	cvo:symbol	main_SIO_000628	sure	java:ClinvarConverter				no		literal	yes	LOC106721785
+http://www.w3.org/2000/01/rdf-schema#seeAlso	hgnc	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene	rdfs:seeAlso	main_SIO_000628	todo					no		iri	no	hgnc:20444
+http://purl.jp/bio/10/clinvar/minor_allele	minor_allele	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/global_minor_allele_frequency	cvo:minor_allele	main_SIO_000628	todo					no		literal	no	G
+http://purl.jp/bio/10/clinvar/source	frequency_source	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/global_minor_allele_frequency	cvo:source	main_SIO_000628	todo					no		literal	no	1000 Genomes Project
+http://purl.jp/bio/10/clinvar/value	frequency	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/SIO_000628/global_minor_allele_frequency	cvo:value	main_SIO_000628	todo					no		literal	no	+0.04014
+http://purl.jp/bio/10/clinvar/classified_condition	_bn5	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list	cvo:classified_condition	main__bn5	link	structure				no		bnode	yes	[]
+http://purl.jp/bio/10/clinvar/trait_set_id	trait_set_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list	cvo:trait_set_id	main_rcv_accession	todo					no		literal	no	2560
+http://purl.jp/bio/10/clinvar/germline_classification	_bn7	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications	cvo:germline_classification	main_rcv_accession	link	structure				no		bnode	no	[]
+http://biohackathon.org/resource/faldo#begin	_bn14	sssom:NoMapping			semapv:UnspecifiedMatching			Ncbigene/location	faldo:begin	main__bn14	link	structure				no		bnode	yes	[]
+http://biohackathon.org/resource/faldo#end	_bn15	sssom:NoMapping			semapv:UnspecifiedMatching			Ncbigene/location	faldo:end	main__bn15	link	structure				no		bnode	yes	[]
+http://purl.jp/bio/10/clinvar/accession	chromosome_accession	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:accession	main_chromosome_accession	todo					no		literal	yes	NC_000013.11
+http://purl.jp/bio/10/clinvar/assembly	gene_assembly	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:assembly	main_SIO_000628	todo					no		literal	no	GRCh38
+http://purl.jp/bio/10/clinvar/assembly_accession_version	gene_assembly_accession	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:assembly_accession_version	main_SIO_000628	todo					no		literal	no	GCF_000001405.38
+http://purl.jp/bio/10/clinvar/assembly_status	gene_assembly_status	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:assembly_status	main_SIO_000628	todo					no		literal	no	current
+http://purl.jp/bio/10/clinvar/chr	gene_chromosome	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:chr	main_SIO_000628	todo					no		literal	no	13
+http://purl.jp/bio/10/clinvar/strand	gene_strand	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location	cvo:strand	main_SIO_000628	todo					no		literal	no	+
+http://purl.org/dc/terms/identifier	disease_id	sssom:NoMapping	intermine:Disease.primaryIdentifier	Disease.primaryIdentifier	semapv:UnspecifiedMatching		MedGen CUI here; ClinvarConverter keys diseases by OMIM - spec D5 (MONDO/TogoID normalisation)	Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition	dct:identifier	main_rcv_accession	todo	spec-D5				no		literal	no	C2675520
+http://purl.org/dc/terms/references	disease_reference	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Disease - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition	dct:references	main_disease_reference	todo					no		iri	yes	medgen:C2675520
+http://purl.org/dc/terms/source	disease_source	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Disease - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition	dct:source	main_rcv_accession	todo					no		literal	no	MedGen
+http://www.w3.org/2000/01/rdf-schema#label	disease_label	skos:exactMatch	intermine:Disease.name	Disease.name	semapv:UnspecifiedMatching	1.0		Clinvar/classified_record/rcv_list/rcv_accession/classified_condition_list/classified_condition	rdfs:label	main_rcv_accession	sure	java:ClinvarConverter				no		literal	no	Breast-ovarian cancer, familial, susceptibility to, 2
+http://purl.jp/bio/10/clinvar/description	_bn8	sssom:NoMapping			semapv:UnspecifiedMatching			Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification	cvo:description	main_rcv_accession	link	structure				no		bnode	no	[]
+http://purl.jp/bio/10/clinvar/review_status	rcv_review_status	skos:closeMatch	intermine:Allele.reviewStatus	Allele.reviewStatus	semapv:UnspecifiedMatching	0.5		Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification	cvo:review_status	main_rcv_accession	guess	spec-section-8+new-field				no		literal	no	reviewed by expert panel
+http://biohackathon.org/resource/faldo#position	gene_begin	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location/begin	faldo:position	main_SIO_000628	todo					no		literal	no	32314559
+http://biohackathon.org/resource/faldo#position	gene_end	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Gene - choose a field, or set status=drop	Ncbigene/location/end	faldo:position	main_SIO_000628	todo					no		literal	no	32315789
+http://purl.jp/bio/10/clinvar/date_last_evaluated	rcv_date_last_evaluated	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Allele - choose a field, or set status=drop	Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description	cvo:date_last_evaluated	main_rcv_accession	todo					no		literal	no	2015-01-12
+http://purl.jp/bio/10/clinvar/description	interpretation	skos:exactMatch	intermine:Allele.clinicalSignificance	Allele.clinicalSignificance	semapv:UnspecifiedMatching	1.0		Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description	cvo:description	main_rcv_accession	sure	java:ClinvarConverter				no		literal	no	Benign
+http://purl.jp/bio/10/clinvar/submission_count	rcv_submission_count	skos:closeMatch	intermine:Allele.submissionCount	Allele.submissionCount	semapv:UnspecifiedMatching	0.5		Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description	cvo:submission_count	main_rcv_accession	guess	spec-section-8+new-field				no		literal	no	1
+rdfc2im:self	Clinvar	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Clinvar	-self-	main	drop	subject-iri				no		iri	no	clinvar:209597
+rdfc2im:self	ncbigene	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Ncbigene	-self-	main_SIO_000628	drop	subject-iri				no		iri	no	ncbigene:106721785
+rdfc2im:const	const_Organism_taxonId	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	constant on every table	Clinvar	-const-	*	sure	sources.yaml			9606	no		const	no	

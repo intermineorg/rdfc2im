@@ -1,0 +1,9 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+DataSet	DataSet	root	sure	name	gxaterms:microarray_1colour_mrna_differential gxaterms:microarray_1colour_microrna_differential gxaterms:microarray_2colour_mrna_differential gxaterms:rnaseq_mrna_baseline gxaterms:rnaseq_mrna_differential gxaterms:proteomics_baseline	(root)	gxa:E-GEOD-56087	subject name is the model class DataSet
+DifferentialAnalysis		node	todo		gxaterms:RNASeqDifferentialAnalysis gxaterms:MicroarrayDifferentialExpressionAnalysis	gxaterms:hasPart+	gxa:E-GEOD-56087#analysis-05E9336DD034DD285691388914E5B56D	no term/knowledge/name match - bind by hand or set role=skip
+BaselineAnalysis		node	todo		gxaterms:BaselineExpressionAnalysis	gxaterms:hasPart+	gxa:E-GEOD-26284#analysis-2016A09DDE60EE59799945563C64D3D5	no term/knowledge/name match - bind by hand or set role=skip
+Assay		node	todo		gxaterms:Assay	gxaterms:hasPart+	gxa:E-GEOD-56087#assay-61FF448F7A1B3C0BBABB356C77082752	no term/knowledge/name match - bind by hand or set role=skip
+Factor		node	todo		<http://www.ebi.ac.uk/efo/EFO_0000001>	gxaterms:hasPart+ / gxaterms:hasFactorValue+	gxa:E-GEOD-56087#factor-40EA3327BFCCBB34E3ACA740B6D0E0D8	no term/knowledge/name match - bind by hand or set role=skip
+DifferentialExpression		node	todo		gxaterms:IncreasedDifferentialExpressionRatio gxaterms:DecreasedDifferentialExpressionRatio	gxaterms:hasPart+ / gxaterms:hasOutput+	gxa:E-GEOD-56087#expression-FCED54288826983AFC759FA4A4BD0C18	no term/knowledge/name match - bind by hand or set role=skip
+BaselineExpression		node	todo		gxaterms:BaselineExpressionValue	gxaterms:hasPart+ / gxaterms:hasOutput+	gxa:E-GEOD-26284#analysis-2016A09DDE60EE59799945563C64D3D5	no term/knowledge/name match - bind by hand or set role=skip
+Sample		node	todo		obo:UBERON_0000001	gxaterms:hasPart+ / gxaterms:hasInputSampleCharacteristic+	gxa:E-GEOD-56087#sample-40EA3327BFCCBB34E3ACA740B6D0E0D8	no term/knowledge/name match - bind by hand or set role=skip

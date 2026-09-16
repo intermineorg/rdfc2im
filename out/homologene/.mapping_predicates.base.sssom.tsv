@@ -1,0 +1,76 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/homologene
+#mapping_set_title: rdf-config homologene -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  dct: http://purl.org/dc/terms/
+#  obo: http://purl.obolibrary.org/obo/
+#  sio: http://semanticscience.org/resource/
+#  homologene: http://identifiers.org/homologene/
+#  taxonomy: http://identifiers.org/taxonomy/
+#  ncbigene: http://identifiers.org/ncbigene/
+#  ncbiprotein: http://identifiers.org/ncbiprotein/
+#  taxon: http://ddbj.nig.ac.jp/ontologies/taxonomy/
+#  orth: http://purl.org/net/orth#
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://purl.org/dc/terms/identifier	group_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Homologue - choose a field, or set status=drop	Group	dct:identifier	main	todo					no		literal	no	3
+http://www.w3.org/2000/01/rdf-schema#label	group_label	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Homologue - choose a field, or set status=drop	Group	rdfs:label	main	todo					no		literal	no	Gene conserved in Bilateria
+http://purl.org/net/orth#inDataset	dataset	sssom:NoMapping			semapv:UnspecifiedMatching			Group	orth:inDataset	main	link	structure				no		link	no	Dataset
+http://purl.org/net/orth#hasHomologousMember	gene	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way	Group	orth:hasHomologousMember	main_gene	todo	spec-D7				no		link	yes	Gene
+http://purl.org/dc/terms/title	dataset_title	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		subject not bound to a class (see subjects.tsv)	Dataset	dct:title	main	todo					no		literal	no	HomoloGene Release 68
+http://www.w3.org/2000/01/rdf-schema#label	gene_label	skos:exactMatch	intermine:Gene.symbol	Gene.symbol	semapv:UnspecifiedMatching	1.0		Gene	rdfs:label	drop	sure	java:HomologeneConverter				no		literal	no	ACADM
+http://purl.obolibrary.org/obo/RO_0002162	taxon	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	"RO_0002162 = ""in taxon"""	Gene	obo:RO_0002162	drop	sure	knowledge	iri_localname			no	Gene.organism	link	no	Taxon
+http://semanticscience.org/resource/SIO_010078	ncbiprotein	skos:exactMatch	intermine:Protein.primaryIdentifier	Protein.primaryIdentifier	semapv:MappingChaining	1.0		Gene	sio:SIO_010078	drop	sure	term				no	Gene.proteins	link	no	Protein
+rdfc2im:self	Group	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Group	-self-	main	drop	subject-iri				no		iri	no	homologene:3
+rdfc2im:self	dataset	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Dataset	-self-	main	drop	subject-iri				no		iri	no	<https://ncbi.nlm.nih.gov/homologene/>
+rdfc2im:self	gene	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Gene	-self-	drop	drop	subject-iri				no		iri	no	ncbigene:34
+rdfc2im:self	taxon	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Taxon	-self-	drop	drop	subject-iri				no		iri	no	taxonomy:9606
+rdfc2im:self	ncbiprotein	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	Protein	-self-	drop	drop	subject-iri				no		iri	no	ncbiprotein:NP_000007.1

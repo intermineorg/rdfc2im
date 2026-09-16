@@ -1,0 +1,10 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+EnsemblGene	Gene	root	sure	knowledge	terms:EnsemblGene	(root)	ensg:ENSG00000000003	
+EnsemblGene/location	Gene	node	sure	inherit:parent	faldo:Region	faldo:location		inline blank node - flattened onto the parent's class
+EnsemblGene/location/begin	Gene	node	sure	inherit:parent	faldo:ExactPosition faldo:ForwardStrandPosition faldo:ReverseStrandPosition	faldo:location / faldo:begin		inline blank node - flattened onto the parent's class
+EnsemblGene/location/end	Gene	node	sure	inherit:parent	faldo:ExactPosition faldo:ForwardStrandPosition faldo:ReverseStrandPosition	faldo:location / faldo:end		inline blank node - flattened onto the parent's class
+EnsemblTranscript	Transcript	skip	sure	knowledge	terms:EnsemblTranscript	(unreachable from a root)	enst:ENST00000207457	
+EnsemblTranscriptFlagComment		skip	todo		rdf:Statement	(unreachable from a root)	<http://rdf.ebi.ac.uk/resource/ensembl.transcript/#_ENST00000207457-has_transcript_flag-tsl1>	no term/knowledge/name match - bind by hand or set role=skip
+EnsemblExon	Exon	skip	sure	term	obo:SO_0000147	(unreachable from a root)	ense:ENSE00002619687	type http://purl.obolibrary.org/obo/SO_0000147 = term of Exon
+EnsemblOrderedExon		skip	todo		sio:SIO_001261	(unreachable from a root)	<http://rdf.ebi.ac.uk/resource/ensembl.transcript/ENST00000623960#Exon_7>	no term/knowledge/name match - bind by hand or set role=skip
+EnsemblProtein	Protein	skip	guess	knowledge	terms:EnsemblProtein	(unreachable from a root)	ensp:ENSP00000473889	ENSP ids are not UniProt accessions - decide whether Protein.secondaryIdentifier or drop

@@ -1,0 +1,2 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Class	AnatomyTerm	root	sure	props:uberon.properties obo.term.class=AnatomyTerm (needs /uberon/ in the allow list)	owl:Class	(root)	obo:UBERON_0002048	

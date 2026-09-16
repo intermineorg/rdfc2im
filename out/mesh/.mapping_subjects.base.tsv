@@ -1,0 +1,15 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Descriptor	MeshTerm	root	sure	knowledge	meshv:TopicalDescriptor	(root)	mesh:D000785	MeSH topical descriptors (D-ids) are what PubMed indexing and HumanMine's MeshTerm use
+Concept		node	todo		meshv:Concept	meshv:concept*	mesh:M0000001	no term/knowledge/name match - bind by hand or set role=skip
+Term		node	todo		meshv:Term	meshv:preferredTerm	mesh:T000002	no term/knowledge/name match - bind by hand or set role=skip
+Qualifier		node	todo		meshv:Qualifier	meshv:allowableQualifier*	mesh:Q000633	no term/knowledge/name match - bind by hand or set role=skip
+TreeNumber		node	todo		meshv:TreeNumber	meshv:treeNumber+	mesh:C01.069	no term/knowledge/name match - bind by hand or set role=skip
+PublicationType		node	todo		meshv:PublicationType	meshv:seeAlso*	mesh:D016430	no term/knowledge/name match - bind by hand or set role=skip
+CheckTag		skip	todo		meshv:CheckTag	(unreachable from a root)	mesh:D008297 mesh:D005260	no term/knowledge/name match - bind by hand or set role=skip
+Geographic		skip	todo		meshv:GeographicalDescriptor	(unreachable from a root)	mesh:D001208	no term/knowledge/name match - bind by hand or set role=skip
+Chemical		skip	todo		meshv:SCR_Chemical	(unreachable from a root)	mesh:C000002	no term/knowledge/name match - bind by hand or set role=skip
+Disease	Disease	skip	sure	name	meshv:SCR_Disease	(unreachable from a root)	mesh:C000591739	subject name is the model class Disease
+Protocol		skip	todo		meshv:SCR_Protocol	(unreachable from a root)	mesh:C010306	no term/knowledge/name match - bind by hand or set role=skip
+Organism	Organism	skip	sure	name	meshv:SCR_Organism	(unreachable from a root)	mesh:C000612320	subject name is the model class Organism
+AllowedDescriptorQualifierPair		skip	todo		meshv:AllowedDescriptorQualifierPair	(unreachable from a root)	mesh:D000086Q000031	no term/knowledge/name match - bind by hand or set role=skip
+DisallowedDescriptorQualifierPair		skip	todo		meshv:DisallowedDescriptorQualifierPair	(unreachable from a root)	mesh:D019216Q000506	no term/knowledge/name match - bind by hand or set role=skip

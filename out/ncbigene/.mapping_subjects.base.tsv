@@ -1,0 +1,2 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Gene	Gene	root	sure	knowledge+java:NcbiGeneConverter	insdc:Gene	(root)	ncbigene:34	ncbigene Gene subject; NcbiGeneConverter creates one Gene per record

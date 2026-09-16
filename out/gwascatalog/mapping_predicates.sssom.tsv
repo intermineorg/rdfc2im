@@ -1,0 +1,115 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/gwascatalog
+#mapping_set_title: rdf-config gwascatalog -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  terms: http://med2rdf.org/gwascatalog/terms/
+#  gwas: http://rdf.ebi.ac.uk/terms/gwas/
+#  oban: http://purl.org/oban/
+#  owl: http://www.w3.org/2002/07/owl#
+#  xsd: http://www.w3.org/2001/XMLSchema#
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  ro: http://www.obofoundry.org/ro/ro.owl#
+#  study: http://www.ebi.ac.uk/gwas/studies/
+#  dct: http://purl.org/dc/terms/
+#  pubmed: http://rdf.ncbi.nlm.nih.gov/pubmed/
+#  med2rdf: http://med2rdf.org/ontology/
+#  ensg: http://identifiers.org/ensembl/
+#  dbsnp: http://identifiers.org/dbsnp/
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://med2rdf.org/gwascatalog/terms/region	region	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:region	main	todo					no		literal	no	18q21.32
+http://med2rdf.org/gwascatalog/terms/chr_id	chr_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:chr_id	main	todo					no		literal	no	18
+http://med2rdf.org/gwascatalog/terms/chr_pos	chr_pos	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:chr_pos	main	todo					no		literal	no	60161902
+http://med2rdf.org/gwascatalog/terms/reported_genes	reported_genes	sssom:NoMapping			semapv:UnspecifiedMatching			GWASAssociation	terms:reported_genes	main	drop	knowledge				no		literal	no	MC4R
+http://med2rdf.org/gwascatalog/terms/mapped_genes	mapped_genes	skos:closeMatch	intermine:Gene.symbol	Gene.symbol	semapv:UnspecifiedMatching	0.5	converter links associatedGenes by symbol; comma-separated list needs splitting (transform split:,)	GWASAssociation	terms:mapped_genes	main	guess	java:HugeGwasConverter	split:,			no	GWASResult.associatedGenes	literal	no	MC4R
+http://med2rdf.org/gwascatalog/terms/upstream_gene_id	upstream_gene_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:upstream_gene_id	main	todo					no		iri	no	ensg:ENSG00000242060
+http://med2rdf.org/gwascatalog/terms/downstream_gene_id	downstream_gene_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:downstream_gene_id	main	todo					no		iri	no	ensg:ENSG00000202468
+http://med2rdf.org/gwascatalog/terms/snp_gene_ids	snp_gene_ids	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:snp_gene_ids	main	todo					no		literal	no	
+http://med2rdf.org/gwascatalog/terms/upstream_gene_distance	upstream_gene_distance	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:upstream_gene_distance	main	todo					no		literal	no	11537
+http://med2rdf.org/gwascatalog/terms/downstream_gene_distance	downstream_gene_distance	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:downstream_gene_distance	main	todo					no		literal	no	1665
+http://med2rdf.org/gwascatalog/terms/strongest_snp_risk_allele	strongest_snp_risk_allele	skos:exactMatch	intermine:GWASResult.associatedVariantRiskAllele	GWASResult.associatedVariantRiskAllele	semapv:UnspecifiedMatching	1.0		GWASAssociation	terms:strongest_snp_risk_allele	main	sure	java:HugeGwasConverter				no		literal	no	rs6567160-T
+http://med2rdf.org/gwascatalog/terms/snps	snps	skos:exactMatch	intermine:SNP.primaryIdentifier	SNP.primaryIdentifier	semapv:UnspecifiedMatching	1.0		GWASAssociation	terms:snps	main	sure	java:HugeGwasConverter				no	GWASResult.SNP	literal	no	rs6567160
+http://www.w3.org/2000/01/rdf-schema#seeAlso	see_also	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	rdfs:seeAlso	main	todo					no		iri	no	dbsnp:rs6567160
+http://med2rdf.org/gwascatalog/terms/merged	merged_	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:merged	main	todo					no		literal	no	0
+http://med2rdf.org/gwascatalog/terms/snp_id_current	snp_id_current	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:snp_id_current	main	todo					no		literal	no	6567160
+http://med2rdf.org/gwascatalog/terms/context	context	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:context	main	todo					no		literal	no	upstream_gene_variant
+http://med2rdf.org/gwascatalog/terms/intergenic	inetergenic	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:intergenic	main	todo					no		literal	no	1
+http://med2rdf.org/gwascatalog/terms/risk_allele_frequency	risk_allele_frequency	skos:exactMatch	intermine:GWASResult.riskAlleleFreqInControls	GWASResult.riskAlleleFreqInControls	semapv:UnspecifiedMatching	1.0		GWASAssociation	terms:risk_allele_frequency	main	sure	java:HugeGwasConverter				no		literal	no	0.7603
+http://med2rdf.org/gwascatalog/terms/p_value	p_value	skos:exactMatch	intermine:GWASResult.pValue	GWASResult.pValue	semapv:UnspecifiedMatching	1.0		GWASAssociation	terms:p_value	main	sure	java:HugeGwasConverter				no		literal	no	1E-28
+http://med2rdf.org/gwascatalog/terms/p_value_mlog	p_value_mlog	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:p_value_mlog	main	todo					no		literal	no	28.0
+http://med2rdf.org/gwascatalog/terms/p_value_text	p_value_text	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:p_value_text	main	todo					no		literal	no	(women)
+http://med2rdf.org/gwascatalog/terms/odds_ratio	odds_ratio	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:odds_ratio	main	todo					no		literal	no	NA
+http://med2rdf.org/gwascatalog/terms/beta	beta	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:beta	main	todo					no		literal	no	0.0542
+http://med2rdf.org/gwascatalog/terms/beta_unit	beta_unit	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:beta_unit	main	todo					no		literal	no	kg/m2 decrease
+http://med2rdf.org/gwascatalog/terms/ci_text	ci_text	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:ci_text	main	todo					no		literal	no	[0.045-0.064]
+http://med2rdf.org/gwascatalog/terms/platform_snp_passing_qc	platform_snp_passing_qc	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:platform_snp_passing_qc	main	todo					no		literal	no	
+http://med2rdf.org/gwascatalog/terms/cnv	cnv	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:cnv	main	todo					no		literal	no	N
+http://med2rdf.org/gwascatalog/terms/mapped_trait	mapped_trait_text	skos:exactMatch	intermine:GWASResult.phenotype	GWASResult.phenotype	semapv:UnspecifiedMatching	1.0		GWASAssociation	terms:mapped_trait	main	sure	java:HugeGwasConverter				no		literal	no	smoking behavior, body mass index
+http://med2rdf.org/gwascatalog/terms/mapped_trait_uri	mapped_trait_uri	skos:closeMatch	intermine:GWASResult.mappedTraitUri	GWASResult.mappedTraitUri	semapv:UnspecifiedMatching	0.5	new attribute approved in spec section 8	GWASAssociation	terms:mapped_trait_uri	main	guess	spec-section-8+new-field				no		iri	yes	<http://www.ebi.ac.uk/efo/EFO_0004318> | <http://www.ebi.ac.uk/efo/EFO_0004340>
+http://med2rdf.org/gwascatalog/terms/study	study	sssom:NoMapping			semapv:UnspecifiedMatching			GWASAssociation	terms:study	main	link	structure				no		link	no	GWASStudy
+http://med2rdf.org/gwascatalog/terms/genotyping_technology	genotyping_technology_assoc	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	terms:genotyping_technology	main	todo					no		literal	no	Genome-wide genotyping array
+http://purl.org/dc/terms/date	date	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	dct:date	main	todo					no		literal	no	2017-08-10
+http://purl.org/dc/terms/references	refpubmed	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	dct:references	main	todo					no		literal	no	28443625
+http://rdf.ebi.ac.uk/terms/gwas/has_pubmed_id	has_pubmed_id_association	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWASResult - choose a field, or set status=drop	GWASAssociation	gwas:has_pubmed_id	main	todo					no		literal	no	28443625
+http://purl.org/dc/terms/identifier	study_identifier	skos:closeMatch	intermine:GWAS.name	GWAS.name	semapv:UnspecifiedMatching	0.5	GCST accession as the study name (GWAS has no identifier attribute)	GWASStudy	dct:identifier	main	guess	knowledge				no		literal	no	GCST004495
+http://purl.org/dc/terms/date	study_date	skos:closeMatch	intermine:GWAS.year	GWAS.year	semapv:UnspecifiedMatching	0.5	spec D12 - year is denormalised from the publication in the converter	GWASStudy	dct:date	main	guess	knowledge	regex:^(\d{4})			no		literal	no	2017-08-10
+http://purl.org/dc/terms/references	study_references	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWAS - choose a field, or set status=drop	GWASStudy	dct:references	main	todo					no		iri	no	pubmed:28443625
+http://rdf.ebi.ac.uk/terms/gwas/has_pubmed_id	has_pubmed_id_study	skos:exactMatch	intermine:Publication.pubMedId	Publication.pubMedId	semapv:UnspecifiedMatching	1.0		GWASStudy	gwas:has_pubmed_id	main	sure	java:HugeGwasConverter				no	GWAS.publication	literal	no	28443625
+http://purl.org/dc/terms/description	study_description	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		converter uses the study title as GWAS.name; here dct:identifier (GCST id) takes name and this description is the trait - decide (D12)	GWASStudy	dct:description	main	todo	java:HugeGwasConverter				no		literal	no	BMI (adjusted for smoking behaviour)
+http://med2rdf.org/gwascatalog/terms/initial_sample_size	initial_sample_size	skos:exactMatch	intermine:GWAS.initialSample	GWAS.initialSample	semapv:UnspecifiedMatching	1.0		GWASStudy	terms:initial_sample_size	main	sure	java:HugeGwasConverter				no		literal	no	98,173 European ancestry women, 64,373 European ancestry men
+http://med2rdf.org/gwascatalog/terms/replication_sample_size	replication_sample_size	skos:exactMatch	intermine:GWAS.replicateSample	GWAS.replicateSample	semapv:UnspecifiedMatching	1.0		GWASStudy	terms:replication_sample_size	main	sure	java:HugeGwasConverter				no		literal	no	21,496 European ancestry women, 24,385 European ancestry men
+http://med2rdf.org/gwascatalog/terms/platform_snps_passing_qc	platform_snps_passing_qc	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWAS - choose a field, or set status=drop	GWASStudy	terms:platform_snps_passing_qc	main	todo					no		literal	no	Affymetrix, Illumina, Perlegen [up to 2800000] (imputed)
+http://med2rdf.org/gwascatalog/terms/association_count	association_count	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWAS - choose a field, or set status=drop	GWASStudy	terms:association_count	main	todo					no		literal	no	145
+http://med2rdf.org/gwascatalog/terms/mapped_trait	mapped_trait	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWAS - choose a field, or set status=drop	GWASStudy	terms:mapped_trait	main_mapped_trait	todo					no		iri	yes	<http://www.ebi.ac.uk/efo/EFO_0004318> | <http://www.ebi.ac.uk/efo/EFO_0004340>
+http://med2rdf.org/gwascatalog/terms/genotyping_technology	genotyping_technology_study	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on GWAS - choose a field, or set status=drop	GWASStudy	terms:genotyping_technology	main	todo					no		literal	no	Genome-wide genotyping array
+rdfc2im:self	GWASAssociation	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	GWASAssociation	-self-	main	drop	subject-iri				no		iri	no	
+rdfc2im:self	study	sssom:NoMapping			semapv:UnspecifiedMatching		the subject's own IRI; map it (with a transform) if it is an identifier	GWASStudy	-self-	main	drop	subject-iri				no		iri	no	study:GCST004495
+rdfc2im:const	const_Organism_taxonId	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	constant on every table	GWASAssociation	-const-	*	sure	sources.yaml			9606	no		const	no	

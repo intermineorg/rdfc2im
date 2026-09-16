@@ -1,0 +1,92 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/mp
+#mapping_set_title: rdf-config mp -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  obo: http://purl.obolibrary.org/obo/
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  oboinowl: http://www.geneontology.org/formats/oboInOwl#
+#  owl: http://www.w3.org/2002/07/owl#
+#  dc: http://purl.org/dc/elements/1.1/
+#  dcterms: http://purl.org/dc/terms/
+#  metadata: http://data.bioontology.org/metadata/
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://www.geneontology.org/formats/oboInOwl#id	id	skos:exactMatch	intermine:MammalianPhenotypeTerm.identifier	MammalianPhenotypeTerm.identifier	semapv:UnspecifiedMatching	1.0	e.g. GO:0044255 - exactly what the obo source stores in identifier	Class	oboinowl:id	main	sure	java:OboConverter				yes		iri	no	MP:0000026
+http://www.w3.org/2000/01/rdf-schema#label	label	skos:exactMatch	intermine:MammalianPhenotypeTerm.name	MammalianPhenotypeTerm.name	semapv:MappingChaining	1.0	term match: OntologyTerm.name	Class	rdfs:label	main	sure	term				no		literal	no	abnormal inner ear morphology
+http://data.bioontology.org/metadata/treeView	tree_view	sssom:NoMapping			semapv:UnspecifiedMatching			Class	metadata:treeView	main_tree_view	link	structure				no		link	yes	Class
+http://purl.obolibrary.org/obo/IAO_0000115	definition	skos:exactMatch	intermine:MammalianPhenotypeTerm.description	MammalianPhenotypeTerm.description	semapv:UnspecifiedMatching	1.0	"IAO_0000115 = ""definition""; obo source stores the def in description"	Class	obo:IAO_0000115	main	sure	java:OboConverter				no		literal	no	any structural anomaly of any components of the labyrinth, i
+http://www.geneontology.org/formats/oboInOwl#hasDbXref	database_cross_reference	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide or drop	Class	oboinowl:hasDbXref	main_database_cross_reference	todo	knowledge				no		iri	yes	GO:0042472
+http://www.geneontology.org/formats/oboInOwl#hasExactSynonym	has_exact_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0	obo source stores each synonym with its scope in OntologyTermSynonym.type	Class	oboinowl:hasExactSynonym	main_has_exact_synonym	sure	java:OboConverter				no	MammalianPhenotypeTerm.synonyms	literal	yes	inner ear dysplasia
+http://www.geneontology.org/formats/oboInOwl#hasOBONamespace	has_obo_namespace	skos:exactMatch	intermine:MammalianPhenotypeTerm.namespace	MammalianPhenotypeTerm.namespace	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasOBONamespace	main	sure	java:OboConverter				no		literal	no	MPheno.ontology
+http://www.w3.org/2000/01/rdf-schema#subClassOf	subclass_of	skos:closeMatch	intermine:OntologyTerm.identifier	OntologyTerm.identifier	semapv:UnspecifiedMatching	0.5	is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted	Class	rdfs:subClassOf	main_subclass_of	guess	java:OboConverter	iri_localname,replace:_:\:			no	MammalianPhenotypeTerm.parents	link	yes	Class
+http://www.w3.org/2004/02/skos/core#notation	notation	sssom:NoMapping	intermine:MammalianPhenotypeTerm.identifier	MammalianPhenotypeTerm.identifier	semapv:UnspecifiedMatching		duplicates oboinowl:id	Class	skos:notation	main	drop	knowledge				yes		iri	no	MP:0000026
+http://purl.obolibrary.org/obo/IAO_0000231	has_obsolescence_reason	sssom:NoMapping			semapv:UnspecifiedMatching		obsolescence reason	Class	obo:IAO_0000231	main_has_obsolescence_reason	drop	knowledge				no		iri	yes	obo:IAO_0000227
+http://purl.obolibrary.org/obo/IAO_0100001	term_replaced_by	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		term replaced by; obsolete-term bookkeeping - probably drop	Class	obo:IAO_0100001	main_term_replaced_by	todo	knowledge				no		link	yes	Class
+http://purl.org/dc/elements/1.1/contributor	contributor	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	dc:contributor	main_contributor	todo					no		iri	yes	<https://orcid.org/0000-0002-6490-7723>
+http://purl.org/dc/elements/1.1/creator	creator	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	dc:creator	main_creator	todo					no		iri	yes	<https://orcid.org/0000-0002-6490-7723>
+http://purl.org/dc/elements/1.1/date	date	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	dc:date	main_date	todo					no		literal	yes	2017-05-22 15:58:02+00:00
+http://purl.org/dc/terms/contributor	terms_contributor	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	dcterms:contributor	main_terms_contributor	todo					no		iri	yes	<https://orcid.org/0000-0003-3691-0324>
+http://www.geneontology.org/formats/oboInOwl#consider	consider	sssom:NoMapping			semapv:UnspecifiedMatching			Class	oboinowl:consider	main_consider	drop	knowledge				no		iri	yes	MP:0001312
+http://www.geneontology.org/formats/oboInOwl#created_by	created_by	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	oboinowl:created_by	main_created_by	todo					no		literal	yes	csmith
+http://www.geneontology.org/formats/oboInOwl#creation_date	creation_date	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on MammalianPhenotypeTerm - choose a field, or set status=drop	Class	oboinowl:creation_date	main	todo					no		literal	no	2010-07-05T10:00:46Z
+http://www.geneontology.org/formats/oboInOwl#hasAlternativeId	has_alternative_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id	Class	oboinowl:hasAlternativeId	main_has_alternative_id	todo	knowledge				no		iri	yes	MP:0000014
+http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym	has_broad_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasBroadSynonym	main_has_broad_synonym	sure	java:OboConverter				no	MammalianPhenotypeTerm.synonyms	literal	yes	auditory abnormalities
+http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym	has_narrow_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasNarrowSynonym	main_has_narrow_synonym	sure	java:OboConverter				no	MammalianPhenotypeTerm.synonyms	literal	yes	abnormal ear development/ ear malformation
+http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym	has_related_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasRelatedSynonym	main_has_related_synonym	sure	java:OboConverter				no	MammalianPhenotypeTerm.synonyms	literal	yes	abnormal eardrum morphology
+http://www.geneontology.org/formats/oboInOwl#inSubset	in_subset	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		spec D2 - GO slim subsets; extend the model or exclude	Class	oboinowl:inSubset	main_in_subset	todo	spec-D2				no		iri	yes	obo:mp#CvDC_Terms
+http://www.w3.org/2000/01/rdf-schema#comment	comment	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		free-text comment; no field (description already used for the definition)	Class	rdfs:comment	main	todo	knowledge				no		literal	no	Heart rate variability (HRV) is the variation of beat-to-bea
+http://www.w3.org/2002/07/owl#deprecated	deprecated	skos:closeMatch	intermine:MammalianPhenotypeTerm.obsolete	MammalianPhenotypeTerm.obsolete	semapv:UnspecifiedMatching	0.5		Class	owl:deprecated	main	guess	knowledge				no		literal	no	1
+rdfc2im:self	Class	sssom:NoMapping			semapv:UnspecifiedMatching		oboinowl:id carries the identifier; the IRI is redundant	Class	-self-	main	drop	knowledge	iri_localname			no		iri	no	obo:MP_0000026
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_exact_synonym	Class	-const-	main_has_exact_synonym	sure	java:OboConverter			exact	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_broad_synonym	Class	-const-	main_has_broad_synonym	sure	java:OboConverter			broad	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_narrow_synonym	Class	-const-	main_has_narrow_synonym	sure	java:OboConverter			narrow	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_related_synonym	Class	-const-	main_has_related_synonym	sure	java:OboConverter			related	no		const	no	
+rdfc2im:const	const_Ontology_name	skos:exactMatch	intermine:Ontology.name	Ontology.name	semapv:UnspecifiedMatching	1.0	constant on every table	Class	-const-	*	sure	sources.yaml			Mammalian Phenotype Ontology	no		const	no	

@@ -1,0 +1,17 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+HGNC	Gene	root	sure	java:HgncConverter	obo:SO_0000704 m2r:Gene	(root)	hgnc:11998	HgncConverter creates a Gene keyed by the NCBI Gene id (line[18]); rows without it are skipped
+NCBIGene	Gene	node	sure	java:HgncConverter	idt:ncbigene	rdfs:seeAlso*	<http://identifiers.org/ncbigene/7157>	identifiers.org/ncbigene node - its dct:identifier is Gene.primaryIdentifier
+Ensembl	Gene	node	sure	java:HgncConverter	idt:ensembl	rdfs:seeAlso*	<http://identifiers.org/ensembl/ENSG00000141510>	identifiers.org/ensembl node - its dct:identifier is Gene.secondaryIdentifier (same Gene object in the row)
+ENA	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:ena.embl	rdfs:seeAlso*	<http://identifiers.org/ena.embl/AF307851>	xref id -> CrossReference.identifier with DataSource.name=ENA (CrossReference.source)
+INSDC	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:insdc	rdfs:seeAlso*	<http://identifiers.org/insdc/AF307851>	xref id -> CrossReference.identifier with DataSource.name=INSDC (CrossReference.source)
+RefSeq	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:refseq	rdfs:seeAlso*	<http://identifiers.org/refseq/NM_000546>	xref id -> CrossReference.identifier with DataSource.name=RefSeq (CrossReference.source)
+CCDS	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:ccds	rdfs:seeAlso*	<http://identifiers.org/ccds/CCDS45605>	xref id -> CrossReference.identifier with DataSource.name=CCDS (CrossReference.source)
+UniProt	Protein	node	guess	knowledge	idt:uniprot	rdfs:seeAlso*	<http://identifiers.org/uniprot/P04637>	identifiers.org/uniprot node -> Protein.primaryAccession, links Gene.proteins by co-occurrence
+MGI	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:mgi	rdfs:seeAlso*	<http://identifiers.org/mgi/MGI:98834>	xref id -> CrossReference.identifier with DataSource.name=MGI (CrossReference.source)
+RGD	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:rgd	rdfs:seeAlso*	<http://identifiers.org/rgd/3889>	xref id -> CrossReference.identifier with DataSource.name=RGD (CrossReference.source)
+LRG	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:lrg	rdfs:seeAlso*	<http://identifiers.org/lrg/LRG_321>	xref id -> CrossReference.identifier with DataSource.name=LRG (CrossReference.source)
+OMIM	Disease	node	guess	knowledge	idt:omim	rdfs:seeAlso*	<http://identifiers.org/omim/191170>	"OMIM id -> Disease.primaryIdentifier as ""OMIM:<id>"" (clinvar/hpo-annotation key OMIM this way)"
+MiRBase	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:mirbase	rdfs:seeAlso*	<http://identifiers.org/mirbase/MI0000651>	xref id -> CrossReference.identifier with DataSource.name=miRBase (CrossReference.source)
+Orphanet	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:orphanet	rdfs:seeAlso*	<http://identifiers.org/orphanet/120204>	xref id -> CrossReference.identifier with DataSource.name=Orphanet (CrossReference.source)
+EC	CrossReference	node	guess	knowledge+java:NcbiGeneConverter	idt:ec-code	rdfs:seeAlso*	<http://identifiers.org/ec-code/2.3.2.27>	xref id -> CrossReference.identifier with DataSource.name=Enzyme Nomenclature (CrossReference.source)
+PubMed	Publication	node	sure	knowledge	idt:pubmed	dct:references*	<http://identifiers.org/pubmed/20498374>	

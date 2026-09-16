@@ -1,0 +1,2 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Class	GOTerm	root	sure	props:go.properties obo.term.class=GOTerm	rdfs:Resource	(root)	obo:GO_0044255	

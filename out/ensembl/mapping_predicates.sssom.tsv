@@ -1,0 +1,86 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/ensembl
+#mapping_set_title: rdf-config ensembl -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  faldo: http://biohackathon.org/resource/faldo#
+#  obo: http://purl.obolibrary.org/obo/
+#  so: http://purl.obolibrary.org/obo/so#
+#  dc: http://purl.org/dc/elements/1.1/
+#  dcterms: http://purl.org/dc/terms/
+#  owl: http://www.w3.org/2002/07/owl#
+#  ensg: http://rdf.ebi.ac.uk/resource/ensembl/
+#  terms: http://rdf.ebi.ac.uk/terms/ensembl/
+#  ense: http://rdf.ebi.ac.uk/resource/ensembl.exon/
+#  ensp: http://rdf.ebi.ac.uk/resource/ensembl.protein/
+#  enst: http://rdf.ebi.ac.uk/resource/ensembl.transcript/
+#  ensgloss: http://ensembl.org/glossary/
+#  ensi: http://identifiers.org/ensembl/
+#  taxonomy: http://identifiers.org/taxonomy/
+#  uniprot: http://purl.uniprot.org/uniprot/
+#  sio: http://semanticscience.org/resource/
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://rdf.ebi.ac.uk/terms/ensembl/has_biotype	ensg_biotype	skos:closeMatch	intermine:Gene.typeOfGene	Gene.typeOfGene	semapv:UnspecifiedMatching	0.5	ENSGLOSSARY ids; a lookup to the biotype label would be nicer	EnsemblGene	terms:has_biotype	main	guess	spec-section-8+new-field	iri_localname			no		iri	no	ensgloss:ENSGLOSSARY_0000026
+http://www.w3.org/2000/01/rdf-schema#label	ensg_label	skos:exactMatch	intermine:Gene.symbol	Gene.symbol	semapv:UnspecifiedMatching	1.0		EnsemblGene	rdfs:label	main	sure	knowledge				no		literal	no	TSPAN6
+http://purl.org/dc/terms/description	ensg_description	skos:exactMatch	intermine:Gene.description	Gene.description	semapv:MappingChaining	1.0	Ensembl descriptions carry a [Source:HGNC ...] suffix; a regex transform can strip it	EnsemblGene	dcterms:description	main	sure	term	regex:^(.*?)\s*\[Source:			no		literal	no	tetraspanin 6 [Source:HGNC Symbol;Acc:HGNC:11858]
+http://purl.org/dc/terms/identifier	ensg_id	skos:exactMatch	intermine:Gene.secondaryIdentifier	Gene.secondaryIdentifier	semapv:UnspecifiedMatching	1.0	Ensembl ids are Gene.secondaryIdentifier in HumanMine (ncbi-gene/hgnc); Gene.key_secondaryidentifier_org merges on it	EnsemblGene	dcterms:identifier	main	sure	java:NcbiGeneConverter				yes		literal	no	ENSG00000000003
+http://purl.obolibrary.org/obo/RO_0002162	ensg_taxonomy	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	"RO_0002162 = ""in taxon"""	EnsemblGene	obo:RO_0002162	main	sure	knowledge	iri_localname			no	Gene.organism	iri	no	taxonomy:9606
+http://purl.obolibrary.org/obo/so#part_of	ensg_chromosome	skos:closeMatch	intermine:Chromosome.primaryIdentifier	Chromosome.primaryIdentifier	semapv:UnspecifiedMatching	0.5	chromosome IRI .../GRCh38/X -> X; HumanMine chromosomes are keyed primaryIdentifier+organism	EnsemblGene	so:part_of	main_ensg_chromosome	guess	knowledge	iri_localname			no	Gene.chromosome	iri	yes	<http://rdf.ebi.ac.uk/resource/ensembl/110/homo_sapiens/GRCh
+http://biohackathon.org/resource/faldo#location	_bn1	sssom:NoMapping			semapv:UnspecifiedMatching			EnsemblGene	faldo:location	main	link	structure				no		bnode	no	[]
+http://www.w3.org/2004/02/skos/core#altLabel	ensg_altlabel	skos:closeMatch	intermine:Synonym.value	Synonym.value	semapv:UnspecifiedMatching	0.5		EnsemblGene	skos:altLabel	main_ensg_altlabel	guess	knowledge				no	Gene.synonyms	literal	yes	TM4SF6
+http://www.w3.org/2000/01/rdf-schema#seeAlso	ensg_xref	skos:closeMatch	intermine:CrossReference.identifier	CrossReference.identifier	semapv:UnspecifiedMatching	0.5		EnsemblGene	rdfs:seeAlso	main_ensg_xref	guess	knowledge	iri_localname			no	Gene.crossReferences	iri	yes	<http://identifiers.org/hgnc/HGNC:11858>
+http://biohackathon.org/resource/faldo#begin	_bn2	sssom:NoMapping			semapv:UnspecifiedMatching			EnsemblGene/location	faldo:begin	main	link	structure				no		bnode	no	[]
+http://biohackathon.org/resource/faldo#end	_bn3	sssom:NoMapping			semapv:UnspecifiedMatching			EnsemblGene/location	faldo:end	main	link	structure				no		bnode	no	[]
+http://biohackathon.org/resource/faldo#position	ensg_begin	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide	EnsemblGene/location/begin	faldo:position	main	todo	knowledge				no		literal	no	100627108
+http://biohackathon.org/resource/faldo#position	ensg_end	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide	EnsemblGene/location/end	faldo:position	main	todo	knowledge				no		literal	no	100639991
+rdfc2im:self	EnsemblGene	skos:closeMatch	intermine:Gene.primaryIdentifier	Gene.primaryIdentifier	semapv:UnspecifiedMatching	0.5	no predicate carries the Gene key; using the local name of the subject IRI	EnsemblGene	-self-	main	guess	subject-iri	iri_localname			yes		iri	no	ensg:ENSG00000000003
+rdfc2im:const	const_Organism_taxonId	skos:exactMatch	intermine:Organism.taxonId	Organism.taxonId	semapv:UnspecifiedMatching	1.0	constant on every table	EnsemblGene	-const-	*	sure	sources.yaml			9606	no		const	no	

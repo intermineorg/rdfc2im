@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
-<!-- Schema extensions approved in SPECIFICATION_15sep26.md section 8, kept out of the per-source
-     additions so they survive regeneration.  Unioned into humanmine-delimited_additions.xml by
-     `rdfc2im project`.  Only the *delta* to the live model is listed (Pathway.identifier/name/
-     shortName/curated and Gene/Protein.pathways already exist in reactome_additions.xml). -->
+<!-- Schema extensions approved in SPECIFICATION_15sep26.md section 8 (that document is not in this
+     repo; see SPEC-DECISIONS.md), kept out of the per-source additions so they survive
+     regeneration.  Unioned into humanmine-items_additions.xml by `rdfc2im project`.  Only the
+     *delta* to the live model is listed (Pathway.identifier/name/shortName/curated and
+     Gene/Protein.pathways already exist in reactome_additions.xml). -->
 <classes>
   <!-- gene loader: D1 side-stepped - typeOfGene lives here, not in ncbi-gene/human-gene -->
   <class name="Gene" is-interface="true">

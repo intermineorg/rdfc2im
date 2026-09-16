@@ -1,0 +1,5 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Pubmed	Publication	root	sure	knowledge		(root)	pubmed:31558841	
+Pubmed/creator	Publication	node	sure	inherit:parent	olo:OrderedList	dct:creator		inline blank node - flattened onto the parent's class
+Pubmed/creator/slot	Publication	node	sure	inherit:parent		dct:creator / olo:slot+		inline blank node - flattened onto the parent's class
+Pubmed/creator/slot/item	Author	node	sure	term	foaf:Person	dct:creator / olo:slot+ / olo:item		

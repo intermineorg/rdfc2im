@@ -1,0 +1,2 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Class	HPOTerm	root	sure	props:hpo.properties obo.term.class=HPOTerm	owl:Class	(root)	obo:HP_0001903	

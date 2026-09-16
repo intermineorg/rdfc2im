@@ -8,8 +8,9 @@ SRC     ?=
 SRCFLAG  = $(foreach s,$(SRC),--source $(s))
 GUESS   ?=            # set to --no-guess to exclude guess rows
 
-.PHONY: all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
+.PHONY: inputs all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
 
+inputs:     ; sh tools/make-inputs.sh
 all:        ; $(PY) -m rdfc2im all --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG) $(GUESS) $(if $(FETCH),--fetch,)
 allow:      ; $(PY) -m rdfc2im allow
 translate:  ; $(PY) -m rdfc2im translate --limit $(LIMIT) $(SRCFLAG) $(GUESS)

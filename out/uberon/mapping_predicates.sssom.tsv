@@ -1,0 +1,126 @@
+#mapping_set_id: https://w3id.org/rdfc2im/mappings/uberon
+#mapping_set_title: rdf-config uberon -> HumanMine (rdfc2im)
+#mapping_set_description: 'Predicate-level mapping from the rdf-config model onto the InterMine model. Editable columns: object_id,
+#  comment, ext_table, ext_status, ext_transform, ext_filter, ext_value, ext_required. ext_status is the operational switch
+#  (sure/human/guess load; todo/drop/link do not).'
+#license: https://creativecommons.org/publicdomain/zero/1.0/
+#curie_map:
+#  intermine: https://w3id.org/intermine/
+#  rdfc2im: https://w3id.org/rdfc2im/
+#  skos: http://www.w3.org/2004/02/skos/core#
+#  semapv: https://w3id.org/semapv/vocab/
+#  sssom: https://w3id.org/sssom/
+#  dc: http://purl.org/dc/elements/1.1/
+#  dcterms: http://purl.org/dc/terms/
+#  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+#  rdfs: http://www.w3.org/2000/01/rdf-schema#
+#  owl: http://www.w3.org/2002/07/owl#
+#  oboinowl: http://www.geneontology.org/formats/oboInOwl#
+#  foaf: http://xmlns.com/foaf/0.1/
+#  obo: http://purl.obolibrary.org/obo/
+#extension_definitions:
+#- slot_name: ext_subject
+#  property: rdfc2im:subject
+#  type_hint: xsd:string
+#- slot_name: ext_predicate
+#  property: rdfc2im:predicate
+#  type_hint: xsd:string
+#- slot_name: ext_table
+#  property: rdfc2im:table
+#  type_hint: xsd:string
+#- slot_name: ext_status
+#  property: rdfc2im:status
+#  type_hint: xsd:string
+#- slot_name: ext_basis
+#  property: rdfc2im:basis
+#  type_hint: xsd:string
+#- slot_name: ext_transform
+#  property: rdfc2im:transform
+#  type_hint: xsd:string
+#- slot_name: ext_filter
+#  property: rdfc2im:filter
+#  type_hint: xsd:string
+#- slot_name: ext_value
+#  property: rdfc2im:value
+#  type_hint: xsd:string
+#- slot_name: ext_required
+#  property: rdfc2im:required
+#  type_hint: xsd:string
+#- slot_name: ext_via
+#  property: rdfc2im:via
+#  type_hint: xsd:string
+#- slot_name: ext_kind
+#  property: rdfc2im:kind
+#  type_hint: xsd:string
+#- slot_name: ext_multi
+#  property: rdfc2im:multi
+#  type_hint: xsd:string
+#- slot_name: ext_example
+#  property: rdfc2im:example
+#  type_hint: xsd:string
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
+http://www.geneontology.org/formats/oboInOwl#id	id	skos:exactMatch	intermine:AnatomyTerm.identifier	AnatomyTerm.identifier	semapv:UnspecifiedMatching	1.0	e.g. GO:0044255 - exactly what the obo source stores in identifier	Class	oboinowl:id	main	sure	java:OboConverter				yes		iri	no	UBERON:00002048
+http://www.w3.org/2000/01/rdf-schema#label	label	skos:exactMatch	intermine:AnatomyTerm.name	AnatomyTerm.name	semapv:MappingChaining	1.0	term match: OntologyTerm.name	Class	rdfs:label	main	sure	term				no		literal	no	lung
+http://purl.obolibrary.org/obo/IAO_0000115	definition	skos:exactMatch	intermine:AnatomyTerm.description	AnatomyTerm.description	semapv:UnspecifiedMatching	1.0	"IAO_0000115 = ""definition""; obo source stores the def in description"	Class	obo:IAO_0000115	main	sure	java:OboConverter				no		literal	no	Respiration organ that develops as an outpocketing of the es
+http://purl.obolibrary.org/obo/IAO_0000116	editor_note	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:IAO_0000116	main_editor_note	todo					no		literal	yes	TODO - check frog/fish
+http://purl.obolibrary.org/obo/IAO_0000232	curator_note	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:IAO_0000232	main_curator_note	todo					no		literal	yes	See notes for pars intermedia of adenohypophysis.
+http://purl.obolibrary.org/obo/IAO_0006012	scheduled_for_obsoletion_on_or_after	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:IAO_0006012	main_scheduled_for_obsoletion_on_or_after	todo					no		literal	yes	2023-04-20
+http://purl.obolibrary.org/obo/IAO_0100001	term_replaced_by	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		term replaced by; obsolete-term bookkeeping - probably drop	Class	obo:IAO_0100001	main_term_replaced_by	todo	knowledge				no		iri	yes	UBERON:0002275
+http://purl.obolibrary.org/obo/RO_0002161	never_in_taxon	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:RO_0002161	main_never_in_taxon	todo					no		iri	yes	obo:NCBITaxon_32443
+http://purl.obolibrary.org/obo/RO_0002171	mutually_spatially_disjoint_with	sssom:NoMapping			semapv:UnspecifiedMatching			Class	obo:RO_0002171	main_mutually_spatially_disjoint_with	link	structure				no		link	yes	Class
+http://purl.obolibrary.org/obo/RO_0002173	ambiguous_for_taxon	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:RO_0002173	main_ambiguous_for_taxon	todo					no		iri	yes	obo:NCBITaxon_8782
+http://purl.obolibrary.org/obo/RO_0002174	dubious_for_taxon	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:RO_0002174	main_dubious_for_taxon	todo					no		iri	yes	obo:NCBITaxon_10090
+http://purl.obolibrary.org/obo/RO_0002175	present_in_taxon	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:RO_0002175	main_present_in_taxon	todo					no		iri	yes	obo:NCBITaxon_9606
+http://purl.obolibrary.org/obo/RO_0002475	has_no_connections_with	sssom:NoMapping			semapv:UnspecifiedMatching			Class	obo:RO_0002475	main_has_no_connections_with	link	structure				no		link	yes	Class
+http://purl.obolibrary.org/obo/UBPROP_0000001	external_definition	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000001	main_external_definition	todo					no		literal	yes	Dense regular connective tissue that connects muscle to bone
+http://purl.obolibrary.org/obo/UBPROP_0000002	axiom_lost_from_external_ontology	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000002	main_axiom_lost_from_external_ontology	todo					no		literal	yes	relationship loss: overlaps hyomandibular-otic region joint 
+http://purl.obolibrary.org/obo/UBPROP_0000003	homology_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000003	main_homology_notes	todo					no		literal	yes	(...) an essentially similar sequence of events occurs durin
+http://purl.obolibrary.org/obo/UBPROP_0000004	provenance_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000004	main_provenance_notes	todo					no		literal	yes	This class was sourced from an external ontology (teleost_an
+http://purl.obolibrary.org/obo/UBPROP_0000005	external_comment	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000005	main_external_comment	todo					no		literal	yes	[In TAO], This term was made obsolete because it is consider
+http://purl.obolibrary.org/obo/UBPROP_0000006	implements_design_pattern	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000006	main_implements_design_pattern	todo					no		iri	yes	<https://github.com/obophenotype/uberon/wiki/Modeling-paired
+http://purl.obolibrary.org/obo/UBPROP_0000007	has_relational_adjective	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000007	main_has_relational_adjective	todo					no		literal	yes	ventral
+http://purl.obolibrary.org/obo/UBPROP_0000008	taxon_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000008	main_taxon_notes	todo					no		literal	yes	the basic trilaminar structure of the dentate gyrus is commo
+http://purl.obolibrary.org/obo/UBPROP_0000009	function_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000009	main_function_notes	todo					no		literal	yes	vomiting center in humans
+http://purl.obolibrary.org/obo/UBPROP_0000010	structure_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000010	main_structure_notes	todo					no		literal	yes	A secretion of the prostate this is slightly alkaline fluid,
+http://purl.obolibrary.org/obo/UBPROP_0000011	development_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000011	main_development_notes	todo					no		literal	yes	contributes significantly in building up the GABAergic corti
+http://purl.obolibrary.org/obo/UBPROP_0000012	external_ontology_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000012	main_external_ontology_notes	todo					no		literal	yes	this is a 'set of anatomical planes' in FMA
+http://purl.obolibrary.org/obo/UBPROP_0000013	terminology_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000013	main_terminology_notes	todo					no		literal	yes	Gilbert uses visceral endoderm as a synonym for primitive en
+http://purl.obolibrary.org/obo/UBPROP_0000014	actions_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000014	main_actions_notes	todo					no		literal	yes	In some mammals these muscles can adjust the direction of th
+http://purl.obolibrary.org/obo/UBPROP_0000015	location_notes	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000015	main_location_notes	todo					no		literal	yes	Bounded medially by the Lamina orbitalis of the Os ethmoidal
+http://purl.obolibrary.org/obo/UBPROP_0000103	pharyngeal_arch_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000103	main_pharyngeal_arch_number	todo					no		literal	yes	7
+http://purl.obolibrary.org/obo/UBPROP_0000104	ray_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000104	main_ray_number	todo					no		literal	yes	6
+http://purl.obolibrary.org/obo/UBPROP_0000105	phalanx_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000105	main_phalanx_number	todo					no		literal	yes	1
+http://purl.obolibrary.org/obo/UBPROP_0000106	rib_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000106	main_rib_number	todo					no		literal	yes	12
+http://purl.obolibrary.org/obo/UBPROP_0000107	vertebra_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000107	main_vertebra_number	todo					no		literal	yes	1
+http://purl.obolibrary.org/obo/UBPROP_0000108	somite_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000108	main_somite_number	todo					no		literal	yes	26
+http://purl.obolibrary.org/obo/UBPROP_0000111	rhombomere_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000111	main_rhombomere_number	todo					no		literal	yes	1
+http://purl.obolibrary.org/obo/UBPROP_0000112	tooth_number	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000112	main_tooth_number	todo					no		literal	yes	1
+http://purl.obolibrary.org/obo/UBPROP_0000201	source_atlas	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000201	main_source_atlas	todo					no		iri	yes	obo:Harvard-Oxford_Atlas
+http://purl.obolibrary.org/obo/UBPROP_0000202	fma_set_term	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	obo:UBPROP_0000202	main_fma_set_term	todo					no		iri	yes	obo:FMA_71364
+http://purl.org/dc/elements/1.1/contributor	dc_contributor	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	dc:contributor	main_dc_contributor	todo					no		iri	yes	<https://github.com/cerivs>
+http://purl.org/dc/terms/contributor	dcterms_contributor	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	dcterms:contributor	main_dcterms_contributor	todo					no		iri	yes	<https://orcid.org/0000-0001-9114-8737>
+http://purl.org/dc/terms/date	date	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	dcterms:date	main_date	todo					no		literal	yes	2021-06-02 00:19:07+00:00
+http://www.geneontology.org/formats/oboInOwl#consider	consider	sssom:NoMapping			semapv:UnspecifiedMatching			Class	oboinowl:consider	main_consider	drop	knowledge				no		iri	yes	BIRNLEX:1003
+http://www.geneontology.org/formats/oboInOwl#created_by	created_by	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	oboinowl:created_by	main_created_by	todo					no		iri	yes	<http://orcid.org/0000-0002-2825-0621>
+http://www.geneontology.org/formats/oboInOwl#creation_date	creation_date	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	oboinowl:creation_date	main_creation_date	todo					no		literal	yes	2009-07-30 07:57:38+00:00
+http://www.geneontology.org/formats/oboInOwl#hasAlternativeId	has_alternative_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id	Class	oboinowl:hasAlternativeId	main_has_alternative_id	todo	knowledge				no		iri	yes	UBERON:0003263
+http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym	has_broad_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasBroadSynonym	main_has_broad_synonym	sure	java:OboConverter				no	AnatomyTerm.synonyms	literal	yes	reticular formation
+http://www.geneontology.org/formats/oboInOwl#hasDbXref	database_cross_reference	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide or drop	Class	oboinowl:hasDbXref	main_database_cross_reference	todo	knowledge				no		iri	yes	CALOHA:TS-1266
+http://www.geneontology.org/formats/oboInOwl#hasExactSynonym	has_exact_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0	obo source stores each synonym with its scope in OntologyTermSynonym.type	Class	oboinowl:hasExactSynonym	main_has_exact_synonym	sure	java:OboConverter				no	AnatomyTerm.synonyms	literal	yes	NA
+http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym	has_narrow_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasNarrowSynonym	main_has_narrow_synonym	sure	java:OboConverter				no	AnatomyTerm.synonyms	literal	yes	elastic fiber
+http://www.geneontology.org/formats/oboInOwl#hasOBONamespace	has_obo_namespace	skos:exactMatch	intermine:AnatomyTerm.namespace	AnatomyTerm.namespace	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasOBONamespace	main	sure	java:OboConverter				no		literal	yes	uberon
+http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym	has_related_synonym	skos:exactMatch	intermine:OntologyTermSynonym.name	OntologyTermSynonym.name	semapv:UnspecifiedMatching	1.0		Class	oboinowl:hasRelatedSynonym	main_has_related_synonym	sure	java:OboConverter				no	AnatomyTerm.synonyms	literal	yes	basal ganglia
+http://www.geneontology.org/formats/oboInOwl#inSubset	in_subset	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		spec D2 - GO slim subsets; extend the model or exclude	Class	oboinowl:inSubset	main_in_subset	todo	spec-D2				no		iri	yes	obo:uberon/core#early_development
+http://www.w3.org/2000/01/rdf-schema#comment	comment	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		free-text comment; no field (description already used for the definition)	Class	rdfs:comment	main_comment	todo	knowledge				no		literal	yes	"Taxon notes:"" the ascidian tube-like heart lacks chambers..."
+http://www.w3.org/2000/01/rdf-schema#seeAlso	see_also	sssom:NoMapping			semapv:UnspecifiedMatching			Class	rdfs:seeAlso	main_see_also	drop	knowledge				no		iri	yes	<https://github.com/obophenotype/uberon/issues/336>
+http://www.w3.org/2000/01/rdf-schema#subClassOf	subclass_of	skos:closeMatch	intermine:OntologyTerm.identifier	OntologyTerm.identifier	semapv:UnspecifiedMatching	0.5	is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted	Class	rdfs:subClassOf	main_subclass_of	guess	java:OboConverter	iri_localname,replace:_:\:			no	AnatomyTerm.parents	link	yes	Class
+http://www.w3.org/2002/07/owl#deprecated	deprecated	skos:closeMatch	intermine:AnatomyTerm.obsolete	AnatomyTerm.obsolete	semapv:UnspecifiedMatching	0.5		Class	owl:deprecated	main	guess	knowledge				no		literal	yes	1
+http://www.w3.org/2002/07/owl#disjointWith	disjoint_with	sssom:NoMapping			semapv:UnspecifiedMatching			Class	owl:disjointWith	main_disjoint_with	link	structure				no		link	yes	Class
+http://www.w3.org/2002/07/owl#equivalentClass	equivalent_class	sssom:NoMapping			semapv:UnspecifiedMatching			Class	owl:equivalentClass	main_equivalent_class	link	structure				no		link	yes	Class
+http://xmlns.com/foaf/0.1/depicted_by	depicted_by	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on AnatomyTerm - choose a field, or set status=drop	Class	foaf:depicted_by	main_depicted_by	todo					no		iri	yes	<http://upload.wikimedia.org/wikipedia/commons/7/77/Gray709.
+rdfc2im:self	Class	sssom:NoMapping			semapv:UnspecifiedMatching		oboinowl:id carries the identifier; the IRI is redundant	Class	-self-	main	drop	knowledge	iri_localname			no		iri	no	obo:UBERON_0002048
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_broad_synonym	Class	-const-	main_has_broad_synonym	sure	java:OboConverter			broad	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_exact_synonym	Class	-const-	main_has_exact_synonym	sure	java:OboConverter			exact	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_narrow_synonym	Class	-const-	main_has_narrow_synonym	sure	java:OboConverter			narrow	no		const	no	
+rdfc2im:const	const_OntologyTermSynonym_type	skos:exactMatch	intermine:OntologyTermSynonym.type	OntologyTermSynonym.type	semapv:UnspecifiedMatching	1.0	constant for has_related_synonym	Class	-const-	main_has_related_synonym	sure	java:OboConverter			related	no		const	no	
+rdfc2im:const	const_Ontology_name	skos:exactMatch	intermine:Ontology.name	Ontology.name	semapv:UnspecifiedMatching	1.0	constant on every table	Class	-const-	*	sure	sources.yaml			Uber Anatomy Ontology	no		const	no	

@@ -1,0 +1,209 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+UniProt	Protein	root	sure	term	core:Protein	(root)	up:Q9BYF1	type http://purl.uniprot.org/core/Protein = term of Protein
+RecommendedNameNode	Protein	node	sure	java:UniProtConverter	core:Structured_Name	core:recommendedName*	up:Q9BYF1#SIPDBB502D4006F752D	flattened - core:fullName -> Protein.name
+SubmittedNameNode	Protein	node	guess	knowledge	core:Structured_Name	core:submittedName*	up:A0A2R3N0P2#SIPE4C7423F69FEF7A2	unreviewed entries have a submitted name instead of a recommended name
+AlternativeNameNode	Synonym	node	guess	knowledge	core:Structured_Name	core:alternativeName*	up:A6NJT0#SIPA55C636CCF9151AA	alternative full names -> Synonym.value on the Protein
+Gene	Gene	node	sure	knowledge+java:UniProtConverter	core:Gene	core:encodedBy?	up:Q9BYF1#gene-MD59FDF2659357792822CB85F383B26B8FE	UniProt gene node; skos:prefLabel is the gene symbol used to link Protein->Gene
+Component	Component	node	sure	name	core:Part	core:component*	up:Q9BYF1#SIPDFC0265AEF6A17B9	subject name is the model class Component
+SimpleSequence	Sequence	node	guess	knowledge	core:Simple_Sequence	core:sequence	isoforms:Q9NYF8-1	rdf:value -> Sequence.residues; core:mass -> Protein.molecularWeight (term)
+ModifiedSequence		node	todo		core:Modificated_Sequence	core:sequence*	isoforms:Q9NYF8-2	no term/knowledge/name match - bind by hand or set role=skip
+ExternalSequence		node	todo		core:External_Sequence	core:sequence*	isoforms:L0R6Q1-1	no term/knowledge/name match - bind by hand or set role=skip
+UnknownSequence		node	todo		core:Unknown_Sequence	core:sequence*	isoforms:52757-2	no term/knowledge/name match - bind by hand or set role=skip
+DbResource	CrossReference	node	guess	knowledge	core:Resource core:Nucleotide_Resource core:Transcript_Resource core:Structure_Resource	rdfs:seeAlso*	<http://purl.uniprot.org/embl-cds/AAF78220.1>	rdfs:seeAlso IRIs -> CrossReference.identifier; DataSource from core:database
+Citation	Publication	node	sure	java:UniProtConverter	core:Journal_Citation core:Submission_Citation core:Thesis_Citation core:Observation_Citation core:Patent_Citation core:Book_Citation core:Electronic_Citation	core:citation*	citations:14504186	foaf:primaryTopicOf pubmed:NNN gives Publication.pubMedId
+GO	GOTerm	node	sure	knowledge+java:UniProtConverter	owl:Class	core:classifiedWith*	obo:GO_0001618	"object IRI obo:GO_nnnnnnn -> GOTerm.identifier ""GO:nnnnnnn"""
+Keyword	OntologyTerm	node	guess	knowledge	core:Concept	core:classifiedWith*	keywords:25	UniProt keyword IRI keywords:NNN; Protein.keywords is an OntologyTerm collection (uniprot-keywords source loads names)
+Intact		node	todo		core:Interaction core:Self_Interaction core:Non_Self_Interaction	core:interaction*	<http://purl.uniprot.org/intact/1391211-7730807>	no term/knowledge/name match - bind by hand or set role=skip
+AbsorptionAnnotation		node	todo		core:Absorption_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P04000#SIPD7876B25E46F0DAD>	no term/knowledge/name match - bind by hand or set role=skip
+ActiveSiteAnnotation		node	todo		core:Active_Site_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP3AC5B779F687F241>	no term/knowledge/name match - bind by hand or set role=skip
+ActivityRegulationAnnotation		node	todo		core:Activity_Regulation_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP24113BC5E56AA353>	no term/knowledge/name match - bind by hand or set role=skip
+AllergenAnnotation		node	todo		core:Allergen_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BQE9#SIP21C424C523E246F6>	no term/knowledge/name match - bind by hand or set role=skip
+AlternativeInitiationAnnotation		node	todo		core:Alternative_Initiation_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q68CP4#SIP253410AED6FBB7FC>	no term/knowledge/name match - bind by hand or set role=skip
+AlternativePromoterUsageAnnotation		node	todo		core:Alternative_Promoter_Usage_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P36402#SIP95AEAE561FE57BBA>	no term/knowledge/name match - bind by hand or set role=skip
+AlternativeSequenceAnnotation		node	todo		core:Alternative_Sequence_Annotation	core:annotation*	<http://purl.uniprot.org/annotation/VSP_060903>	no term/knowledge/name match - bind by hand or set role=skip
+AlternativeSplicingAnnotation		node	todo		core:Alternative_Splicing_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP3EC7FC68B97F7D30>	no term/knowledge/name match - bind by hand or set role=skip
+Annotation		node	todo		core:Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/O14994#SIP7D3E6C3AD70A5B22>	no term/knowledge/name match - bind by hand or set role=skip
+BetaStrandAnnotation		node	todo		core:Beta_Strand_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP07DCC01247230EE4>	no term/knowledge/name match - bind by hand or set role=skip
+BindingSiteAnnotation		node	todo		core:Binding_Site_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP1F377B1DE4C0DD98>	no term/knowledge/name match - bind by hand or set role=skip
+BiotechnologyAnnotation		node	todo		core:Biotechnology_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP655A591DC7BB5F7C>	no term/knowledge/name match - bind by hand or set role=skip
+CatalyticActivityAnnotation		node	todo		core:Catalytic_Activity_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/A0A024R495#SIP793B603C8353D35C>	no term/knowledge/name match - bind by hand or set role=skip
+CautionAnnotation		node	todo		core:Caution_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9UBV6#SIP1EB470CAD3155EA6>	no term/knowledge/name match - bind by hand or set role=skip
+ChainAnnotation		node	todo		core:Chain_Annotation	core:annotation*	<http://purl.uniprot.org/annotation/PRO_0000028570>	no term/knowledge/name match - bind by hand or set role=skip
+CofactorAnnotation		node	todo		core:Cofactor_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP70C2C386E6334DC3>	no term/knowledge/name match - bind by hand or set role=skip
+CoiledCoilAnnotation		node	todo		core:Coiled_Coil_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q8TCM3#SIP7B20A9889ADA67D4>	no term/knowledge/name match - bind by hand or set role=skip
+CompositionalBiasAnnotation		node	todo		core:Compositional_Bias_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP014E9A8DFAF0D2BF>	no term/knowledge/name match - bind by hand or set role=skip
+CrossLinkAnnotation		node	todo		core:Cross-link_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q6PCB5#SIP685176030B3FB725>	no term/knowledge/name match - bind by hand or set role=skip
+DevelopmentalStageAnnotation		node	todo		core:Developmental_Stage_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q99218#SIP64374804BD22E0E2>	no term/knowledge/name match - bind by hand or set role=skip
+DiseaseAnnotation		node	todo		core:Disease_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q5T8D3#SIPE92EF7B4CE188CB3>	no term/knowledge/name match - bind by hand or set role=skip
+DisruptionPhenotypeAnnotation		node	todo		core:Disruption_Phenotype_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P52130#SIP72EE5F24F7558A62>	no term/knowledge/name match - bind by hand or set role=skip
+DisulfideBondAnnotation		node	todo		core:Disulfide_Bond_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP7320356582E6F072>	no term/knowledge/name match - bind by hand or set role=skip
+DomainAnnotation		node	todo		core:Domain_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP602CC12AAC4C1E4B>	no term/knowledge/name match - bind by hand or set role=skip
+DomainExtentAnnotation		node	todo		core:Domain_Extent_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/A0A075B6K2#SIP2B8577CC9F81EEE5>	no term/knowledge/name match - bind by hand or set role=skip
+ErroneousGeneModelPredictionAnnotation		node	todo		core:Erroneous_Gene_Model_Prediction_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q8WUQ7#SIPCAC0CFFDFD09C79B>>	no term/knowledge/name match - bind by hand or set role=skip
+ErroneousInitiationAnnotation		node	todo		core:Erroneous_Initiation_Annotation	core:annotation*	up:Q9NYF8#SIPE5597FD28F20E839	no term/knowledge/name match - bind by hand or set role=skip
+ErroneousTerminationAnnotation		node	todo		core:Erroneous_Termination_Annotation	core:annotation*	up:O94979#SIPB2950A91FA076FE3	no term/knowledge/name match - bind by hand or set role=skip
+ErroneousTranslationAnnotation		node	todo		core:Erroneous_Translation_Annotation	core:annotation*	up:P36544#SIP2002BB2EF2E9FF2C	no term/knowledge/name match - bind by hand or set role=skip
+FrameshiftAnnotation		node	todo		core:Frameshift_Annotation	core:annotation*	up:Q9NY61#SIP6C126E7063CC03D8	no term/knowledge/name match - bind by hand or set role=skip
+FunctionAnnotation		node	todo		core:Function_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP376F906C1FC9BAE4>	no term/knowledge/name match - bind by hand or set role=skip
+GlycosylationAnnotation		node	todo		core:Glycosylation_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP20781602C636CB39>	no term/knowledge/name match - bind by hand or set role=skip
+HelixAnnotation		node	todo		core:Helix_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP0F315404B2449569>	no term/knowledge/name match - bind by hand or set role=skip
+InductionAnnotation		node	todo		core:Induction_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP0975ACA8F20ADBC0>	no term/knowledge/name match - bind by hand or set role=skip
+InitiatorMethionineAnnotation		node	todo		core:Initiator_Methionine_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/O15523#SIP0265DF11775E181A>	no term/knowledge/name match - bind by hand or set role=skip
+IntramembraneAnnotation		node	todo		core:Intramembrane_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q6AI14#SIPAD05AE88A309BFAB>	no term/knowledge/name match - bind by hand or set role=skip
+KineticsAnnotation		node	todo		core:Kinetics_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q13838#SIP82291B7583D2A2E4>	no term/knowledge/name match - bind by hand or set role=skip
+LipidationAnnotation		node	todo		core:Lipidation_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/O43745#SIPC8B1D25E66389EF2>	no term/knowledge/name match - bind by hand or set role=skip
+MassSpectrometryAnnotation		node	todo		core:Mass_Spectrometry_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P80511#SIP832E02F2003FCDD7>	no term/knowledge/name match - bind by hand or set role=skip
+ModifiedResidueAnnotation		node	todo		core:Modified_Residue_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP5E370263A4857D22>	no term/knowledge/name match - bind by hand or set role=skip
+MotifAnnotation		node	todo		core:Motif_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP1DCF0881D89E4492>	no term/knowledge/name match - bind by hand or set role=skip
+MutagenesisAnnotation		node	todo		core:Mutagenesis_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP08AFE023275A02FA>	no term/knowledge/name match - bind by hand or set role=skip
+NaturalVariantAnnotation		node	todo		core:Natural_Variant_Annotation	core:annotation*	<http://purl.uniprot.org/annotation/VAR_023082>	no term/knowledge/name match - bind by hand or set role=skip
+NonAdjacentResiduesAnnotation		node	todo		core:Non-adjacent_Residues_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9H195#SIPCA8701C234810EB7>	no term/knowledge/name match - bind by hand or set role=skip
+NonStandardResidueAnnotation		node	todo		core:Non-standard_Residue_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P49908#SIPFCA5080EC09C3F98>	no term/knowledge/name match - bind by hand or set role=skip
+NonTerminalResidueAnnotation		node	todo		core:Non-Terminal_Residue_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/C9J3B5#SIP0A2F2501462C9DC2>	no term/knowledge/name match - bind by hand or set role=skip
+NucleotideBindingAnnotation		node	todo		core:Nucleotide_Binding_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q6AW80#SIP288BDD5CD7B67E49>	no term/knowledge/name match - bind by hand or set role=skip
+PhDependenceAnnotation		node	todo		core:PH_Dependence_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIPE0D7193ADE63CBF1>	no term/knowledge/name match - bind by hand or set role=skip
+PtmAnnotation		node	todo		core:PTM_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP34FE7438CE6B6A77>	no term/knowledge/name match - bind by hand or set role=skip
+PathwayAnnotation		node	todo		core:Pathway_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q5JU20#SIP8B5E08474E65EEEE>	no term/knowledge/name match - bind by hand or set role=skip
+PeptideAnnotation		node	todo		core:Peptide_Annotation	core:annotation*	<http://purl.uniprot.org/annotation/PRO_0000005420>	no term/knowledge/name match - bind by hand or set role=skip
+PharmaceuticalAnnotation		node	todo		core:Pharmaceutical_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q2M2I8#SIP72C2A5B0E13E4976>	no term/knowledge/name match - bind by hand or set role=skip
+PolymorphismAnnotation		node	todo		core:Polymorphism_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P14679#SIPDE59820269555BEA>	no term/knowledge/name match - bind by hand or set role=skip
+PropeptideAnnotation		node	todo		core:Propeptide_Annotation	core:annotation*	<http://purl.uniprot.org/annotation/PRO_0000027506>	no term/knowledge/name match - bind by hand or set role=skip
+RnaEditingAnnotation		node	todo		core:RNA_Editing_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P62952#SIP33EBA9AA3D98FCB3>	no term/knowledge/name match - bind by hand or set role=skip
+RedoxPotentialAnnotation		node	todo		core:Redox_Potential_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q8N5K1#SIP3818A95A2F00CD07>	no term/knowledge/name match - bind by hand or set role=skip
+RegionAnnotation		node	todo		core:Region_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP2DFAC5510D837438>	no term/knowledge/name match - bind by hand or set role=skip
+RepeatAnnotation		node	todo		core:Repeat_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9ULM6#SIPADC01FA0870D51A9>	no term/knowledge/name match - bind by hand or set role=skip
+RibosomalFrameshifting		node	todo		core:Ribosomal_Frameshifting	core:annotation*	<http://purl.uniprot.org/uniprot/P63126#SIP51E33BC26A028813>	no term/knowledge/name match - bind by hand or set role=skip
+SequenceCautionAnnotation		node	todo		core:Sequence_Caution_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP0DD00D6781008A7E>	no term/knowledge/name match - bind by hand or set role=skip
+SequenceConflictAnnotation		node	todo		core:Sequence_Conflict_Annotation	core:annotation*	up:Q9BYF1#SIP7DA2AEFD56F5CC8F	no term/knowledge/name match - bind by hand or set role=skip
+SequenceUncertaintyAnnotation		node	todo		core:Sequence_Uncertainty_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/F4MHP3#SIP1892436ABD7EE556>	no term/knowledge/name match - bind by hand or set role=skip
+SignalPeptideAnnotation		node	todo		core:Signal_Peptide_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/A0A075B6K2#SIP19CECB1CD6328B5B>	no term/knowledge/name match - bind by hand or set role=skip
+SimilarityAnnotation		node	todo		core:Similarity_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP3C3646B8E7B3D163>	no term/knowledge/name match - bind by hand or set role=skip
+SiteAnnotation		node	todo		core:Site_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/A0A004#SIPA03BA46FEB19AEFF>	no term/knowledge/name match - bind by hand or set role=skip
+SubcellularLocationAnnotation		node	todo		core:Subcellular_Location_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIPA37239D978A32E27>	no term/knowledge/name match - bind by hand or set role=skip
+SubunitAnnotation		node	todo		core:Subunit_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP1DFF5F58F75A9E93>	no term/knowledge/name match - bind by hand or set role=skip
+TemperatureDependenceAnnotation		node	todo		core:Temperature_Dependence_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q15067#SIPFAF2319FF366C954>	no term/knowledge/name match - bind by hand or set role=skip
+TissueSpecificityAnnotation		node	todo		core:Tissue_Specificity_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP4A7F7FEF73AD1B2D>	no term/knowledge/name match - bind by hand or set role=skip
+TopologicalDomainAnnotation		node	todo		core:Topological_Domain_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP24975BE8185AD056>	no term/knowledge/name match - bind by hand or set role=skip
+TransitPeptideAnnotation		node	todo		core:Transit_Peptide_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/P09038#SIP23FBF4FEB5B0798C>	no term/knowledge/name match - bind by hand or set role=skip
+TransmembraneAnnotation		node	todo		core:Transmembrane_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIPE6A37CDFE551A5E3>	no term/knowledge/name match - bind by hand or set role=skip
+TurnAnnotation		node	todo		core:Turn_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9BYF1#SIP0979C4B449C5071B>	no term/knowledge/name match - bind by hand or set role=skip
+ZincFingerAnnotation		node	todo		core:Zinc_Finger_Annotation	core:annotation*	<http://purl.uniprot.org/uniprot/Q9NSD4#SIP6F21C96F90DA1648>	no term/knowledge/name match - bind by hand or set role=skip
+ComponentNameNode		node	todo		core:Structured_Name	core:component* / core:recommendedName+	up:Q9BYF1#SIP0AFB38383A51AFB7	no term/knowledge/name match - bind by hand or set role=skip
+ComponentAltNameNode		node	todo		core:Structured_Name	core:component* / core:alternativeName*	up:P04535#SIP946A7DAB764CBC03	no term/knowledge/name match - bind by hand or set role=skip
+IntactParticipant		node	todo		core:Participant	core:interaction* / core:participant+	<http://purl.uniprot.org/intact/EBI-1391211>	no term/knowledge/name match - bind by hand or set role=skip
+ActiveSiteAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+AlternativeSequenceAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+BetaStrandAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+BindingSiteAnnotation/ligand		node	todo	inherit:parent		core:annotation* / core:ligand		inline blank node - flattened onto the parent's class
+BindingSiteAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+CatalyticActivityAnnotation/catalyticActivity		node	todo	inherit:parent	core:Catalytic_Activity	core:annotation* / core:catalyticActivity		inline blank node - flattened onto the parent's class
+ChainAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+CoiledCoilAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+CompositionalBiasAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+CrossLinkAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range+		inline blank node - flattened onto the parent's class
+DisulfideBondAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range+		inline blank node - flattened onto the parent's class
+DomainExtentAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+ErrGeneModelPredicationConflictSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:Q8WUQ7#SIP9FB4852469FB0692	no term/knowledge/name match - bind by hand or set role=skip
+ErrInitConflictSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:Q9NYF8#SIP51CDE913E7CBBB2F	no term/knowledge/name match - bind by hand or set role=skip
+ErrTermConflictSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:O94979#SIP72DF09D3E7C27B0D	no term/knowledge/name match - bind by hand or set role=skip
+ErrTranslateConflictSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:P36544#SIP1AA4C077BB4475D3	no term/knowledge/name match - bind by hand or set role=skip
+FrameshiftSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:Q9NY61#SIP05DE5164AF85D03E	no term/knowledge/name match - bind by hand or set role=skip
+GlycosylationAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+HelixAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+InitiatorMethionineAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+IntramembraneAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+LipidationAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+ModifiedResidueAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+MotifAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+MutagenesisAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+NaturalVariantAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+NonAdjacentResiduesAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+NonStandardResidueAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+NonTerminalResidueAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+NucleotideBindingAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+PeptideAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+PropeptideAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+RnaEditingAnnotation/location		node	todo	inherit:parent	faldo:Position faldo:ExactPosition	core:annotation* / faldo:location*		inline blank node - flattened onto the parent's class
+RegionAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+RepeatAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+CautionSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:Q9BYF1#SIP88F6482138F28E84	no term/knowledge/name match - bind by hand or set role=skip
+ConflictSeqNode		node	todo		core:External_Sequence	core:annotation* / core:conflictingSequence	up:Q9BYF1#SIP32276D8B1949959D	no term/knowledge/name match - bind by hand or set role=skip
+SequenceConflictAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+SequenceUncertaintyAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+SignalPeptideAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+SiteAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+SubcellularLocationAnnotation/locatedIn		node	todo	inherit:parent		core:annotation* / core:locatedIn+		inline blank node - flattened onto the parent's class
+TopologicalDomainAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+TransmembraneAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+TurnAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+ZincFingerAnnotation/range		node	todo	inherit:parent	faldo:Region	core:annotation* / core:range		inline blank node - flattened onto the parent's class
+ActiveSiteAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+ActiveSiteAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+AlternativeSequenceAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+AlternativeSequenceAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+BetaStrandAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+BetaStrandAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+BindingSiteAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+BindingSiteAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+ChainAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+ChainAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+CoiledCoilAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+CoiledCoilAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+CompositionalBiasAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+CompositionalBiasAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+CrossLinkAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range+ / faldo:begin		inline blank node - flattened onto the parent's class
+CrossLinkAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range+ / faldo:end		inline blank node - flattened onto the parent's class
+DisulfideBondAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range+ / faldo:begin		inline blank node - flattened onto the parent's class
+DisulfideBondAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range+ / faldo:end		inline blank node - flattened onto the parent's class
+DomainExtentAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+DomainExtentAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+GlycosylationAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+GlycosylationAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+HelixAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+HelixAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+InitiatorMethionineAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+InitiatorMethionineAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+IntramembraneAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+IntramembraneAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+LipidationAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+LipidationAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+ModifiedResidueAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+ModifiedResidueAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+MotifAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+MotifAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+MutagenesisAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+MutagenesisAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+NaturalVariantAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+NaturalVariantAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+NonAdjacentResiduesAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+NonAdjacentResiduesAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+NonStandardResidueAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+NonStandardResidueAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+NonTerminalResidueAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+NonTerminalResidueAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+NucleotideBindingAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+NucleotideBindingAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+PeptideAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+PeptideAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+PropeptideAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+PropeptideAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+RegionAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+RegionAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+RepeatAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+RepeatAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+SequenceConflictAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+SequenceConflictAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+SequenceUncertaintyAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+SequenceUncertaintyAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+SignalPeptideAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+SignalPeptideAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+SiteAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+SiteAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+TopologicalDomainAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+TopologicalDomainAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+TransmembraneAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+TransmembraneAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+TurnAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+TurnAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class
+ZincFingerAnnotation/range/begin		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:begin		inline blank node - flattened onto the parent's class
+ZincFingerAnnotation/range/end		node	todo	inherit:parent	faldo:Position	core:annotation* / core:range / faldo:end		inline blank node - flattened onto the parent's class

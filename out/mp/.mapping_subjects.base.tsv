@@ -1,0 +1,2 @@
+subject	im_class	role	status	basis	rdf_types	path	example	note
+Class	MammalianPhenotypeTerm	root	sure	props:mammalian-phenotype-ontology.properties obo.term.class=MammalianPhenotypeTerm	owl:Class	(root)	obo:MP_0000026	
