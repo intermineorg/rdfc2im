@@ -246,12 +246,16 @@ class CrosswalkBuilder:
                         queue.append(child)
                     elif o.sub_subjects:
                         union = len(o.sub_subjects) > 1
+                        placed = 0
                         for sn in o.sub_subjects:
                             sub = self.cfg.subject(sn)
                             if sub is None:
                                 continue
                             if sn in self.nodes:
-                                if self.nodes[sn].parent is not node:
+                                if self.nodes[sn] is node or self.nodes[sn] in _ancestors(node):
+                                    self.messages.append(
+                                        f"{node.display} {p.curie} {sn} is a cycle; kept as a column, not expanded")
+                                elif self.nodes[sn].parent is not node:
                                     self.messages.append(f"{sn} is reachable by more than one path; using {self.nodes[sn].path_str()}")
                                 continue
                             child = Node(subject=sub, var=_uniq_var(self, o.name if not union else f"{o.name}_{_var(sn)}"),
@@ -259,7 +263,16 @@ class CrosswalkBuilder:
                             self._add_node(child, overrides)
                             node.children.append(child)
                             queue.append(child)
-                        self.rows.append(self._row(node, p, o, kind="link"))
+                            placed += 1
+                        # Every target subject was already placed elsewhere in the tree - a back-edge,
+                        # and for MP/Uberon's `rdfs:subClassOf*: - subclass_of: Class` a self-edge.  We
+                        # cannot recurse (that is the cycle) and there is no child node to bind the
+                        # variable to, so a `link` row here would dangle and be silently dropped when
+                        # the query is built.  The object is still just an IRI of a known class, which
+                        # is exactly what GO and HPO get from the `superclass: obo:GO_0044237` spelling
+                        # of the same edge, so emit an ordinary column and let the predicate knowledge
+                        # bind it (rdfs:subClassOf -> OntologyTerm.parents).
+                        self.rows.append(self._row(node, p, o, kind="link" if placed else "iri"))
                     else:
                         self.rows.append(self._row(node, p, o, kind="iri" if not o.is_literal else "literal"))
 
@@ -504,6 +517,14 @@ CrosswalkBuilder._pruned_nodes = _pruned_nodes_impl
 
 def _var(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", s)
+
+
+def _ancestors(node: Node) -> List[Node]:
+    out, n = [], node.parent
+    while n is not None:
+        out.append(n)
+        n = n.parent
+    return out
 
 
 def _uniq_var(b: CrosswalkBuilder, v: str) -> str:

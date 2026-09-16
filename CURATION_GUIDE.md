@@ -147,7 +147,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | EnsemblGene/location/begin | `faldo:position` | `ensg_begin` | 100627108 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 | EnsemblGene/location/end | `faldo:position` | `ensg_end` | 100639991 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 
-**expressionatlas** - 19 active rows (rows under a pruned branch are not listed):
+**expressionatlas** - 25 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
@@ -155,13 +155,19 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | DataSet | `obo:RO_0002162` | `taxon` | obo:NCBITaxon_9606 | no match on DataSet - choose a field, or set status=drop |
 | DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | no match on DataSet - choose a field, or set status=drop |
 | DifferentialAnalysis | `rdfs:label` | `diff_analysis_label` | Analysis of 'endometrial carcinoma' vs 'normal' | subject not bound to a class (see subjects.tsv) |
+| DifferentialAnalysis | `gxaterms:hasReferenceAssay` | `diff_analysis_ref_assay` | Assay | subject not bound to a class (see subjects.tsv) |
+| DifferentialAnalysis | `gxaterms:hasTestAssay` | `diff_analysis_test_assay` | Assay | subject not bound to a class (see subjects.tsv) |
+| BaselineAnalysis | `gxaterms:hasFactorValue` | `base_analysis_factor` | Factor | subject not bound to a class (see subjects.tsv) |
+| BaselineAnalysis | `gxaterms:hasReferenceAssay` | `base_analysis_ref_assay` | Assay | subject not bound to a class (see subjects.tsv) |
 | Assay | `rdfs:label` | `assay_label` | (Assay) SRR1200879 | subject not bound to a class (see subjects.tsv) |
 | Assay | `dct:identifier` | `assay_id` | SRR1200879 | subject not bound to a class (see subjects.tsv) |
+| Assay | `gxaterms:hasFactorValue` | `factor` | Factor | subject not bound to a class (see subjects.tsv) |
 | Factor | `rdfs:label` | `factor_label` | (Factor value) DISEASE/endometrial carcinoma | subject not bound to a class (see subjects.tsv) |
 | Factor | `gxaterms:propertyType` | `factor_property_type` | DISEASE | subject not bound to a class (see subjects.tsv) |
 | Factor | `gxaterms:propertyValue` | `factor_property_value` | endometrial carcinoma | subject not bound to a class (see subjects.tsv) |
 | DifferentialExpression | `rdfs:label` | `diff_expression_label` | JSRP1 UP in 'endometrial carcinoma' vs 'normal' | subject not bound to a class (see subjects.tsv) |
 | DifferentialExpression | `gxaterms:foldChange` | `diff_expression_fold_change` | 1.5 | subject not bound to a class (see subjects.tsv) |
+| DifferentialExpression | `gxaterms:isOutputOf` | `diff_expression_analysis` | DifferentialAnalysis | subject not bound to a class (see subjects.tsv) |
 | DifferentialExpression | `gxaterms:pValue` | `diff_expression_pvalue` | 0.02421369125 | subject not bound to a class (see subjects.tsv) |
 | DifferentialExpression | `gxaterms:refersTo` | `diff_expression_gene` | ido:ensembl/ENSG00000167476 \| ensembl:ENSG00000167476 | subject not bound to a class (see subjects.tsv) |
 | BaselineExpression | `rdfs:label` | `base_expression_label` | RP3-508I15.9 expressed in NHLF cell line | subject not bound to a class (see subjects.tsv) |
@@ -209,6 +215,12 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | GWASAssociation | `gwas:has_pubmed_id` | `has_pubmed_id_association` | 28443625 | no match on GWASResult - choose a field, or set status=drop |
 | ... | | | | 6 more in the file |
 
+**hgnc** - 1 active rows (rows under a pruned branch are not listed):
+
+| subject | predicate | column | example | why open |
+|---|---|---|---|---|
+| HGNC | `skos:historyNote` | `history_note` | Approved | no match on Gene - choose a field, or set status=drop |
+
 **homologene** - 4 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
@@ -226,18 +238,20 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `oboinowl:hasDbXref` | `snomedct` | SNOMEDCT_US:271737000 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `rdfs:comment` | `comment` | Anemia is not a specific entity but can result from many und | free-text comment; no field (description already used for the definition) |
 
-**mesh** - 46 active rows (rows under a pruned branch are not listed):
+**mesh** - 64 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Descriptor | `meshv:annotation` | `descriptor_annotation` | coordinate IM with specific bacteria or fungal infection (IM | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:nlmClassificationNumber` | `descriptor_nlm_classification_number` | WG 580 | no match on MeshTerm - choose a field, or set status=drop |
+| Descriptor | `meshv:preferredConcept` | `descriptor_preferred_concept` | Concept | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:broaderDescriptor` | `broader_descriptor` | Descriptor | MeshTerm has no parents collection; drop or extend the model |
 | Descriptor | `meshv:historyNote` | `descriptor_history_note` | 87; was ANEURYSM, MYCOTIC 1964-86 (Prov 1964-69) | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:publicMeSHNote` | `descriptor_public_mesh_note` | 87; was ANEURYSM, MYCOTIC 1970-86 | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:onlineNote` | `descriptor_online_note` | use ANEURYSM, INFECTED to search ANEURYSM, MYCOTIC 1966-86 ( | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:active` | `descriptor_active` | True | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:lastActiveYear` | `descriptor_last_active_year` | 2018 | no match on MeshTerm - choose a field, or set status=drop |
+| Descriptor | `meshv:pharmacologicalAction` | `descriptor_pharmacological_action` | Descriptor | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:previousIndexing` | `descriptor_previous_indexing` | Nerve Tissue Proteins (1995-2015) | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:considerAlso` | `descriptor_consider_also` | consider also terms at MYEL- | no match on MeshTerm - choose a field, or set status=drop |
 | Concept | `rdfs:label` | `concept_label` | Calcimycin | subject not bound to a class (see subjects.tsv) |
@@ -246,21 +260,20 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Concept | `meshv:relatedRegistryNumber` | `concept_related_registry_number` | 52665-69-7 (Calcimycin) | subject not bound to a class (see subjects.tsv) |
 | Concept | `meshv:scopeNote` | `concept_scope_note` | An ionophorous, polyether antibiotic from Streptomyces chart | subject not bound to a class (see subjects.tsv) |
 | Concept | `meshv:casn1_label` | `cas_label` | 4-Benzoxazolecarboxylic acid, 5-(methylamino)-2-((3,9,11-tri | subject not bound to a class (see subjects.tsv) |
+| Concept | `meshv:term` | `concept_term` | Term | subject not bound to a class (see subjects.tsv) |
+| Concept | `meshv:preferredTerm` | `concept_preferred_term` | Term | subject not bound to a class (see subjects.tsv) |
+| Concept | `meshv:narrowerConcept` | `concept_narrower_concept` | Concept | subject not bound to a class (see subjects.tsv) |
+| Concept | `meshv:broaderConcept` | `concept_broader_concept` | Concept | subject not bound to a class (see subjects.tsv) |
+| Concept | `meshv:relatedConcept` | `concept_related_concept` | Concept | subject not bound to a class (see subjects.tsv) |
 | Concept | `meshv:active` | `concept_active` | True | subject not bound to a class (see subjects.tsv) |
 | Concept | `meshv:lastActiveYear` | `concept_last_active_year` | 2018 | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:prefLabel` | `term_label` | Calcimycin | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:altLabel` | `term_alt_label` | Calcimycin | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:identifier` | `term_id` | T000002 | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:thesaurusID` | `term_thesaurus_id` | FDA SRS (2014) | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:lexicalTag` | `term_lexical_tag` | NON | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:active` | `term_active` | True | subject not bound to a class (see subjects.tsv) |
-| Term | `meshv:lastActiveYear` | `term_last_active_year` | 2018 | subject not bound to a class (see subjects.tsv) |
-| ... | | | | 21 more in the file |
+| ... | | | | 39 more in the file |
 
-**mp** - 11 active rows (rows under a pruned branch are not listed):
+**mp** - 12 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
+| Class | `metadata:treeView` | `tree_view` | Class | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
 | Class | `oboinowl:hasDbXref` | `database_cross_reference` | GO:0042472 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `obo:IAO_0100001` | `term_replaced_by` | Class | term replaced by; obsolete-term bookkeeping - probably drop |
 | Class | `dc:contributor` | `contributor` | <https://orcid.org/0000-0002-6490-7723> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
@@ -312,7 +325,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | UnificationXref | `biopax:comment` | `unification_xref_description` | Reactome stable identifier. Use this URL to connect to the w | no match on Pathway - choose a field, or set status=drop |
 | UnificationXref | `biopax:idVersion` | `pathway_ver` | 1 | no match on Pathway - choose a field, or set status=drop |
 
-**uberon** - 43 active rows (rows under a pruned branch are not listed):
+**uberon** - 47 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
@@ -321,9 +334,11 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `obo:IAO_0006012` | `scheduled_for_obsoletion_on_or_after` | 2023-04-20 | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:IAO_0100001` | `term_replaced_by` | UBERON:0002275 | term replaced by; obsolete-term bookkeeping - probably drop |
 | Class | `obo:RO_0002161` | `never_in_taxon` | obo:NCBITaxon_32443 | no match on AnatomyTerm - choose a field, or set status=drop |
+| Class | `obo:RO_0002171` | `mutually_spatially_disjoint_with` | Class | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:RO_0002173` | `ambiguous_for_taxon` | obo:NCBITaxon_8782 | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:RO_0002174` | `dubious_for_taxon` | obo:NCBITaxon_10090 | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:RO_0002175` | `present_in_taxon` | obo:NCBITaxon_9606 | no match on AnatomyTerm - choose a field, or set status=drop |
+| Class | `obo:RO_0002475` | `has_no_connections_with` | Class | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000001` | `external_definition` | Dense regular connective tissue that connects muscle to bone | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000002` | `axiom_lost_from_external_ontology` | relationship loss: overlaps hyomandibular-otic region joint  | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000003` | `homology_notes` | (...) an essentially similar sequence of events occurs durin | no match on AnatomyTerm - choose a field, or set status=drop |
@@ -339,15 +354,14 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `obo:UBPROP_0000013` | `terminology_notes` | Gilbert uses visceral endoderm as a synonym for primitive en | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000014` | `actions_notes` | In some mammals these muscles can adjust the direction of th | no match on AnatomyTerm - choose a field, or set status=drop |
 | Class | `obo:UBPROP_0000015` | `location_notes` | Bounded medially by the Lamina orbitalis of the Os ethmoidal | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000103` | `pharyngeal_arch_number` | 7 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000104` | `ray_number` | 6 | no match on AnatomyTerm - choose a field, or set status=drop |
-| ... | | | | 18 more in the file |
+| ... | | | | 22 more in the file |
 
-**uniprot** - 16 active rows (rows under a pruned branch are not listed):
+**uniprot** - 17 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | UniProt | `core:reviewed` | `reviewed` | 1 | Swiss-Prot(1)/TrEMBL(0); the converter loads only reviewed by default - use as a VALUES filter (value: 1) rather than a field? |
+| UniProt | `core:classifiedWith` | `go` | GO | spec D4, and DO NOT simply re-enable this.  obo:GO_0001618 -> GO:0001618 is right, but there is no correct single-hop target.  Protein's only OntologyTerm colle |
 | UniProt | `core:interaction` | `intact` | Intact | IntAct interactions - spec D6 (traditional psi load) |
 | SubmittedNameNode | `core:ecName` | `submitted_ec` | 5.2.1.8 | no match on Protein - choose a field, or set status=drop |
 | AlternativeNameNode | `core:ecName` | `altanative_ec` | 2.1.1.- | no match on Synonym - choose a field, or set status=drop |

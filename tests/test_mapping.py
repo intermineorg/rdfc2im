@@ -121,3 +121,113 @@ def test_three_way_merge_stale_and_no_base():
     merged, n, stale = three_way_merge(fresh, disk, [], lambda r: (r["subject"], r["predicate"], r["column"]), ["status", "im_field"])
     assert n == 1 and merged[0]["im_field"] == "x" and merged[0]["status"] == "human"
     assert len(stale) == 1 and merged[1]["note"].startswith("STALE")
+
+
+# ---------------------------------------------------------------- cyclic links
+CYCLE_MODEL = """<model name="genomic" package="org.intermine.model.bio">
+<class name="OntologyTerm" is-interface="true">
+  <attribute name="identifier" type="java.lang.String"/>
+  <attribute name="name" type="java.lang.String" term="http://www.w3.org/2000/01/rdf-schema#label"/>
+  <collection name="parents" referenced-type="OntologyTerm"/>
+</class>
+<class name="GOTerm" extends="OntologyTerm" is-interface="true"/>
+</model>"""
+
+
+def _cycle_setup(tmp_path, object_value):
+    """A one-subject config whose `rdfs:subClassOf` object is `object_value`.
+
+    rdf-config sources write this two ways.  GO gives an example CURIE
+    (`superclass: obo:GO_0044237`); MP and Uberon name the subject itself
+    (`subclass_of: Class`), which is a back-edge in the subject graph.  Both must
+    end up as an ordinary column bound to OntologyTerm.parents.
+    """
+    (tmp_path / "core.xml").write_text(CYCLE_MODEL)
+    (tmp_path / "k_keys.properties").write_text("OntologyTerm.key_identifier=identifier\n")
+    m = InterMineModel()
+    m.load_xml(str(tmp_path / "core.xml"))
+    m.load_keys(str(tmp_path / "k_keys.properties"))
+    m.finalize()
+    m.live = None
+    d = tmp_path / "cfg" / "onto"
+    d.mkdir(parents=True)
+    (d / "model.yaml").write_text(textwrap.dedent(f"""\
+    - Class obo:GO_0000016:
+      - a: owl:Class
+      - oboinowl:id:
+        - id: "GO:0000016"
+      - rdfs:label:
+        - label: "lactase activity"
+      - rdfs:subClassOf*:
+        - parent: {object_value}
+    """))
+    (d / "prefix.yaml").write_text(
+        "obo: <http://purl.obolibrary.org/obo/>\n"
+        "oboinowl: <http://www.geneontology.org/formats/oboInOwl#>\n"
+        "owl: <http://www.w3.org/2002/07/owl#>\n"
+        "rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n")
+    (d / "endpoint.yaml").write_text("endpoint:\n  - https://ep/sparql\n")
+    p = tmp_path / "kn_cycle.yaml"
+    p.write_text(textwrap.dedent("""\
+    prefixes: {owl: "http://www.w3.org/2002/07/owl#"}
+    subjects:
+      - {type: owl:Class, im_class: GOTerm, status: sure, basis: test}
+    predicates:
+      - {pred: oboinowl:id, class: OntologyTerm, im: OntologyTerm.identifier, status: sure, basis: test, required: "yes"}
+      - {pred: rdfs:subClassOf, class: OntologyTerm, im: OntologyTerm.parents, status: guess, basis: test, transform: "iri_localname"}
+    """))
+    return m, str(d), Knowledge(str(p))
+
+
+def test_self_referential_link_becomes_a_column(tmp_path):
+    """MP/Uberon write `subclass_of: Class` - a link back to the root subject.
+
+    No child node can be created for it (the subject is already placed), so the row
+    must degrade to an ordinary IRI column and pick up the OntologyTerm.parents
+    knowledge, exactly as GO's CURIE-example form does.
+    """
+    m, cfg, kn = _cycle_setup(tmp_path, "Class")
+    r = translate(m, cfg, str(tmp_path / "out_cycle"), kn, {})
+    row = next(x for x in r["rows"] if x["predicate"] == "rdfs:subClassOf")
+    assert row["kind"] == "iri", f"back-edge should be a column, got kind={row['kind']!r}"
+    # A collection target is rewritten to the target class's key attribute, with the
+    # collection itself recorded in `via` - see CURATION_GUIDE.md, "What you edit".
+    assert (row["im_class"], row["im_field"]) == ("OntologyTerm", "identifier")
+    assert row["via"] == "GOTerm.parents"
+    assert row["transform"] == "iri_localname"
+    assert row["status"] == "guess"
+
+    # ...and it must reach the generated query, not be dropped as a dangling link.
+    table = row["table"]
+    qb = QueryBuilder(r["cfg"], r["node_by_key"])
+    q, select, _ = qb.build(table, query_rows(r["rows"], table, True))
+    assert "rdfs:subClassOf ?parent" in q, q
+    assert "parent" in select
+    assert not any("cannot be a column" in msg for msg in qb.messages), qb.messages
+
+
+def test_cycle_and_curie_forms_agree(tmp_path):
+    """The two spellings must produce the same mapping - only the example differs."""
+    (tmp_path / "a").mkdir(exist_ok=True)
+    (tmp_path / "b").mkdir(exist_ok=True)
+    m1, c1, k1 = _cycle_setup(tmp_path / "a", "Class")
+    m2, c2, k2 = _cycle_setup(tmp_path / "b", "obo:GO_0044237")
+    a = translate(m1, c1, str(tmp_path / "a" / "out"), k1, {})
+    b = translate(m2, c2, str(tmp_path / "b" / "out"), k2, {})
+    ra = next(x for x in a["rows"] if x["predicate"] == "rdfs:subClassOf")
+    rb = next(x for x in b["rows"] if x["predicate"] == "rdfs:subClassOf")
+    for field in ("kind", "im_class", "im_field", "via", "status", "table", "transform"):
+        assert ra[field] == rb[field], f"{field}: cycle={ra[field]!r} curie={rb[field]!r}"
+
+
+def test_table_with_only_key_columns_is_not_emitted(tmp_path):
+    """A satellite table left with nothing but the root key carries no information."""
+    m, cfg, kn = _cycle_setup(tmp_path, "Class")
+    r = translate(m, cfg, str(tmp_path / "out_empty"), kn, {})
+    rows = [dict(x) for x in r["rows"]]
+    for x in rows:                      # drop the only non-key column of the satellite
+        if x["predicate"] == "rdfs:subClassOf":
+            x["status"] = "todo"
+    tables = [t for t in table_names(rows) if t != "main"]
+    for t in tables:
+        assert query_rows(rows, t, True) == [], f"{t} should be dropped, not queried"

@@ -229,6 +229,12 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
                     hard.append(f"{name}: via {via} is an attribute, not a reference/collection")
                 elif not (model.is_a(cls, vfd.type) or model.is_a(vfd.type, cls)):
                     hard.append(f"{name}: via {via} has range {vfd.type} but the column carries {cls}")
+                elif vfd.type != cls and model.is_a(cls, vfd.type):
+                    # The range is a strict ancestor of what the column carries, so the type check
+                    # cannot tell an intended link (GOTerm into OntologyTerm.parents) from a wrong
+                    # one (GOTerm into Protein.keywords, which is how spec D4 went unnoticed).
+                    soft.append(f"{name}: via {via} widens - {cls} into a {vfd.type} "
+                                f"{vfd.kind}; confirm that is the intended link")
             owner, keys = model.keys_for(cls)
             if not keys and cls in gen_keys and c.get("required") == "yes":
                 soft.append(f"{name}: root class {cls} uses a DRAFT key ({gen_keys[cls]}) - review")

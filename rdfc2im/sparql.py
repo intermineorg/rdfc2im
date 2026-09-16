@@ -69,6 +69,7 @@ class QueryBuilder:
         nodes: Dict[str, Node] = {}
         root: Optional[Node] = None
         used_vars: Dict[str, int] = {}
+        kept: List[dict] = []
         select: List[str] = []
         params: Dict[str, str] = {}
         for r in qrows:
@@ -82,7 +83,9 @@ class QueryBuilder:
                 # the object IS a sub-node; use that node's variable
                 child = next((c for c in node.children if c.objvar == r["column"]), None)
                 if child is None or child.union:
-                    self.messages.append(f"{table}: link row {r['column']} on a union object cannot be a column - skipped")
+                    why = "a union object ([A, B, ...]) has no single variable" if child is not None \
+                        else "no sub-node binds it"
+                    self.messages.append(f"{table}: link row {r['column']} cannot be a column ({why}) - skipped")
                     continue
                 var = child.var
             if var in used_vars:
@@ -92,6 +95,7 @@ class QueryBuilder:
                 used_vars[var] = 1
             r = dict(r); r["_var"] = var
             leaves.setdefault(node.display, []).append(r)
+            kept.append(r)
             n = node
             while n is not None:
                 nodes[n.display] = n
@@ -100,6 +104,12 @@ class QueryBuilder:
             if r.get("value"):
                 params[var] = r["value"]
         if root is None:
+            return "", [], {}
+        # query_rows() drops a satellite table that has nothing but the root's key columns, but a
+        # row can also be skipped above (a link with no node to bind to).  If that leaves only the
+        # key columns, the query is a projection of `main` and carries nothing; don't emit it.
+        if table != "main" and all(r.get("required") == "yes" for r in kept):
+            self.messages.append(f"{table}: nothing left but the root key after skips - table dropped")
             return "", [], {}
 
         body = self._emit(root, nodes, leaves, indent=1)

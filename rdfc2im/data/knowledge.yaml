@@ -919,11 +919,18 @@ predicates:
     subject: UniProt
     pred: core:classifiedWith
     column: go
-    im: GOTerm.identifier
-    status: sure
-    basis: java:UniProtConverter
+    im: ""
+    status: todo
+    basis: spec-D4
     transform: "iri_localname,replace:_:\\:"
-    note: obo:GO_0001618 -> GO:0001618; produces Protein.ontologyAnnotations? No - GOAnnotation needs evidence; this only links Protein.keywords-style. Treat as a review candidate (spec D4)
+    note: >-
+      spec D4, and DO NOT simply re-enable this.  obo:GO_0001618 -> GO:0001618 is right, but there
+      is no correct single-hop target.  Protein's only OntologyTerm collection is `keywords` (filled
+      by uniprot-keywords), and binding GOTerm.identifier here sent GO terms into it - visibly wrong
+      in the emitted items.  InterMine models GO as Annotatable.ontologyAnnotations -> GOAnnotation
+      -> ontologyTerm -> GOTerm, i.e. an intermediate object that `via` cannot express today (it is
+      one Class.field).  Either teach items.py to synthesise the intermediate, or leave this to the
+      existing go-annotation source, which already loads protein GO annotations with evidence codes.
   - source: uniprot
     subject: UniProt
     pred: core:classifiedWith
