@@ -638,8 +638,18 @@ def write_tsv(path: str, rows: List[dict], columns: List[str]):
 
 
 def three_way_merge(fresh: List[dict], disk: List[dict], base: List[dict], keyf, editable: List[str],
-                    mark_human: bool = True) -> Tuple[List[dict], int, List[dict]]:
-    """Return (merged, n_preserved_edits, stale_rows)."""
+                    mark_human: bool = True, inert: Optional[dict] = None) -> Tuple[List[dict], int, List[dict]]:
+    """Return (merged, n_preserved_edits, stale_rows).
+
+    A stale row is one on disk whose key the fresh output no longer has (a subject or predicate
+    left model.yaml, or a column was renamed).  It is kept only to protect a human's edit: one
+    identical to its base snapshot is old auto output and is dropped.  A kept stale row gets
+    `inert` applied (e.g. table=drop), because its key no longer exists and it must not load.
+
+    Both points used to be missing: every stale row was kept with its status intact, so a renamed
+    mapping went on loading under its old name - HGNC's xref DataSource constants did exactly
+    that, loading once linked and once unlinked.
+    """
     dmap = {keyf(r): r for r in disk}
     bmap = {keyf(r): r for r in base}
     merged, preserved = [], 0
@@ -660,11 +670,21 @@ def three_way_merge(fresh: List[dict], disk: List[dict], base: List[dict], keyf,
                     f["status"] = "human"
         merged.append(f)
     fresh_keys = {keyf(f) for f in fresh}
-    stale = [d for k, d in dmap.items() if k not in fresh_keys]
-    for s in stale:
-        s = dict(s)
-        s["note"] = ("STALE: no longer in model.yaml; " + s.get("note", "")).strip("; ")
+    stale = []
+    for k, d in dmap.items():
+        if k in fresh_keys:
+            continue
+        b = bmap.get(k)
+        already = (d.get("note") or "").startswith("STALE")
+        edited = b is None or any(d.get(col, "") != b.get(col, "") for col in editable)
+        if not (already or edited):
+            continue                                   # untouched auto output: let it go
+        s = dict(d)
+        if not already:
+            s["note"] = ("STALE: no longer in model.yaml; " + s.get("note", "")).strip("; ")
+        s.update(inert or {})
         merged.append(s)
+        stale.append(s)
     return merged, preserved, stale
 
 
@@ -709,7 +729,7 @@ def translate(model: InterMineModel, config_dir: str, out_dir: str, knowledge: K
     disk_rows, base_rows = read_sssom(cw_path)[1], read_sssom(cw_base)[1]
     merged, n_edits, stale = three_way_merge(fresh_rows, disk_rows, base_rows,
                                              lambda r: (r["subject"], r["predicate"], r["column"]),
-                                             CW_EDITABLE)
+                                             CW_EDITABLE, inert={"table": "drop"})
     # keep node refs for downstream generation
     node_by_key = {r.key(): r._node for r in b.rows}
     write_sssom(cw_base, auto_rows, cfg)

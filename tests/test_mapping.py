@@ -385,3 +385,26 @@ def test_constants_can_declare_the_link_they_hang_off(tmp_path):
     consts = [x for x in r["rows"] if x["kind"] == "const" and x["im_field"] == "taxonId"]
     assert {c["via"] for c in consts} == {"Gene.organism", "Synonym.subject"}, consts
     assert len({c["column"] for c in consts}) == 2, "same field, different links: distinct columns"
+
+
+def test_stale_rows_are_dropped_unless_edited_and_never_load():
+    """A renamed mapping must stop loading under its old name.
+
+    Every stale row used to be kept with its status intact, so HGNC's xref DataSource constant,
+    renamed when it gained a link, loaded twice: once linked, once not.
+    """
+    key = lambda r: (r["subject"], r["predicate"], r["column"])
+    old = {"subject": "HGNC", "predicate": "-const-", "column": "const_DataSource_name",
+           "status": "guess", "table": "main_see_also_ena", "im_field": "name", "note": ""}
+    new = dict(old, column="const_DataSource_name_CrossReference_source")
+    # untouched: the old row is identical to its base snapshot -> gone
+    merged, _, stale = three_way_merge([dict(new)], [dict(old)], [dict(old)], key, ["status", "table", "im_field"],
+                                       inert={"table": "drop"})
+    assert [r["column"] for r in merged] == [new["column"]] and stale == []
+    # edited by a human (differs from base) -> kept for them, but inert
+    edited = dict(old, status="human", im_field="shortName")
+    merged, _, stale = three_way_merge([dict(new)], [edited], [dict(old)], key, ["status", "table", "im_field"],
+                                       inert={"table": "drop"})
+    kept = [r for r in merged if r["column"] == old["column"]]
+    assert len(kept) == 1 and kept[0]["table"] == "drop" and kept[0]["note"].startswith("STALE")
+    assert kept[0]["im_field"] == "shortName", "the human's edit itself is preserved"
