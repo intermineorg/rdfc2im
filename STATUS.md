@@ -41,7 +41,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
 | reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
 | uberon | good | - | 1/0/0 | 16/2/0/1/47 | 0 | 8 | 0 | yes (8) | yes |
-| uniprot | good | uniprot | 4/5/0 | 11/13/0/17/96 | 400 | 10 | 0 | yes (10) | yes |
+| uniprot | good | uniprot | 4/5/0 | 11/13/0/16/97 | 400 | 10 | 0 | yes (10) | yes |
 
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)
 

@@ -930,9 +930,15 @@ predicates:
     pred: core:reviewed
     class: Protein
     im: ""
-    status: todo
-    basis: knowledge
-    note: "Swiss-Prot(1)/TrEMBL(0); the converter loads only reviewed by default - use as a VALUES filter (value: 1) rather than a field?"
+    status: drop
+    basis: java:UniprotConverter
+    note: >-
+      Do NOT turn this into a reviewed=1 filter - the previous note suggested it, and its premise
+      was false.  UniprotConverter defaults `loadtrembl = true` and HumanMine's project.xml does
+      not override it, so stock loads TrEMBL as well as Swiss-Prot.  Checked 2026-09-16: RDF
+      Portal has 20,431 reviewed and 190,278 unreviewed human entries, and live HumanMine holds
+      117,219 human proteins - far more than Swiss-Prot alone.  A reviewed filter would drop
+      ~83% of them.  There is no Protein field for the flag, so it is not loaded as data either.
   - source: uniprot
     pred: core:organism
     class: Protein

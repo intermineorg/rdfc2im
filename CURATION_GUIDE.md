@@ -221,11 +221,10 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `in_subset` | obo:uberon/core#early_development | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**uniprot** - 17 active rows (rows under a pruned branch are not listed):
+**uniprot** - 16 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| UniProt | `core:reviewed` | `reviewed` | 1 | Swiss-Prot(1)/TrEMBL(0); the converter loads only reviewed by default - use as a VALUES filter (value: 1) rather than a field? |
 | UniProt | `core:classifiedWith` | `go` | GO | spec D4, and DO NOT simply re-enable this.  obo:GO_0001618 -> GO:0001618 is right, but there is no correct single-hop target.  Protein's only OntologyTerm colle |
 | UniProt | `core:interaction` | `intact` | Intact | IntAct interactions - spec D6 (traditional psi load) |
 | SubmittedNameNode | `core:ecName` | `submitted_ec` | 5.2.1.8 | no match on Protein - choose a field, or set status=drop |
