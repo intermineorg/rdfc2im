@@ -1553,6 +1553,7 @@ predicates:
   # Coordinates - spec D13, still open.  Narrower than it looks: the stock converter loads no
   # coordinates at all (it only uses line[16] to skip non-GRCh38 rows), so dropping these matches
   # HumanMine today.  The open question is only whether to go beyond stock and model locations.
+  - {source: clinvar, pred: "rdfs:label", column: exact_position_bnode_label, im: "", status: drop, basis: spec-D13, note: "the label of the variant LOCATION blank node (e.g. 12:51864290:GRCh37), flattened onto Allele and matched to Allele.name by term; it overwrote the real variant name, one per assembly. Coordinates are D13"}
   - {source: clinvar, pred: "faldo:position", column: position, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
   - {source: clinvar, pred: "faldo:position", column: gene_begin, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}
   - {source: clinvar, pred: "faldo:position", column: gene_end, im: "", status: todo, basis: spec-D13, note: "spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock"}

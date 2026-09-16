@@ -27,7 +27,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 
 | source | scope | replaces | subjects sure/guess/todo | rows sure/guess/human/todo/drop | pruned | tables | new fields | fetched | items |
 |---|---|---|---|---|---|---|---|---|---|
-| clinvar | good | clinvar | 17/0/0 | 11/2/0/22/29 | 0 | 3 | 2 | yes (3) | yes |
+| clinvar | good | clinvar | 17/0/0 | 10/2/0/22/30 | 0 | 3 | 2 | yes (3) | yes |
 | ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
 | expressionatlas | structural | - | 1/0/0 | 1/1/0/2/1 | 33 | 1 | 0 | yes (1) | yes |
 | go | good | go | 1/0/0 | 8/1/0/1/1 | 0 | 4 | 0 | yes (4) | yes |
@@ -46,7 +46,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)
 
 - `clinvar/main`: `Allele.primaryIdentifier`, `Allele.type`, `Allele.name`, `Organism.taxonId`
-- `clinvar/main_SIO_000628`: `Allele.primaryIdentifier`, `Allele.alternate`, `Allele.reference`, `Allele.name`, `Gene.primaryIdentifier`, `Gene.symbol`, `Organism.taxonId`
+- `clinvar/main_SIO_000628`: `Allele.primaryIdentifier`, `Allele.alternate`, `Allele.reference`, `Gene.primaryIdentifier`, `Gene.symbol`, `Organism.taxonId`
 - `clinvar/main_rcv_accession`: `Allele.primaryIdentifier`, `Disease.name`, `Allele.reviewStatus`, `Allele.clinicalSignificance`, `Allele.submissionCount`, `Organism.taxonId`
 - `ensembl/main`: `Gene.secondaryIdentifier`, `Gene.primaryIdentifier`, `Gene.typeOfGene`, `Gene.symbol`, `Gene.description`, `Organism.taxonId`, `Organism.taxonId`
 - `ensembl/main_ensg_chromosome`: `Gene.secondaryIdentifier`, `Gene.primaryIdentifier`, `Chromosome.primaryIdentifier`, `Organism.taxonId`
