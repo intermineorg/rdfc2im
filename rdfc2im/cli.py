@@ -46,6 +46,7 @@ DEFAULTS = dict(
     type="humanmine-items",
     model_json="in/humanmine_model.json",
     src_data_dir="/micklem/data/rdfc2im",
+    source_version="4.3.0",   # humanmine-bio-sources' gradle project version
     include_guess=True,
     limit=20,
     types="root",
@@ -174,7 +175,8 @@ def run(a, ws) -> int:
 
     def do_project(m):
         return gen_project(out, os.path.join(out, "_mine"), m, ws["type"], ws["src_data_dir"],
-                           ws.get("project_xml"), sources_cfg, ws.get("extensions"))
+                           ws.get("project_xml"), sources_cfg, ws.get("extensions"),
+                           ws.get("source_version"))
 
     def do_check(m):
         return check_project(out, os.path.join(out, "_mine"), m, ws["type"], ws.get("project_xml"), sources_cfg)

@@ -6,6 +6,8 @@ config_root: in/config
 out: out
 # sources: [ncbigene, hgnc, uniprot, go, reactome]   # default: every scope good/structural source in sources.yaml
 type: humanmine-items
+source_version: "4.3.0"                   # humanmine-bio-sources' gradle project version;
+                                         # goes on each <source> so the mine resolves our jar
 src_data_dir: /micklem/data/rdfc2im      # where items/<source>.xml will live on the build machine
 model_json: in/humanmine_model.json      # for `rdfc2im linkml` (optional)
 include_guess: true
