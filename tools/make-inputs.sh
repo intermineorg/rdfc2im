@@ -5,6 +5,7 @@
 #   in/intermine/bio/              intermine/intermine              bio/
 #   in/humanmine-bio-sources/      intermine/humanmine-bio-sources
 #   in/humanmine_project.xml       intermine/humanmine              project.xml
+#   in/humanmine_priorities.properties  intermine/humanmine     dbmodel/resources/genomic_priorities.properties
 #   in/humanmine_model.xml         humanmine.org  /service/model?format=xml
 #   in/humanmine_model.json        humanmine.org  /service/model?format=json
 #
@@ -42,6 +43,7 @@ cp -r "$CACHE/intermine/bio"                    in/intermine/bio
 cp -r "$CACHE/humanmine-bio-sources"            in/humanmine-bio-sources
 rm -rf in/humanmine-bio-sources/.git
 cp    "$CACHE/humanmine/project.xml"            in/humanmine_project.xml
+cp    "$CACHE/humanmine/dbmodel/resources/genomic_priorities.properties" in/humanmine_priorities.properties
 
 # The live model is the merged, deployed model - it has no upstream file.
 for fmt in xml json; do

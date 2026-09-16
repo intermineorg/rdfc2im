@@ -40,6 +40,7 @@ DEFAULTS = dict(
     model_dirs=["in/intermine_bio_model_bio_sources", "in/humanmine-bio-sources"],
     live_model="in/humanmine_model.xml",
     project_xml="in/humanmine_project.xml",
+    priorities="in/humanmine_priorities.properties",   # merged into out/_mine/genomic_priorities.properties
     config_root="in/rdf-config-config-only/config",
     out="out",
     sources=None,                 # None = every source listed in sources.yaml with scope good/structural
@@ -178,7 +179,7 @@ def run(a, ws) -> int:
     def do_project(m):
         return gen_project(out, os.path.join(out, "_mine"), m, ws["type"], ws["src_data_dir"],
                            ws.get("project_xml"), sources_cfg, ws.get("extensions"),
-                           ws.get("source_version"))
+                           ws.get("source_version"), ws.get("priorities"))
 
     def do_check(m):
         return check_project(out, os.path.join(out, "_mine"), m, ws["type"], ws.get("project_xml"), sources_cfg)

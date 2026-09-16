@@ -6,7 +6,9 @@ Outputs (in out/_mine/):
   replaced_sources.xml           the original <source> entries an rdf-config load supersedes
   humanmine-items_keys.properties    integration keys for every class the mappings touch
   humanmine-items_additions.xml      union of per-source additions + curation/extensions
-  genomic_priorities.properties  draft priorities for fields written by >1 source
+  genomic_priorities.properties  HumanMine's priorities with our sources merged in: a replacement
+                                 takes the slot of the source it replaces, and fields written by
+                                 more than one source get an entry
   links_report.txt               per source: classes, links (via) and their reverse references
 """
 from __future__ import annotations
@@ -48,7 +50,7 @@ def _prop(name: str, value: Optional[str] = None, location: Optional[str] = None
 def gen_project(out_root: str, project_out: str, model: InterMineModel, type_name: str,
                 src_data_dir: str, humanmine_project: Optional[str], sources_cfg: dict,
                 extensions_xml: Optional[str], source_version: Optional[str] = None,
-                log=print) -> dict:
+                priorities: Optional[str] = None, log=print) -> dict:
     os.makedirs(project_out, exist_ok=True)
     report: List[str] = []
     new_sources: List[etree._Element] = []
@@ -192,14 +194,14 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
         fh.write(etree.tostring(classes_el, pretty_print=True))
 
     # ---- priorities
-    plines = ["# genomic_priorities.properties - DRAFT from rdfc2im project",
-              "# fields written by more than one rdf-config source; add the traditional sources that also write them", ""]
-    for fld, srcs in sorted(writers.items()):
-        uniq = list(dict.fromkeys(srcs))
-        if len(uniq) > 1:
-            plines.append(f"{fld} = {', '.join(uniq)}")
+    replaced_by: Dict[str, List[str]] = {}
+    for src in source_dirs(out_root):
+        for r in sources_cfg.get(src, {}).get("replaces") or []:
+            replaced_by.setdefault(r, []).append(f"humanmine-{src}")
+    text = merge_priorities(priorities if priorities and os.path.exists(priorities) else None,
+                            writers, replaced_by, {}, {})
     with open(os.path.join(project_out, "genomic_priorities.properties"), "w") as fh:
-        fh.write("\n".join(plines) + "\n")
+        fh.write(text)
     with open(os.path.join(project_out, "links_report.txt"), "w") as fh:
         fh.write("\n".join(report) + "\n")
     if carried:
@@ -207,6 +209,84 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
     log(f"project: {len(new_sources)} items sources, {len(replaced_names)} originals replaced, "
         f"{len(all_classes)} classes keyed -> {project_out}")
     return {"sources": len(new_sources), "replaced": replaced_names, "classes": all_classes, "report": report}
+
+
+def _parse_priority(line: str):
+    if line.lstrip().startswith("#") or "=" not in line:
+        return None, None
+    key, _, val = line.partition("=")
+    return key.strip(), [v.strip() for v in val.split(",") if v.strip()]
+
+
+def merge_priorities(base: Optional[str], writers: Dict[str, List[str]],
+                     replaced_by: Dict[str, List[str]], alongside: Dict[str, List[str]],
+                     alongside_fields: Dict[str, List[str]]) -> str:
+    """HumanMine's genomic_priorities.properties with our sources merged in.
+
+    Two sources writing different non-null values into one field stop the build unless the field
+    has a priority that lists both (SourcePriorityComparator: "Conflicting values for field";
+    sources left to `*` share one rank, so they conflict too).  So every field with more than one
+    writer needs every writer named:
+
+    - a source we replace hands its slot to the replacement (ncbi-gene -> humanmine-ncbigene);
+    - a source loaded `alongside` a stock one goes right after it, so HumanMine's value stands;
+      if the stock source is not named yet, both go in just before `*`;
+    - any other writer of ours goes just before `*` (or last, if there is no `*`).
+
+    A field HumanMine does not configure gets an entry when more than one of our sources writes it
+    or an `alongside` source does; the latter ends in `*`, since the stock source's other
+    co-writers are unknown here.  Without a base file only those entries are written.
+    """
+    ours_of = {f: list(dict.fromkeys(srcs)) for f, srcs in writers.items()}
+    for f, srcs in alongside_fields.items():
+        ours_of[f] = list(dict.fromkeys(ours_of.get(f, []) + srcs))
+
+    def merge(order: List[str], fld: str) -> List[str]:
+        out: List[str] = []
+        for n in order:
+            out.extend(replaced_by.get(n, [n]))
+        out = list(dict.fromkeys(out))
+        for n in ours_of.get(fld, []):
+            if n in out:
+                continue
+            stocks = [st for st in alongside.get(n, [])]
+            at = out.index("*") if "*" in out else len(out)
+            placed = [out.index(st) for st in stocks if st in out]
+            if placed:
+                at = max(placed) + 1
+                while at < len(out) and out[at] in alongside:
+                    at += 1
+            else:
+                for st in stocks:
+                    out.insert(at, st); at += 1
+            out.insert(at, n)
+        return out
+
+    lines = ["# genomic_priorities.properties - generated by rdfc2im project from "
+             + (os.path.basename(base) if base else "(no base file: rdfc2im entries only)"),
+             "# Our sources are merged into HumanMine's entries; see project.merge_priorities.", ""]
+    done = set()
+    if base:
+        for ln in open(base, encoding="utf-8").read().splitlines():
+            key, order = _parse_priority(ln)
+            if key is None:
+                lines.append(ln)
+                continue
+            done.add(key)
+            new = merge(order, key)
+            lines.append(ln if new == order else f"{key} = {', '.join(new)}")
+    added = []
+    for fld in sorted(ours_of):
+        if fld in done:
+            continue
+        srcs = ours_of[fld]
+        supplements = [n for n in srcs if n in alongside]
+        if len(srcs) < 2 and not supplements:
+            continue
+        added.append(f"{fld} = {', '.join(merge(['*'] if supplements else [], fld))}")
+    if added:
+        lines += ["", "# ---- fields HumanMine does not configure, written by rdfc2im sources"] + added
+    return "\n".join(lines) + "\n"
 
 
 def _is_core(path: str) -> bool:
@@ -351,7 +431,8 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
             soft.append(f"{name}: {n} items in {items}")
         else:
             soft.append(f"{name}: no items file yet (run fetch, tsv, items)")
-        for orig in sources_cfg.get(src, {}).get("replaces") or []:
+        replaces = sources_cfg.get(src, {}).get("replaces") or []
+        for orig in replaces:
             if orig in active:
                 soft.append(f"{name}: original source '{orig}' is still active - duplicate load")
             for cls, missing, whole in replaced_coverage(model, out_root, src, orig):

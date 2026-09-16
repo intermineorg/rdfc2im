@@ -308,3 +308,34 @@ def test_approved_extensions_are_part_of_the_working_model(tmp_path):
     assert load_model([str(tmp_path / "bio")]).field("Pathway", "organism") is None
     fd = load_model([str(tmp_path / "bio")], extra_additions=[str(ext)]).field("Pathway", "organism")
     assert fd is not None and fd.type == "Organism"
+
+
+# ------------------------------------------------------------------ priorities
+def test_priorities_merge_into_humanmines_own(tmp_path):
+    """Two writers of one field with no priority naming both stop the build ("Conflicting values
+    for field").  A replacement inherits the replaced source's slot; other writers of ours go in
+    before `*`, since sources left to `*` share a rank and conflict with each other too."""
+    from rdfc2im.project import merge_priorities
+    base = tmp_path / "p.properties"
+    base.write_text("# HumanMine\n"
+                    "Gene.symbol = ncbi-gene, hgnc, depmap-expression, *\n"
+                    "Disease.name = omim, *\n"
+                    "Gene.organism = *, gtex\n")
+    writers = {"Gene.symbol": ["humanmine-ncbigene", "humanmine-hgnc", "humanmine-clinvar"],
+               "Gene.name": ["humanmine-hgnc", "humanmine-ncbigene"],
+               "Gene.typeOfGene": ["humanmine-ensembl"]}
+    out = merge_priorities(str(base), writers,
+                           {"ncbi-gene": ["humanmine-ncbigene"], "hgnc": ["humanmine-hgnc"]}, {}, {})
+    lines = out.splitlines()
+    assert "# HumanMine" in lines
+    assert "Gene.symbol = humanmine-ncbigene, humanmine-hgnc, depmap-expression, humanmine-clinvar, *" in lines
+    assert "Disease.name = omim, *" in lines and "Gene.organism = *, gtex" in lines   # untouched
+    assert "Gene.name = humanmine-hgnc, humanmine-ncbigene" in lines
+    assert not any(l.startswith("Gene.typeOfGene") for l in lines)                   # one writer
+
+
+def test_priorities_without_a_base_file_list_only_shared_fields(tmp_path):
+    from rdfc2im.project import merge_priorities
+    out = merge_priorities(None, {"Gene.name": ["humanmine-a", "humanmine-b"], "Gene.x": ["humanmine-a"]}, {}, {}, {})
+    assert [l for l in out.splitlines() if "=" in l] == ["Gene.name = humanmine-a, humanmine-b"]
+

@@ -60,6 +60,7 @@ full UniProt or ncbi-gene extract. Switch the properties line back only for smal
    `src.data.file` points (`src_data_dir` in `rdfc2im.yaml`).  Each `<source>` carries
    `version="4.3.0"` (`source_version` in `rdfc2im.yaml`) to match humanmine-bio-sources'
    gradle project version; without it the mine resolves `bioVersion` (5.0.+) and fails.
-5. Merge `out/_mine/genomic_priorities.properties` into the mine's own - it lists only the
-   `humanmine-*` writers, and every legacy source that still writes the same field must be added
-   or the build will reject the ambiguity.
+5. Use `out/_mine/genomic_priorities.properties` in place of the mine's own
+   (`dbmodel/resources/`).  It is HumanMine's file with our sources merged in (`priorities` in
+   `rdfc2im.yaml`); a field HumanMine does not configure lists only the writers rdfc2im knows of,
+   so a legacy source that also writes it must still be added, or the build rejects the ambiguity.

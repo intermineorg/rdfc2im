@@ -2,6 +2,7 @@
 model_dirs: [in/intermine, in/humanmine-bio-sources]
 live_model: in/humanmine_model.xml
 project_xml: in/humanmine_project.xml
+priorities: in/humanmine_priorities.properties   # HumanMine's own; project merges our sources in
 config_root: in/config
 out: out
 # sources: [ncbigene, hgnc, uniprot, go, reactome]   # default: every scope good/structural source in sources.yaml
