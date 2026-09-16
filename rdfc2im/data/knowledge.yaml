@@ -1530,22 +1530,32 @@ predicates:
 
   # ======================= clinvar (ClinvarConverter) =====================================
   - source: clinvar
+    pred: cvo:allele_id
+    column: allele_id
+    im: Allele.primaryIdentifier
+    status: sure
+    basis: java:ClinvarConverter
+    required: "yes"
+    note: >-
+      The stock identifier: ClinvarConverter sets Allele.primaryIdentifier from line[0] of
+      variant_summary.txt, the numeric AlleleID, and clinvar_keys.properties merges Allele on it.
+      Keeping it lets this source merge with anything keyed on stock ids and keeps saved lists and
+      templates working.  It sits on the SIO_000628 node, not the record root, so the required
+      pattern runs through classified_record.  On RDF Portal (2026-09-17) AlleleID and VCV are
+      one-to-one: 3,586,720 records carry 3,586,720 distinct AlleleIDs, none shared and none
+      doubled.  2,249 records (0.06%) have no AlleleID and are not loaded; variant_summary has
+      no such rows either.
+  - source: clinvar
     pred: cvo:accession
     class: Allele
     column: vcv
-    im: Allele.primaryIdentifier
+    im: Allele.secondaryIdentifier
     status: sure
     basis: rdfconfig:model
-    required: "yes"
     note: >-
-      DIVERGES FROM STOCK - decide before replacing clinvar.  This previously claimed
-      basis java:ClinvarConverter, which is false: the converter sets primaryIdentifier from
-      `line[0]` of variant_summary.txt, the numeric AlleleID (e.g. 205807), never the VCV
-      accession.  VCV is what rdf-config's own model uses to identify a record and is a sound
-      identifier, so it stays mapped - but loading it in place of stock clinvar changes every
-      Allele.primaryIdentifier, which breaks saved lists, templates and anything keyed on AlleleID.
-      To match stock instead, key on cvo:allele_id (column allele_id) - that id sits on the
-      SIO_000628 node, not the record root, so it is a structural change, not a one-line swap.
+      The VCV accession, the record identifier rdf-config's model uses.  It was the primary
+      identifier until the AlleleID above replaced it; kept as secondaryIdentifier (from
+      BioEntity) so a VCV still finds its allele.  Stock loads no VCV.
   # ---- clinvar, first curation pass (CURATION_GUIDE 4.2).  The stock ClinvarConverter reads 8
   # columns of variant_summary.txt and writes only Allele.{primaryIdentifier, type,
   # clinicalSignificance, reference, alternate, organism, gene, diseases}, a bare
@@ -1619,7 +1629,6 @@ predicates:
   - {source: clinvar, pred: "dct:source", column: disease_source, im: "", status: todo, basis: spec-D5, note: "spec D5 - ClinVar gives MedGen; the converter parses OMIM out of line[12] for Disease.primaryIdentifier"}
 
   # Other identifiers - part of the AlleleID/VCV decision on cvo:accession above.
-  - {source: clinvar, pred: "cvo:allele_id", column: allele_id, im: "", status: todo, basis: java:ClinvarConverter, note: "the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession"}
   - {source: clinvar, pred: "cvo:variation_id", column: id, im: "", status: todo, basis: knowledge, note: "ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession"}
 
   - source: clinvar
