@@ -41,7 +41,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
 | reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
 | uberon | good | - | 1/0/0 | 16/2/0/1/47 | 0 | 8 | 0 | yes (8) | yes |
-| uniprot | good | uniprot | 4/5/0 | 11/13/0/16/97 | 400 | 10 | 0 | yes (10) | yes |
+| uniprot | good | uniprot | 4/5/0 | 12/13/0/4/108 | 400 | 10 | 0 | yes (10) | yes |
 
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)
 
@@ -113,7 +113,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `uniprot/main_db_resource`: `Organism.taxonId`, `Protein.primaryAccession`, `CrossReference.identifier`, `DataSource.name`, `Organism.taxonId`
 - `uniprot/main_keyword`: `Organism.taxonId`, `Protein.primaryAccession`, `OntologyTerm.identifier`, `Organism.taxonId`
 - `uniprot/main_recommended_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Protein.name`, `Synonym.value`, `ECNumber.identifier`, `Organism.taxonId`
-- `uniprot/main_submitted_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Protein.name`, `Organism.taxonId`
+- `uniprot/main_submitted_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Protein.name`, `ECNumber.identifier`, `Organism.taxonId`
 - `uniprot/main_alternative_name_node`: `Organism.taxonId`, `Protein.primaryAccession`, `Synonym.value`, `Synonym.value`, `Organism.taxonId`
 - `uniprot/main_citation`: `Organism.taxonId`, `Protein.primaryAccession`, `Publication.pubMedId`, `Publication.title`, `Publication.volume`, `Publication.pages`, `Publication.pubMedId`, `Organism.taxonId`
 

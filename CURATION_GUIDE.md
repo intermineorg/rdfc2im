@@ -221,26 +221,14 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `in_subset` | obo:uberon/core#early_development | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**uniprot** - 16 active rows (rows under a pruned branch are not listed):
+**uniprot** - 4 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | UniProt | `core:classifiedWith` | `go` | GO | spec D4, and DO NOT simply re-enable this.  obo:GO_0001618 -> GO:0001618 is right, but there is no correct single-hop target.  Protein's only OntologyTerm colle |
-| UniProt | `core:interaction` | `intact` | Intact | IntAct interactions - spec D6 (traditional psi load) |
-| SubmittedNameNode | `core:ecName` | `submitted_ec` | 5.2.1.8 | no match on Protein - choose a field, or set status=drop |
-| AlternativeNameNode | `core:ecName` | `altanative_ec` | 2.1.1.- | no match on Synonym - choose a field, or set status=drop |
-| AlternativeNameNode | `core:cdAntigenName` | `altanative_antigen` | CD312 | no match on Synonym - choose a field, or set status=drop |
-| AlternativeNameNode | `core:allergenName` | `altanative_allergen` | Hom s 3 | no match on Synonym - choose a field, or set status=drop |
-| Gene | `skos:altLabel` | `gene_alt_name` | UNCX4.1 | gene alias - would become a Synonym on the *Gene*, but the row's Synonym slot is used by protein synonyms; decide |
-| Citation | `core:date` | `ciattion_date` | 2003 | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:name` | `ciattion_name` | Circulation | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:author` | `citation_author` | Zisman L.S. | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:editor` | `citation_editor` | Shugar D. | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:institution` | `citation_institution` | Faculty of Biological Sciences / Goettingen | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:place` | `citation_place` | Germany | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:publisher` | `citation_publisher` | Academic Press | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:submittedTo` | `submit_to` | UniProtKB | no match on Publication - choose a field, or set status=drop |
-| Citation | `core:group` | `citation_group` | Alzheimer's Disease Genetics Consortium | no match on Publication - choose a field, or set status=drop |
+| AlternativeNameNode | `core:ecName` | `altanative_ec` | 2.1.1.- | a genuine stock EC, but this node is bound to Synonym and Synonym has no link to ECNumber, so it would load unlinked; move it onto a Protein-bound path |
+| AlternativeNameNode | `core:cdAntigenName` | `altanative_antigen` | CD312 | an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so |
+| AlternativeNameNode | `core:allergenName` | `altanative_allergen` | Hom s 3 | an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so |
 
 ### 4.3 Confirm or correct `guess` rows
 

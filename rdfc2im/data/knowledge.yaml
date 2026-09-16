@@ -422,6 +422,29 @@ subjects:
     note: "Pathway has no crossReferences and is not a BioEntity, so CrossReference.subject cannot point at it"
 
 predicates:
+  # ---------------------------------------------------------------------------------------
+  # First curation pass (CURATION_GUIDE 4.2), remaining sources, 2026-09-16.
+  # ---------------------------------------------------------------------------------------
+
+  # uniprot.  UniprotConverter creates Publication with ONLY pubMedId (update-publications fills
+  # the rest from PubMed); creates every Synonym on the protein, never the gene; and collects
+  # every EC attribute into Protein.ecNumbers (entry.addECNumber).
+  - {source: uniprot, pred: "core:ecName", column: submitted_ec, im: "ECNumber.identifier", status: sure, basis: java:UniprotConverter, note: "every EC attribute goes to Protein.ecNumbers; this node is bound to Protein, so the link resolves"}
+  - {source: uniprot, pred: "core:ecName", column: altanative_ec, im: "", status: todo, basis: java:UniprotConverter, note: "a genuine stock EC, but this node is bound to Synonym and Synonym has no link to ECNumber, so it would load unlinked; move it onto a Protein-bound path"}
+  - {source: uniprot, pred: "core:cdAntigenName", column: altanative_antigen, im: "", status: todo, basis: knowledge, note: "an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so a second value here silently replaces the first - fix that before mapping this"}
+  - {source: uniprot, pred: "core:allergenName", column: altanative_allergen, im: "", status: todo, basis: knowledge, note: "an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so a second value here silently replaces the first - fix that before mapping this"}
+  - {source: uniprot, pred: "skos:altLabel", column: gene_alt_name, im: "", status: drop, basis: java:UniprotConverter, note: "UniprotConverter creates synonyms only on the protein; gene aliases come from ncbi-gene and hgnc"}
+  - {source: uniprot, pred: "core:interaction", column: intact, im: "", status: drop, basis: spec-D6, note: "spec D6, settled: interactions stay with the traditional psi-intact load"}
+  - {source: uniprot, pred: "core:date", column: ciattion_date, im: "", status: drop, basis: java:UniprotConverter, note: "citation date; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:name", column: ciattion_name, im: "", status: drop, basis: java:UniprotConverter, note: "journal name; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:author", column: citation_author, im: "", status: drop, basis: java:UniprotConverter, note: "author; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:editor", column: citation_editor, im: "", status: drop, basis: java:UniprotConverter, note: "editor; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:institution", column: citation_institution, im: "", status: drop, basis: java:UniprotConverter, note: "institution; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:place", column: citation_place, im: "", status: drop, basis: java:UniprotConverter, note: "place; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:publisher", column: citation_publisher, im: "", status: drop, basis: java:UniprotConverter, note: "publisher; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:submittedTo", column: submit_to, im: "", status: drop, basis: java:UniprotConverter, note: "submission target; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+  - {source: uniprot, pred: "core:group", column: citation_group, im: "", status: drop, basis: java:UniprotConverter, note: "author group; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
+
   # ======================= gene identity: ncbigene (NcbiGeneConverter, taxon 9606) ==========
   - source: ncbigene
     pred: dct:identifier
