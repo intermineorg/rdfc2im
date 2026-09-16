@@ -31,7 +31,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
 | expressionatlas | structural | - | 1/0/0 | 1/1/0/2/1 | 33 | 1 | 0 | yes (1) | yes |
 | go | good | go | 1/0/0 | 8/1/0/1/1 | 0 | 4 | 0 | yes (4) | yes |
-| gwascatalog | good | huge-gwas | 2/0/0 | 9/5/0/2/32 | 0 | 1 | 1 | yes (1) | yes |
+| gwascatalog | good | huge-gwas | 2/0/0 | 11/3/0/1/33 | 0 | 1 | 1 | yes (1) | yes |
 | hgnc | good | hgnc | 4/12/0 | 7/24/0/0/17 | 0 | 16 | 0 | yes (16) | yes |
 | homologene | structural | - | 0/1/0 | 0/0/0/3/1 | 8 | 0 | 0 | no | no |
 | hpo | good | hpo | 1/0/0 | 12/1/0/0/3 | 0 | 6 | 0 | yes (6) | yes |
@@ -57,7 +57,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 - `go/main_xref`: `GOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
 - `go/main_synonym`: `GOTerm.identifier`, `OntologyTermSynonym.name`, `OntologyTermSynonym.type`, `Ontology.name`
 - `go/main_superclass`: `GOTerm.identifier`, `OntologyTerm.identifier`, `Ontology.name`
-- `gwascatalog/main`: `Gene.symbol`, `GWASResult.associatedVariantRiskAllele`, `SNP.primaryIdentifier`, `GWASResult.riskAlleleFreqInControls`, `GWASResult.pValue`, `GWASResult.phenotype`, `GWASResult.mappedTraitUri`, `GWAS.name`, `GWAS.year`, `Publication.pubMedId`, `GWAS.initialSample`, `GWAS.replicateSample`, `Organism.taxonId`, `Organism.taxonId`
+- `gwascatalog/main`: `Gene.secondaryIdentifier`, `GWASResult.associatedVariantRiskAllele`, `SNP.primaryIdentifier`, `GWASResult.riskAlleleFreqInControls`, `GWASResult.pValue`, `GWASResult.phenotype`, `GWASResult.mappedTraitUri`, `GWAS.name`, `GWAS.year`, `Publication.pubMedId`, `GWAS.initialSample`, `GWAS.replicateSample`, `Organism.taxonId`, `Organism.taxonId`
 - `hgnc/main`: `Gene.primaryIdentifier`, `Gene.symbol`, `Synonym.value`, `Gene.name`, `Gene.cytoLocation`, `Organism.taxonId`
 - `hgnc/main_alt_label`: `Gene.primaryIdentifier`, `Synonym.value`, `Organism.taxonId`
 - `hgnc/main_see_also_ensembl`: `Gene.primaryIdentifier`, `Gene.secondaryIdentifier`, `Organism.taxonId`

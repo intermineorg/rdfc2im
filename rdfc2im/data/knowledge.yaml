@@ -1402,7 +1402,7 @@ predicates:
   - {source: gwascatalog, pred: "terms:mapped_trait", column: mapped_trait, im: "", status: drop, basis: knowledge, note: "study-level trait; the association-level mapped_trait_uri is already GWASResult.mappedTraitUri"}
 
   # Genuine decisions.
-  - {source: gwascatalog, pred: "terms:snp_gene_ids", column: snp_gene_ids, im: "", status: todo, basis: java:HugeGwasConverter, note: "DIVERGES FROM STOCK: the converter fills associatedGenes from line[17] (SNP_GENE_IDS, Ensembl ids) and uses them as Gene.primaryIdentifier; this source maps terms:mapped_genes (MAPPED_GENE, line[14]) to Gene.symbol instead. Stock's choice clashes with HumanMine's NCBI-keyed genes, so decide which to follow"}
+  - {source: gwascatalog, pred: "terms:snp_gene_ids", column: snp_gene_ids, im: "Gene.secondaryIdentifier", status: sure, basis: "java:HugeGwasConverter+model:Gene", transform: iri_localname, const: {Organism.taxonId: "9606"}, const_via: {Organism.taxonId: Gene.organism}, note: "The only populated gene source: 442,992 Ensembl IRIs over 397,141 associations on TogoVar (checked 2026-09-17), while terms:mapped_genes is empty on all 686,504. HugeGwasConverter also takes associatedGenes from this column (SNP_GENE_IDS, line[17]) but writes the Ensembl id to Gene.primaryIdentifier, which clashes with HumanMine's NCBI keys; HumanMine keeps Ensembl ids in Gene.secondaryIdentifier and merges them on key_secondaryidentifier_org, so this writes there, with the organism the key requires. Stays in main: GWASResult has no identifier, so a satellite table could not say which result a gene belongs to"}
   - {source: gwascatalog, pred: "dct:description", column: study_description, im: "", status: todo, basis: spec-D12, note: "spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead"}
 
   - source: gwascatalog
@@ -1447,18 +1447,14 @@ predicates:
   - source: gwascatalog
     pred: terms:mapped_genes
     class: GWASResult
-    im: Gene.symbol
-    status: guess
-    basis: java:HugeGwasConverter
-    transform: "split:,"
-    const: {Organism.taxonId: "9606"}
-    const_via: {Organism.taxonId: Gene.organism}
+    im: ""
+    status: drop
+    basis: data:togovar
     note: >-
-      MAPPED_GENE symbols, split on commas.  (This note used to say the converter links
-      associatedGenes by symbol; it does not - it uses SNP_GENE_IDS, line[17]; see snp_gene_ids.)
-      The organism is not optional: a Gene carrying only a symbol can merge with HumanMine's genes
-      solely through key_symbol_org (symbol + organism), so without Gene.organism every GWAS gene
-      would load as a duplicate.
+      Empty on every one of TogoVar's 686,504 associations (checked 2026-09-17: the predicate is
+      present, every value is ""), so it produced no genes at all.  The genes come from
+      terms:snp_gene_ids instead.  (This entry's note used to say HugeGwasConverter links
+      associatedGenes by symbol; it does not - it uses SNP_GENE_IDS, line[17].)
   - source: gwascatalog
     pred: terms:reported_genes
     class: GWASResult

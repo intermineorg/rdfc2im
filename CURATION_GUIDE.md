@@ -133,11 +133,10 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `subset` | go:goslim_pir | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**gwascatalog** - 2 active rows (rows under a pruned branch are not listed):
+**gwascatalog** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| GWASAssociation | `terms:snp_gene_ids` | `snp_gene_ids` |  | DIVERGES FROM STOCK: the converter fills associatedGenes from line[17] (SNP_GENE_IDS, Ensembl ids) and uses them as Gene.primaryIdentifier; this source maps ter |
 | GWASStudy | `dct:description` | `study_description` | BMI (adjusted for smoking behaviour) | spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead |
 
 **homologene** - 3 active rows (rows under a pruned branch are not listed):
@@ -218,15 +217,13 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 |---|---|---|---|---|
 | Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 
-**gwascatalog** - 5 guesses:
+**gwascatalog** - 3 guesses:
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| GWASAssociation | `terms:mapped_genes` | `mapped_genes` | `Gene.symbol` | MAPPED_GENE symbols, split on commas.  (This note used to say the converter links associatedGenes by symbol; it does not - it uses SNP_GENE_IDS, line[17]; see s |
 | GWASAssociation | `terms:mapped_trait_uri` | `mapped_trait_uri` | `GWASResult.mappedTraitUri` | new attribute approved in spec section 8 |
 | GWASStudy | `dct:identifier` | `study_identifier` | `GWAS.name` | GCST accession as the study name (GWAS has no identifier attribute) |
 | GWASStudy | `dct:date` | `study_date` | `GWAS.year` | spec D12 - year is denormalised from the publication in the converter |
-| GWASAssociation | `-const-` | `const_Organism_taxonId_Gene_organism` | `Organism.taxonId` | constant for mapped_genes |
 
 **hgnc** - 24 guesses:
 
