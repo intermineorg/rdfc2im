@@ -8,9 +8,22 @@ SRC     ?=
 SRCFLAG  = $(foreach s,$(SRC),--source $(s))
 GUESS   ?=            # set to --no-guess to exclude guess rows
 
-.PHONY: inputs all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
+.PHONY: inputs up down restart status logs trial-stage trial-destroy all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
 
 inputs:     ; sh tools/make-inputs.sh
+
+# ---- local trial stack (postgres + InterMine webapp + BlueGenes), all in containers.
+# Everything is published to 127.0.0.1 only; reach it with `ssh -L` (see LOAD-TRIAL.md).
+# `down` keeps the database volume; only `trial-destroy` throws it away.
+COMPOSE  ?= podman compose -f trial/docker-compose.yml
+trial-stage:   ; sh tools/trial-stage.sh
+up:            ; $(COMPOSE) up -d
+down:          ; $(COMPOSE) down
+# the webapp reads the database once, at startup - restart it after (re)loading data
+restart:       ; $(COMPOSE) restart $(SVC)
+status:        ; $(COMPOSE) ps
+logs:          ; $(COMPOSE) logs --tail 40 $(SVC)
+trial-destroy: ; $(COMPOSE) down -v
 all:        ; $(PY) -m rdfc2im all --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG) $(GUESS) $(if $(FETCH),--fetch,)
 allow:      ; $(PY) -m rdfc2im allow
 translate:  ; $(PY) -m rdfc2im translate --limit $(LIMIT) $(SRCFLAG) $(GUESS)

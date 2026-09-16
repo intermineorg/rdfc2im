@@ -1,0 +1,79 @@
+# Local trial stack for the rdfc2im load: PostgreSQL, the InterMine webapp, and BlueGenes.
+#
+# Everything is published to 127.0.0.1 only - reach it with `ssh -L` (see ../LOAD-TRIAL.md).
+# Run `make trial-stage` first: it explodes the built war into artifacts/humanmine/ and
+# collects BlueGenes' jars into artifacts/bluegenes-lib/.  Both are gitignored build output.
+#
+#   make up | down | status | logs
+#
+# `down` stops and removes the containers but KEEPS the pgdata volume; use
+# `make trial-destroy` to throw the database away.
+services:
+
+  postgres:
+    image: docker.io/library/postgres:14
+    container_name: rdfc2im-postgres
+    environment:
+      POSTGRES_USER: intermine
+      POSTGRES_PASSWORD: intermine
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # published so the host-side gradle tasks (builddb, integrate) can reach it
+      - "127.0.0.1:${PG_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intermine"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  mine:
+    image: docker.io/library/tomcat:8.5-jdk8-temurin
+    container_name: rdfc2im-mine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CATALINA_OPTS: "-Xmx3g -Djava.awt.headless=true"
+    volumes:
+      # exploded webapp; its two properties files are patched at stage time to point
+      # at the `postgres` service rather than the host's published port
+      - ./artifacts/humanmine:/usr/local/tomcat/webapps/humanmine:ro
+      # listens on 8090, not 8080: InterMine fetches its own query.xsd from webapp.baseurl
+      # (http://localhost:8090), so the port INSIDE the container must equal the published
+      # one or every query-service call fails with "Connection refused"
+      - ./tomcat/server.xml:/usr/local/tomcat/conf/server.xml:ro
+    ports:
+      - "127.0.0.1:8090:8090"
+    restart: unless-stopped
+
+  bluegenes:
+    image: docker.io/library/eclipse-temurin:17-jre
+    container_name: rdfc2im-bluegenes
+    depends_on:
+      - mine
+    environment:
+      SERVER_PORT: "5000"
+      # what the BROWSER calls - it resolves on your machine, through `ssh -L`
+      BLUEGENES_DEFAULT_SERVICE_ROOT: "http://localhost:8090/humanmine"
+      # what the BlueGenes server calls - container to container on the compose network
+      BLUEGENES_BACKEND_SERVICE_ROOT: "http://mine:8090/humanmine"
+      BLUEGENES_DEFAULT_MINE_NAME: "rdfc2im trial (GO only)"
+      BLUEGENES_DEFAULT_NAMESPACE: "humanmine"
+      HIDE_REGISTRY_MINES: "true"
+      LOGGING_LEVEL: "info"
+    volumes:
+      - ./artifacts/bluegenes-lib:/opt/bluegenes/lib:ro
+    working_dir: /opt/bluegenes
+    # BlueGenes hardcodes its Jetty bind to 0.0.0.0 (no :host in run-jetty), which is fine
+    # here: the container's netns confines it, and podman publishes only to loopback.
+    command: ["java", "-cp", "/opt/bluegenes/lib/*", "bluegenes.core"]
+    ports:
+      - "127.0.0.1:${BG_PORT:-5000}:5000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: rdfc2im-pgdata

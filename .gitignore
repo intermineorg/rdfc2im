@@ -23,6 +23,10 @@ out/*/raw/
 out/*/tsv/
 out/*/items/
 
+# Trial stack build output (see LOAD-TRIAL.md); the compose file itself is tracked.
+trial/artifacts/
+.trial-home
+
 __pycache__/
 *.pyc
 .pytest_cache/
