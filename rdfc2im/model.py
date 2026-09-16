@@ -231,7 +231,16 @@ def find_model_files(model_dirs: List[str], allow_tokens: Optional[List[str]]):
 
 
 def load_model(model_dirs: List[str], allow_file: Optional[str] = None,
-               live_model: Optional[str] = None) -> "InterMineModel":
+               live_model: Optional[str] = None,
+               extra_additions: Optional[List[str]] = None) -> "InterMineModel":
+    """The model translate, items and check reason about.
+
+    `extra_additions` are approved extensions - curation/extensions_additions.xml - which
+    `rdfc2im project` puts into the mine's additions, so they will exist when the data loads.
+    They must be in this model too.  They used to be left out, so a mapping onto an approved
+    field could not resolve: Reactome's Pathway.organism found no link and its organisms were
+    created unlinked, although the field the link needs was approved and would be in the mine.
+    """
     tokens = None
     if allow_file:
         with open(allow_file) as fh:
@@ -242,6 +251,9 @@ def load_model(model_dirs: List[str], allow_file: Optional[str] = None,
         m.load_xml(p)
     for p in keys:
         m.load_keys(p)
+    for p in extra_additions or []:
+        if p and os.path.exists(p):
+            m.load_xml(p)
     if live_model:
         m.live = InterMineModel()
         m.live.load_xml(live_model)

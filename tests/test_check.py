@@ -292,3 +292,19 @@ def test_untyped_predicate_bound_twice_is_a_cross_product(tmp_path):
     msgs = cross_products(str(out_root), "pubmed")
     assert len(msgs) == 1 and "N^2" in msgs[0], msgs
     assert "discriminated" not in msgs[0]
+
+
+def test_approved_extensions_are_part_of_the_working_model(tmp_path):
+    """project puts curation/extensions_additions.xml into the mine, so the model mappings are
+    checked against must include it - or a link onto an approved field can never resolve."""
+    from rdfc2im.model import load_model
+    d = tmp_path / "bio" / "model"; d.mkdir(parents=True)
+    (d / "core.xml").write_text('<model name="genomic" package="org.intermine.model.bio">'
+        '<class name="Pathway" is-interface="true"><attribute name="identifier" type="java.lang.String"/></class>'
+        '<class name="Organism" is-interface="true"><attribute name="taxonId" type="java.lang.String"/></class></model>')
+    ext = tmp_path / "extensions_additions.xml"
+    ext.write_text('<classes><class name="Pathway" is-interface="true">'
+                   '<reference name="organism" referenced-type="Organism"/></class></classes>')
+    assert load_model([str(tmp_path / "bio")]).field("Pathway", "organism") is None
+    fd = load_model([str(tmp_path / "bio")], extra_additions=[str(ext)]).field("Pathway", "organism")
+    assert fd is not None and fd.type == "Organism"

@@ -141,7 +141,9 @@ def run(a, ws) -> int:
     def model():
         if not os.path.exists(allow_path):
             do_allow()
-        return load_model(ws["model_dirs"], allow_path, ws.get("live_model") if os.path.exists(ws.get("live_model") or "") else None)
+        return load_model(ws["model_dirs"], allow_path,
+                          ws.get("live_model") if os.path.exists(ws.get("live_model") or "") else None,
+                          extra_additions=[ws.get("extensions")])
 
     def do_translate(m):
         kn = Knowledge(ws.get("knowledge"))

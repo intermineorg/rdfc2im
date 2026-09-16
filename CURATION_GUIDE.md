@@ -192,8 +192,8 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification | `cvo:review_status` | `rcv_review_status` | `Allele.reviewStatus` | spec-section-8+new-field |
-| Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description | `cvo:submission_count` | `rcv_submission_count` | `Allele.submissionCount` | spec-section-8+new-field |
+| Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification | `cvo:review_status` | `rcv_review_status` | `Allele.reviewStatus` | spec-section-8 |
+| Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description | `cvo:submission_count` | `rcv_submission_count` | `Allele.submissionCount` | spec-section-8 |
 
 **ensembl** - 5 guesses:
 
