@@ -355,6 +355,72 @@ subjects:
     note: bare owl:Class subject in a non-ontology source; pick the concrete *Term class
 
 # --------------------------------------------------------------------------- predicates
+  # ---------------------------------------------------------------------------------------
+  # Subjects resolved in the first curation pass (CURATION_GUIDE 4.1), 2026-09-16.
+  # Every one is `role: skip`: none has an InterMine target.  `sure` means the evidence is in
+  # the model, a stock converter or a spec decision - the note says which - not my taste.
+  # A role set in out/<source>/mapping_subjects.tsv still overrides these.
+  # ---------------------------------------------------------------------------------------
+
+  # ensembl: both are unreachable from the Gene root, so they could not contribute rows even if
+  # bound; loading transcripts or exons would mean adding a Transcript root, not binding these.
+  - source: ensembl
+    subject: EnsemblTranscriptFlagComment
+    role: skip
+    status: sure
+    basis: structure:unreachable
+    note: "rdf:Statement reifying a transcript flag (e.g. tsl1); transcript-level and unreachable from the Gene root"
+  - source: ensembl
+    subject: EnsemblOrderedExon
+    role: skip
+    status: sure
+    basis: structure:unreachable
+    note: "SIO_001261 ordered exon; exon-level and unreachable from the Gene root"
+
+  # expressionatlas: the experiment -> assay -> expression hierarchy is spec D10, not started.
+  # Deferred, not rejected.  See sources.yaml: until D10 lands this source must NOT replace
+  # atlas-express, which it would otherwise silently delete.
+  - {source: expressionatlas, subject: DifferentialAnalysis,   role: skip, status: sure, basis: spec-D10, note: "deferred to D10 (EBI hierarchy flattening)"}
+  - {source: expressionatlas, subject: BaselineAnalysis,       role: skip, status: sure, basis: spec-D10, note: "deferred to D10 (EBI hierarchy flattening)"}
+  - {source: expressionatlas, subject: Assay,                  role: skip, status: sure, basis: spec-D10, note: "deferred to D10 (EBI hierarchy flattening)"}
+  - {source: expressionatlas, subject: Factor,                 role: skip, status: sure, basis: spec-D10, note: "deferred to D10 (EBI hierarchy flattening)"}
+  - {source: expressionatlas, subject: DifferentialExpression, role: skip, status: sure, basis: spec-D10, note: "deferred to D10; would map onto AtlasExpression once flattened"}
+  - {source: expressionatlas, subject: BaselineExpression,     role: skip, status: sure, basis: spec-D10, note: "deferred to D10; would map onto AtlasExpression once flattened"}
+  - {source: expressionatlas, subject: Sample,                 role: skip, status: sure, basis: spec-D10, note: "deferred to D10 (EBI hierarchy flattening)"}
+
+  # homologene: every items file already gets one DataSet, built from sources.yaml's
+  # data_set_title by items.py; binding orth:OrthologyDataset would create a second one.
+  - source: homologene
+    subject: Dataset
+    role: skip
+    status: sure
+    basis: code:items.py
+    note: "items.py emits the source's DataSet from sources.yaml; binding this would duplicate it"
+
+  # mesh: the live MeshTerm is `name` + `publications` (rdfc2im adds `identifier`).  There is no
+  # field or class for MeSH's concept/term structure, qualifiers, tree numbers, or its other
+  # record types, so the loadable part of a Descriptor is its label and id - already mapped.
+  - {source: mesh, subject: Concept,       role: skip, status: sure, basis: model:MeshTerm, note: "no InterMine class for MeSH concepts"}
+  - {source: mesh, subject: Term,          role: skip, status: sure, basis: model:MeshTerm, note: "no synonyms/terms field on MeshTerm; the preferred label is already MeshTerm.name"}
+  - {source: mesh, subject: Qualifier,     role: skip, status: sure, basis: model:MeshTerm, note: "no InterMine class for MeSH qualifiers (subheadings)"}
+  - {source: mesh, subject: TreeNumber,    role: skip, status: sure, basis: model:MeshTerm, note: "no field for MeSH tree numbers; MeshTerm is flat"}
+  - {source: mesh, subject: PublicationType, role: skip, status: sure, basis: model:MeshTerm, note: "a different MeSH record type, reached via seeAlso; not a Descriptor"}
+  - {source: mesh, subject: CheckTag,      role: skip, status: sure, basis: model:MeshTerm, note: "a different MeSH record type; unreachable from Descriptor"}
+  - {source: mesh, subject: Geographic,    role: skip, status: sure, basis: model:MeshTerm, note: "a different MeSH record type; unreachable from Descriptor"}
+  - {source: mesh, subject: Chemical,      role: skip, status: sure, basis: model:MeshTerm, note: "supplementary concept record, not a Descriptor; unreachable"}
+  - {source: mesh, subject: Protocol,      role: skip, status: sure, basis: model:MeshTerm, note: "supplementary concept record, not a Descriptor; unreachable"}
+  - {source: mesh, subject: AllowedDescriptorQualifierPair,    role: skip, status: sure, basis: model:MeshTerm, note: "descriptor/qualifier pairing; no model class; unreachable"}
+  - {source: mesh, subject: DisallowedDescriptorQualifierPair, role: skip, status: sure, basis: model:MeshTerm, note: "descriptor/qualifier pairing; no model class; unreachable"}
+
+  # reactome: Pathway is not a BioEntity, and CrossReference.subject must be one, so a
+  # biopax RelationshipXref on a pathway has nowhere to attach.
+  - source: reactome
+    subject: RelationshipXref
+    role: skip
+    status: sure
+    basis: model:Pathway
+    note: "Pathway has no crossReferences and is not a BioEntity, so CrossReference.subject cannot point at it"
+
 predicates:
   # ======================= gene identity: ncbigene (NcbiGeneConverter, taxon 9606) ==========
   - source: ncbigene

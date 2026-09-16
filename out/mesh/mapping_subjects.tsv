@@ -1,15 +1,15 @@
 subject	im_class	role	status	basis	rdf_types	path	example	note
 Descriptor	MeshTerm	root	sure	knowledge	meshv:TopicalDescriptor	(root)	mesh:D000785	MeSH topical descriptors (D-ids) are what PubMed indexing and HumanMine's MeshTerm use
-Concept		node	todo		meshv:Concept	meshv:concept*	mesh:M0000001	no term/knowledge/name match - bind by hand or set role=skip
-Term		node	todo		meshv:Term	meshv:preferredTerm	mesh:T000002	no term/knowledge/name match - bind by hand or set role=skip
-Qualifier		node	todo		meshv:Qualifier	meshv:allowableQualifier*	mesh:Q000633	no term/knowledge/name match - bind by hand or set role=skip
-TreeNumber		node	todo		meshv:TreeNumber	meshv:treeNumber+	mesh:C01.069	no term/knowledge/name match - bind by hand or set role=skip
-PublicationType		node	todo		meshv:PublicationType	meshv:seeAlso*	mesh:D016430	no term/knowledge/name match - bind by hand or set role=skip
-CheckTag		skip	todo		meshv:CheckTag	(unreachable from a root)	mesh:D008297 mesh:D005260	no term/knowledge/name match - bind by hand or set role=skip
-Geographic		skip	todo		meshv:GeographicalDescriptor	(unreachable from a root)	mesh:D001208	no term/knowledge/name match - bind by hand or set role=skip
-Chemical		skip	todo		meshv:SCR_Chemical	(unreachable from a root)	mesh:C000002	no term/knowledge/name match - bind by hand or set role=skip
+Concept		skip	sure	model:MeshTerm	meshv:Concept	meshv:concept*	mesh:M0000001	no InterMine class for MeSH concepts
+Term		skip	sure	model:MeshTerm	meshv:Term	meshv:preferredTerm	mesh:T000002	no synonyms/terms field on MeshTerm; the preferred label is already MeshTerm.name
+Qualifier		skip	sure	model:MeshTerm	meshv:Qualifier	meshv:allowableQualifier*	mesh:Q000633	no InterMine class for MeSH qualifiers (subheadings)
+TreeNumber		skip	sure	model:MeshTerm	meshv:TreeNumber	meshv:treeNumber+	mesh:C01.069	no field for MeSH tree numbers; MeshTerm is flat
+PublicationType		skip	sure	model:MeshTerm	meshv:PublicationType	meshv:seeAlso*	mesh:D016430	a different MeSH record type, reached via seeAlso; not a Descriptor
+CheckTag		skip	sure	model:MeshTerm	meshv:CheckTag	(unreachable from a root)	mesh:D008297 mesh:D005260	a different MeSH record type; unreachable from Descriptor
+Geographic		skip	sure	model:MeshTerm	meshv:GeographicalDescriptor	(unreachable from a root)	mesh:D001208	a different MeSH record type; unreachable from Descriptor
+Chemical		skip	sure	model:MeshTerm	meshv:SCR_Chemical	(unreachable from a root)	mesh:C000002	supplementary concept record, not a Descriptor; unreachable
 Disease	Disease	skip	sure	name	meshv:SCR_Disease	(unreachable from a root)	mesh:C000591739	subject name is the model class Disease
-Protocol		skip	todo		meshv:SCR_Protocol	(unreachable from a root)	mesh:C010306	no term/knowledge/name match - bind by hand or set role=skip
+Protocol		skip	sure	model:MeshTerm	meshv:SCR_Protocol	(unreachable from a root)	mesh:C010306	supplementary concept record, not a Descriptor; unreachable
 Organism	Organism	skip	sure	name	meshv:SCR_Organism	(unreachable from a root)	mesh:C000612320	subject name is the model class Organism
-AllowedDescriptorQualifierPair		skip	todo		meshv:AllowedDescriptorQualifierPair	(unreachable from a root)	mesh:D000086Q000031	no term/knowledge/name match - bind by hand or set role=skip
-DisallowedDescriptorQualifierPair		skip	todo		meshv:DisallowedDescriptorQualifierPair	(unreachable from a root)	mesh:D019216Q000506	no term/knowledge/name match - bind by hand or set role=skip
+AllowedDescriptorQualifierPair		skip	sure	model:MeshTerm	meshv:AllowedDescriptorQualifierPair	(unreachable from a root)	mesh:D000086Q000031	descriptor/qualifier pairing; no model class; unreachable
+DisallowedDescriptorQualifierPair		skip	sure	model:MeshTerm	meshv:DisallowedDescriptorQualifierPair	(unreachable from a root)	mesh:D019216Q000506	descriptor/qualifier pairing; no model class; unreachable

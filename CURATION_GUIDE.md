@@ -62,30 +62,7 @@ Curation never blocks the later steps: `sure`/`human` rows and (by default) `gue
 
 Set `im_class` to a concrete model class (or `role` to `skip`). A subject with no class blocks every row under it.
 
-**ensembl** - 2 unbound (subjects under a pruned branch not listed): `EnsemblTranscriptFlagComment`, `EnsemblOrderedExon`
-
-Example - `out/ensembl/mapping_subjects.tsv`, the line
-
-```
-EnsemblTranscriptFlagComment		skip	todo		rdf:Statement	(unreachable from a root)	<http://rdf.ebi.ac.uk/resource/ensembl.transcript/#_ENST00000207457-has_transcript_flag-tsl1>	no term/knowledge/name match - bind by hand or set role=skip
-```
-
-Types: `rdf:Statement`; reached via `(unreachable from a root)`; example `<http://rdf.ebi.ac.uk/resource/ensembl.transcript/#_ENST00000207457-has_transcript_flag-tsl1>`. Decide the class and edit the `im_class` and `status` cells:
-
-```
-EnsemblTranscriptFlagComment	<ClassName>	skip	human		rdf:Statement	(unreachable from a root)	<http://rdf.ebi.ac.uk/resource/ensembl.transcript/#_ENST00000207457-has_transcript_flag-tsl1>	your reason
-```
-
-or, if the subject is not wanted:
-
-```
-EnsemblTranscriptFlagComment		skip	human		rdf:Statement	(unreachable from a root)	<http://rdf.ebi.ac.uk/resource/ensembl.transcript/#_ENST00000207457-has_transcript_flag-tsl1>	no term/knowledge/name match - bind by hand or set role=skip
-```
-
-**expressionatlas** - 7 unbound (subjects under a pruned branch not listed): `DifferentialAnalysis`, `BaselineAnalysis`, `Assay`, `Factor`, `DifferentialExpression`, `BaselineExpression`, `Sample`
-**homologene** - 1 unbound (subjects under a pruned branch not listed): `Dataset`
-**mesh** - 11 unbound (subjects under a pruned branch not listed): `Concept`, `Term`, `Qualifier`, `TreeNumber`, `PublicationType`, `CheckTag`, `Geographic`, `Chemical`, `Protocol`, `AllowedDescriptorQualifierPair`, `DisallowedDescriptorQualifierPair`
-**reactome** - 1 unbound (subjects under a pruned branch not listed): `RelationshipXref`
+(none at the moment)
 
 ### 4.2 Resolve `todo` rows (`mapping_predicates.sssom.tsv`)
 
@@ -147,35 +124,13 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | EnsemblGene/location/begin | `faldo:position` | `ensg_begin` | 100627108 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 | EnsemblGene/location/end | `faldo:position` | `ensg_end` | 100639991 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 
-**expressionatlas** - 25 active rows (rows under a pruned branch are not listed):
+**expressionatlas** - 3 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | DataSet | `dct:identifier` | `dataset_id` | E-GEOD-56087 | no match on DataSet - choose a field, or set status=drop |
 | DataSet | `obo:RO_0002162` | `taxon` | obo:NCBITaxon_9606 | no match on DataSet - choose a field, or set status=drop |
 | DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | no match on DataSet - choose a field, or set status=drop |
-| DifferentialAnalysis | `rdfs:label` | `diff_analysis_label` | Analysis of 'endometrial carcinoma' vs 'normal' | subject not bound to a class (see subjects.tsv) |
-| DifferentialAnalysis | `gxaterms:hasReferenceAssay` | `diff_analysis_ref_assay` | Assay | subject not bound to a class (see subjects.tsv) |
-| DifferentialAnalysis | `gxaterms:hasTestAssay` | `diff_analysis_test_assay` | Assay | subject not bound to a class (see subjects.tsv) |
-| BaselineAnalysis | `gxaterms:hasFactorValue` | `base_analysis_factor` | Factor | subject not bound to a class (see subjects.tsv) |
-| BaselineAnalysis | `gxaterms:hasReferenceAssay` | `base_analysis_ref_assay` | Assay | subject not bound to a class (see subjects.tsv) |
-| Assay | `rdfs:label` | `assay_label` | (Assay) SRR1200879 | subject not bound to a class (see subjects.tsv) |
-| Assay | `dct:identifier` | `assay_id` | SRR1200879 | subject not bound to a class (see subjects.tsv) |
-| Assay | `gxaterms:hasFactorValue` | `factor` | Factor | subject not bound to a class (see subjects.tsv) |
-| Factor | `rdfs:label` | `factor_label` | (Factor value) DISEASE/endometrial carcinoma | subject not bound to a class (see subjects.tsv) |
-| Factor | `gxaterms:propertyType` | `factor_property_type` | DISEASE | subject not bound to a class (see subjects.tsv) |
-| Factor | `gxaterms:propertyValue` | `factor_property_value` | endometrial carcinoma | subject not bound to a class (see subjects.tsv) |
-| DifferentialExpression | `rdfs:label` | `diff_expression_label` | JSRP1 UP in 'endometrial carcinoma' vs 'normal' | subject not bound to a class (see subjects.tsv) |
-| DifferentialExpression | `gxaterms:foldChange` | `diff_expression_fold_change` | 1.5 | subject not bound to a class (see subjects.tsv) |
-| DifferentialExpression | `gxaterms:isOutputOf` | `diff_expression_analysis` | DifferentialAnalysis | subject not bound to a class (see subjects.tsv) |
-| DifferentialExpression | `gxaterms:pValue` | `diff_expression_pvalue` | 0.02421369125 | subject not bound to a class (see subjects.tsv) |
-| DifferentialExpression | `gxaterms:refersTo` | `diff_expression_gene` | ido:ensembl/ENSG00000167476 \| ensembl:ENSG00000167476 | subject not bound to a class (see subjects.tsv) |
-| BaselineExpression | `rdfs:label` | `base_expression_label` | RP3-508I15.9 expressed in NHLF cell line | subject not bound to a class (see subjects.tsv) |
-| BaselineExpression | `gxaterms:refersTo` | `base_expression_gene` | ido:ensembl/ENSG00000228274 \| ensembl:ENSG00000228274 | subject not bound to a class (see subjects.tsv) |
-| BaselineExpression | `gxaterms:fpkm` | `base_expression_fpkm` | 1 | subject not bound to a class (see subjects.tsv) |
-| Sample | `rdfs:label` | `sample_label` | (Sample) organism part/endometrium | subject not bound to a class (see subjects.tsv) |
-| Sample | `gxaterms:propertyType` | `sample_property_type` | organism part | subject not bound to a class (see subjects.tsv) |
-| Sample | `gxaterms:propertyValue` | `sample_property_value` | endometrium | subject not bound to a class (see subjects.tsv) |
 
 **go** - 2 active rows (rows under a pruned branch are not listed):
 
@@ -221,14 +176,13 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 |---|---|---|---|---|
 | HGNC | `skos:historyNote` | `history_note` | Approved | no match on Gene - choose a field, or set status=drop |
 
-**homologene** - 4 active rows (rows under a pruned branch are not listed):
+**homologene** - 3 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Group | `dct:identifier` | `group_id` | 3 | no match on Homologue - choose a field, or set status=drop |
 | Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | no match on Homologue - choose a field, or set status=drop |
 | Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
-| Dataset | `dct:title` | `dataset_title` | HomoloGene Release 68 | subject not bound to a class (see subjects.tsv) |
 
 **hpo** - 3 active rows (rows under a pruned branch are not listed):
 
@@ -238,7 +192,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Class | `oboinowl:hasDbXref` | `snomedct` | SNOMEDCT_US:271737000 | OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide o |
 | Class | `rdfs:comment` | `comment` | Anemia is not a specific entity but can result from many und | free-text comment; no field (description already used for the definition) |
 
-**mesh** - 64 active rows (rows under a pruned branch are not listed):
+**mesh** - 12 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
@@ -254,20 +208,6 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Descriptor | `meshv:pharmacologicalAction` | `descriptor_pharmacological_action` | Descriptor | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:previousIndexing` | `descriptor_previous_indexing` | Nerve Tissue Proteins (1995-2015) | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:considerAlso` | `descriptor_consider_also` | consider also terms at MYEL- | no match on MeshTerm - choose a field, or set status=drop |
-| Concept | `rdfs:label` | `concept_label` | Calcimycin | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:identifier` | `concept_id` | M0000001 | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:registryNumber` | `concept_registry_number` | 37H9VM9WZL | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:relatedRegistryNumber` | `concept_related_registry_number` | 52665-69-7 (Calcimycin) | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:scopeNote` | `concept_scope_note` | An ionophorous, polyether antibiotic from Streptomyces chart | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:casn1_label` | `cas_label` | 4-Benzoxazolecarboxylic acid, 5-(methylamino)-2-((3,9,11-tri | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:term` | `concept_term` | Term | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:preferredTerm` | `concept_preferred_term` | Term | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:narrowerConcept` | `concept_narrower_concept` | Concept | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:broaderConcept` | `concept_broader_concept` | Concept | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:relatedConcept` | `concept_related_concept` | Concept | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:active` | `concept_active` | True | subject not bound to a class (see subjects.tsv) |
-| Concept | `meshv:lastActiveYear` | `concept_last_active_year` | 2018 | subject not bound to a class (see subjects.tsv) |
-| ... | | | | 39 more in the file |
 
 **mp** - 12 active rows (rows under a pruned branch are not listed):
 
@@ -311,7 +251,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Pubmed | `rdfs:seeAlso` | `mesh_publicationtype` | mesh:D016428 | no match on Publication - choose a field, or set status=drop |
 | Pubmed | `rdfs:seeAlso` | `mesh_scr_chemical` | mesh:C096127 | no match on Publication - choose a field, or set status=drop |
 
-**reactome** - 9 active rows (rows under a pruned branch are not listed):
+**reactome** - 7 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
@@ -320,8 +260,6 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | PublicationXref | `biopax:author` | `pub_author` | Hardin, PE | no match on Publication - choose a field, or set status=drop |
 | PublicationXref | `biopax:source` | `pub_source` | Curr Biol 15:R714-22 | no match on Publication - choose a field, or set status=drop |
 | PublicationXref | `biopax:url` | `pub_url` | <https://www.immport.org/immportWeb/queryref/geneListSummary | no match on Publication - choose a field, or set status=drop |
-| RelationshipXref | `biopax:db` | `relationship_db` | GENE ONTOLOGY | subject not bound to a class (see subjects.tsv) |
-| RelationshipXref | `biopax:id` | `relationship_id` | GO:0006357 | subject not bound to a class (see subjects.tsv) |
 | UnificationXref | `biopax:comment` | `unification_xref_description` | Reactome stable identifier. Use this URL to connect to the w | no match on Pathway - choose a field, or set status=drop |
 | UnificationXref | `biopax:idVersion` | `pathway_ver` | 1 | no match on Pathway - choose a field, or set status=drop |
 

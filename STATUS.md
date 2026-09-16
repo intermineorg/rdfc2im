@@ -28,19 +28,19 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | source | scope | replaces | subjects sure/guess/todo | rows sure/guess/human/todo/drop | pruned | tables | new fields | fetched | items |
 |---|---|---|---|---|---|---|---|---|---|
 | clinvar | good | clinvar | 17/0/0 | 13/2/0/44/5 | 0 | 3 | 2 | yes (3) | yes |
-| ensembl | good | - | 6/1/2 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
-| expressionatlas | structural | atlas-express | 1/0/7 | 1/1/0/25/7 | 0 | 1 | 0 | yes (1) | yes |
-| go | good | go | 1/0/0 | 7/1/0/2/1 | 0 | 3 | 0 | yes (3) | yes |
+| ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
+| expressionatlas | structural | - | 1/0/0 | 1/1/0/3/0 | 33 | 1 | 0 | yes (1) | yes |
+| go | good | go | 1/0/0 | 7/1/0/2/1 | 0 | 3 | 0 | yes (4) | yes |
 | gwascatalog | good | huge-gwas | 2/0/0 | 9/4/0/31/3 | 0 | 1 | 1 | yes (1) | yes |
 | hgnc | good | hgnc | 4/12/0 | 7/24/0/1/16 | 0 | 16 | 0 | yes (16) | yes |
-| homologene | structural | - | 0/1/1 | 0/0/0/4/2 | 6 | 0 | 0 | no | no |
-| hpo | good | hpo | 1/0/0 | 9/1/0/3/2 | 0 | 4 | 0 | yes (4) | yes |
-| mesh | good | - | 3/0/11 | 1/1/0/64/16 | 0 | 1 | 1 | yes (1) | yes |
-| mp | good | mammalian-phenotype-ontology | 1/0/0 | 13/2/0/12/4 | 0 | 6 | 0 | yes (6) | yes |
+| homologene | structural | - | 0/1/0 | 0/0/0/3/1 | 8 | 0 | 0 | no | no |
+| hpo | good | hpo | 1/0/0 | 9/1/0/3/2 | 0 | 4 | 0 | yes (6) | yes |
+| mesh | good | - | 9/0/0 | 1/1/0/12/4 | 64 | 1 | 1 | yes (1) | yes |
+| mp | good | mammalian-phenotype-ontology | 1/0/0 | 13/2/0/12/4 | 0 | 6 | 0 | yes (8) | yes |
 | ncbigene | good | ncbi-gene | 1/0/0 | 11/2/0/4/2 | 0 | 5 | 1 | yes (5) | yes |
 | pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
-| reactome | good | reactome | 2/3/1 | 7/2/0/9/11 | 371 | 2 | 1 | yes (2) | yes |
-| uberon | good | - | 1/0/0 | 13/2/0/47/3 | 0 | 6 | 0 | yes (6) | yes |
+| reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
+| uberon | good | - | 1/0/0 | 13/2/0/47/3 | 0 | 6 | 0 | yes (8) | yes |
 | uniprot | good | uniprot | 4/5/0 | 11/13/0/17/96 | 400 | 10 | 0 | yes (10) | yes |
 
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)
