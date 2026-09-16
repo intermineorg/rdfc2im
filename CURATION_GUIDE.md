@@ -170,21 +170,12 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | Gene | `ncbio:featureType` | `feature_type` |  | could feed Gene.sequenceOntologyTerm (SOTerm.name) - decide |
 | Gene | `dct:modified` | `modified` | 2021-02-07 | spec D1 - no InterMine field for record modification date; drop or add |
 
-**pubmed** - 11 active rows (rows under a pruned branch are not listed):
+**pubmed** - 2 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Pubmed | `prism:eISSN` | `eissn` | 1476-5438 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `prism:endingPage` | `ending_page` | 382 | see startingPage |
-| Pubmed | `dct:language` | `lang` | eng | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `pav:derivedFrom` | `derived_from` | NLM | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `fabio:dateLastUpdated` | `date_last_updated` | 2020-11-05 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `fabio:hasIssnL` | `issn` | 1018-4813 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `fabio:hasNationalLibraryOfMedicineJournalId` | `nlm_id` | 9302235 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `fabio:hasPlaceOfPublication` | `place_of_publication` | England | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `rdfs:seeAlso` | `mesh_topicaldescriptor_2` | mesh:D000426 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `rdfs:seeAlso` | `mesh_publicationtype` | mesh:D016428 | no match on Publication - choose a field, or set status=drop |
-| Pubmed | `rdfs:seeAlso` | `mesh_scr_chemical` | mesh:C096127 | no match on Publication - choose a field, or set status=drop |
+| Pubmed | `prism:endingPage` | `ending_page` | 382 | Publication.pages is a range ('375-382') and starting_page alone already feeds it; there is no two-column transform to join them. update-publications fills page |
+| Pubmed | `rdfs:seeAlso` | `mesh_topicaldescriptor_2` | mesh:D000426 | a topical descriptor, so MeshTerm.identifier - but pubmed/main already has four MeshTerm.identifier columns and items.py collapses same class+field columns in o |
 
 **reactome** - 7 active rows (rows under a pruned branch are not listed):
 

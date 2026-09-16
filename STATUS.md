@@ -38,7 +38,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | mesh | good | - | 9/0/0 | 1/1/0/0/16 | 64 | 1 | 1 | yes (1) | yes |
 | mp | good | mammalian-phenotype-ontology | 1/0/0 | 16/2/0/1/13 | 0 | 8 | 0 | yes (8) | yes |
 | ncbigene | good | ncbi-gene | 1/0/0 | 11/2/0/4/2 | 0 | 5 | 1 | yes (5) | yes |
-| pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
+| pubmed | good | - | 4/0/0 | 9/7/0/2/19 | 0 | 2 | 1 | yes (2) | yes |
 | reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
 | uberon | good | - | 1/0/0 | 16/2/0/1/47 | 0 | 8 | 0 | yes (8) | yes |
 | uniprot | good | uniprot | 4/5/0 | 12/13/0/4/108 | 400 | 10 | 0 | yes (10) | yes |

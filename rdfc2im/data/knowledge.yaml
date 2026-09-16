@@ -445,6 +445,20 @@ predicates:
   - {source: uniprot, pred: "core:submittedTo", column: submit_to, im: "", status: drop, basis: java:UniprotConverter, note: "submission target; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
   - {source: uniprot, pred: "core:group", column: citation_group, im: "", status: drop, basis: java:UniprotConverter, note: "author group; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
 
+  # pubmed.  update-publications (EntrezPublicationsRetriever) fills Publication.{abstractText, doi,
+  # firstAuthor, issue, journal, month, pages, pubMedId, title, volume, year} and author names.
+  - {source: pubmed, pred: "prism:eISSN", column: eissn, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "eISSN; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "fabio:hasIssnL", column: issn, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "ISSN-L; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "fabio:hasNationalLibraryOfMedicineJournalId", column: nlm_id, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "NLM journal id; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "fabio:hasPlaceOfPublication", column: place_of_publication, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "place of publication; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "dct:language", column: lang, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "language; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "pav:derivedFrom", column: derived_from, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "provenance; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "fabio:dateLastUpdated", column: date_last_updated, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "record update date; not among the fields update-publications fills, and Publication has no field for it"}
+  - {source: pubmed, pred: "prism:endingPage", column: ending_page, im: "", status: todo, basis: java:EntrezPublicationsRetriever, note: "Publication.pages is a range ('375-382') and starting_page alone already feeds it; there is no two-column transform to join them. update-publications fills pages authoritatively anyway"}
+  - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_publicationtype, im: "", status: drop, basis: model:MeshTerm, note: "a MeSH PublicationType (e.g. D016428 Journal Article), not a subject heading; the mesh source skips PublicationType"}
+  - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_scr_chemical, im: "", status: drop, basis: model:MeshTerm, note: "a supplementary concept record, not a Descriptor; the mesh source skips SCR records"}
+  - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_topicaldescriptor_2, im: "", status: todo, basis: knowledge, note: "a topical descriptor, so MeshTerm.identifier - but pubmed/main already has four MeshTerm.identifier columns and items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so a second value here silently replaces the first - fix that before mapping this"}
+
   # mesh.  The live MeshTerm is `name` + `publications` (rdfc2im adds `identifier`); stock HumanMine
   # only creates MeshTerms by name via update-publications.  Nothing below has a field.
   - {source: mesh, pred: "meshv:annotation", column: descriptor_annotation, im: "", status: drop, basis: model:MeshTerm, note: "indexing annotation; no MeshTerm field"}
