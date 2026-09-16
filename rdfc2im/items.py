@@ -105,6 +105,24 @@ class ItemStore:
         return len(ids)
 
 
+def table_root(cols: List[dict]) -> str:
+    """The class a table's rows are about: the root its query was designed around.
+
+    Root choice is a design decision - a table may be built around Protein or around Organism -
+    and `rdfc2im translate` records the one it used in columns.tsv's `root` column.  Linking must
+    follow that choice.  It used to be inferred from column order instead (first required column,
+    else first column), which picks whatever happens to come first: every UniProt table came out
+    rooted at Organism, because the taxon constraint precedes the accession, and GWAS Catalog at
+    Gene; links were then sought from a class the rows are not about, and Protein, Synonym,
+    Publication, GWASResult and GWAS items were created unlinked.  The inference remains only as a
+    fallback for columns.tsv files written before the column existed.
+    """
+    for c in cols:
+        if c.get("root"):
+            return c["root"]
+    return next((c["im_class"] for c in cols if c.get("required") == "yes"), cols[0]["im_class"])
+
+
 def _via_from(model: InterMineModel, from_cls: str, to_cls: str) -> str:
     for fname, fd in model.all_fields(from_cls).items():
         if fd.kind != "attribute" and (fd.type == to_cls or model.is_a(to_cls, fd.type)):
@@ -125,7 +143,7 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
         if not os.path.exists(tsv):
             continue
         cl = sorted(cl, key=lambda c: int(c["position"]))
-        root_cls = next((c["im_class"] for c in cl if c.get("required") == "yes"), cl[0]["im_class"])
+        root_cls = table_root(cl)
         # object groups in column order: (class, via) -> [column dicts]
         groups: List[Tuple[Tuple[str, str], List[dict]]] = []
         for c in cl:
@@ -196,4 +214,8 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
     stats["conflicts"] = store.conflicts
     log(f"  {src}: {stats['tables']} tables, {stats['rows']} rows -> {stats['items']} items ({', '.join(classes_seen)})"
         + (f"; {len(store.conflicts)} attribute conflicts" if store.conflicts else ""))
+    # These used to be collected and never shown, which is how every UniProt table stayed
+    # mis-rooted: the warnings existed, nobody could see them.
+    for note in dict.fromkeys(stats["notes"]):
+        log(f"    WARNING {note}")
     return stats

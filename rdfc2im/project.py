@@ -18,6 +18,7 @@ from lxml import etree
 
 from .mapping import read_tsv
 from .model import InterMineModel
+from .items import table_root
 
 ABSTRACT = {"InterMineObject", "Annotatable", "BioEntity"}
 
@@ -73,7 +74,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
         classes: List[str] = []
         links: List[str] = []
         for table, cols in tables.items():
-            root_cls = next((c["im_class"] for c in cols if c.get("required") == "yes"), cols[0]["im_class"])
+            root_cls = table_root(cols)
             for c in cols:
                 if c["im_class"] not in classes:
                     classes.append(c["im_class"])
@@ -404,7 +405,7 @@ def replaced_coverage(model: InterMineModel, out_root: str, src: str, replaced: 
             add(fd.type, fd.reverse)
 
     for table, cols in load_columns(out_root, src).items():
-        root = next((c["im_class"] for c in cols if c.get("required") == "yes"), cols[0]["im_class"])
+        root = table_root(cols)
         for c in cols:
             if c["im_class"] and c["im_field"]:
                 add(c["im_class"], c["im_field"])

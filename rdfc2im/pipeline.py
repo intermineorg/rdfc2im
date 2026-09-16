@@ -14,7 +14,7 @@ from .tsv import clean_table
 from .fetch import fetch_query
 
 COL_COLUMNS = ["table", "position", "column", "variable", "im_class", "im_field", "transform",
-               "filter", "value", "kind", "via", "status", "required"]
+               "filter", "value", "kind", "via", "status", "required", "root"]
 
 
 def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, source_cfg: dict,
@@ -42,6 +42,10 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
         n_tables += 1
         with open(os.path.join(qdir, f"{t}.sparql"), "w", encoding="utf-8") as fh:
             fh.write(sparql)
+        # the class this table's rows are about: the root subject the query was built around
+        # (see items.table_root for why this is recorded rather than inferred)
+        table_root = next((node_by_key[k].root.im_class for k in
+                           ((r["subject"], r["predicate"], r["column"]) for r in qrows) if k in node_by_key), "")
         # columns.tsv: order = SELECT order, then constants
         pos = 0
         used = set()
@@ -49,7 +53,7 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
             col_rows.append(dict(table=t, position=pos, column=r["column"], variable=var, im_class=r["im_class"],
                                  im_field=r["im_field"], transform=r.get("transform", ""), filter=r.get("filter", ""),
                                  value="", kind=r.get("kind", ""), via=r.get("via", ""), status=r["status"],
-                                 required=r.get("required", "no")))
+                                 required=r.get("required", "no"), root=table_root))
             pos += 1
         for c in const_rows(rows, t, include_guess):
             k = (c["im_class"], c["im_field"])
@@ -58,7 +62,7 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
             used.add(k)
             col_rows.append(dict(table=t, position=pos, column=c["column"], variable="", im_class=c["im_class"],
                                  im_field=c["im_field"], transform="", filter="", value=c.get("value", ""),
-                                 kind="const", via="", status=c["status"], required="no"))
+                                 kind="const", via="", status=c["status"], required="no", root=table_root))
             pos += 1
         root_var = cfg.subjects[0].name if not res["builder"].roots else res["builder"].roots[0].subject.name
         variables = [root_var] + [r["column"] for r in qrows]
