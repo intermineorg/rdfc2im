@@ -61,8 +61,8 @@
 #  property: rdfc2im:example
 #  type_hint: xsd:string
 subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
-http://purl.org/dc/terms/identifier	group_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Homologue - choose a field, or set status=drop	Group	dct:identifier	main	todo					no		literal	no	3
-http://www.w3.org/2000/01/rdf-schema#label	group_label	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on Homologue - choose a field, or set status=drop	Group	rdfs:label	main	todo					no		literal	no	Gene conserved in Bilateria
+http://purl.org/dc/terms/identifier	group_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue	Group	dct:identifier	main	todo	spec-D7				no		literal	no	3
+http://www.w3.org/2000/01/rdf-schema#label	group_label	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue	Group	rdfs:label	main	todo	spec-D7				no		literal	no	Gene conserved in Bilateria
 http://purl.org/net/orth#inDataset	dataset	sssom:NoMapping			semapv:UnspecifiedMatching			Group	orth:inDataset	main	link	structure				no		link	no	Dataset
 http://purl.org/net/orth#hasHomologousMember	gene	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way	Group	orth:hasHomologousMember	main_gene	todo	spec-D7				no		link	yes	Gene
 http://purl.org/dc/terms/title	dataset_title	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		subject not bound to a class (see subjects.tsv)	Dataset	dct:title	drop	todo					no		literal	no	HomoloGene Release 68

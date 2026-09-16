@@ -120,13 +120,12 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | EnsemblGene/location/begin | `faldo:position` | `ensg_begin` | 100627108 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 | EnsemblGene/location/end | `faldo:position` | `ensg_end` | 100639991 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 
-**expressionatlas** - 3 active rows (rows under a pruned branch are not listed):
+**expressionatlas** - 2 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| DataSet | `dct:identifier` | `dataset_id` | E-GEOD-56087 | no match on DataSet - choose a field, or set status=drop |
-| DataSet | `obo:RO_0002162` | `taxon` | obo:NCBITaxon_9606 | no match on DataSet - choose a field, or set status=drop |
-| DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | no match on DataSet - choose a field, or set status=drop |
+| DataSet | `dct:identifier` | `dataset_id` | E-GEOD-56087 | the experiment accession - part of how experiments become DataSets under D10 |
+| DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | would be DataSet.url; decide with the rest of D10 |
 
 **go** - 1 active rows (rows under a pruned branch are not listed):
 
@@ -141,18 +140,12 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | GWASAssociation | `terms:snp_gene_ids` | `snp_gene_ids` |  | DIVERGES FROM STOCK: the converter fills associatedGenes from line[17] (SNP_GENE_IDS, Ensembl ids) and uses them as Gene.primaryIdentifier; this source maps ter |
 | GWASStudy | `dct:description` | `study_description` | BMI (adjusted for smoking behaviour) | spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead |
 
-**hgnc** - 1 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| HGNC | `skos:historyNote` | `history_note` | Approved | no match on Gene - choose a field, or set status=drop |
-
 **homologene** - 3 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Group | `dct:identifier` | `group_id` | 3 | no match on Homologue - choose a field, or set status=drop |
-| Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | no match on Homologue - choose a field, or set status=drop |
+| Group | `dct:identifier` | `group_id` | 3 | spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue |
+| Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue |
 | Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
 
 **mp** - 1 active rows (rows under a pruned branch are not listed):
@@ -161,14 +154,11 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `in_subset` | obo:mp#CvDC_Terms | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**ncbigene** - 4 active rows (rows under a pruned branch are not listed):
+**ncbigene** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Gene | `insdc:locus_tag` | `locus_tag` |  | empty for human genes; drop |
-| Gene | `ncbio:nomenclatureStatus` | `nomenclature_status` | official | no InterMine field; probably drop |
-| Gene | `ncbio:featureType` | `feature_type` |  | could feed Gene.sequenceOntologyTerm (SOTerm.name) - decide |
-| Gene | `dct:modified` | `modified` | 2021-02-07 | spec D1 - no InterMine field for record modification date; drop or add |
+| Gene | `dct:modified` | `modified` | 2021-02-07 | spec D1 - narrower than it looks: NcbiGeneConverter never stored a modification date, so dropping matches stock; open only if we extend the model |
 
 **pubmed** - 2 active rows (rows under a pruned branch are not listed):
 
@@ -177,17 +167,11 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | Pubmed | `prism:endingPage` | `ending_page` | 382 | Publication.pages is a range ('375-382') and starting_page alone already feeds it; there is no two-column transform to join them. update-publications fills page |
 | Pubmed | `rdfs:seeAlso` | `mesh_topicaldescriptor_2` | mesh:D000426 | a topical descriptor, so MeshTerm.identifier - but pubmed/main already has four MeshTerm.identifier columns and items.py collapses same class+field columns in o |
 
-**reactome** - 7 active rows (rows under a pruned branch are not listed):
+**reactome** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Pathway | `biopax:pathwayComponent` | `pathway_component` | Pathway \| BiochemicalReaction \| TemplateReaction | reactions -> new PathwayReaction class (Phase 1 extension) or defer to Phase 2 BioPAX |
-| PublicationXref | `biopax:db` | `pub_db` | Pubmed | no match on Publication - choose a field, or set status=drop |
-| PublicationXref | `biopax:author` | `pub_author` | Hardin, PE | no match on Publication - choose a field, or set status=drop |
-| PublicationXref | `biopax:source` | `pub_source` | Curr Biol 15:R714-22 | no match on Publication - choose a field, or set status=drop |
-| PublicationXref | `biopax:url` | `pub_url` | <https://www.immport.org/immportWeb/queryref/geneListSummary | no match on Publication - choose a field, or set status=drop |
-| UnificationXref | `biopax:comment` | `unification_xref_description` | Reactome stable identifier. Use this URL to connect to the w | no match on Pathway - choose a field, or set status=drop |
-| UnificationXref | `biopax:idVersion` | `pathway_ver` | 1 | no match on Pathway - choose a field, or set status=drop |
+| Pathway | `biopax:pathwayComponent` | `pathway_component` | Pathway \| BiochemicalReaction \| TemplateReaction | the approved PathwayReaction extension (curation/extensions_additions.xml) - but the reactions and participants subtree is pruned, and it is the same subtree th |
 
 **uberon** - 1 active rows (rows under a pruned branch are not listed):
 

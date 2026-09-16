@@ -61,10 +61,10 @@
 #  property: rdfc2im:example
 #  type_hint: xsd:string
 subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence	comment	ext_subject	ext_predicate	ext_table	ext_status	ext_basis	ext_transform	ext_filter	ext_value	ext_required	ext_via	ext_kind	ext_multi	ext_example
-http://purl.org/dc/terms/identifier	dataset_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on DataSet - choose a field, or set status=drop	DataSet	dct:identifier	main	todo					no		literal	no	E-GEOD-56087
+http://purl.org/dc/terms/identifier	dataset_id	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		the experiment accession - part of how experiments become DataSets under D10	DataSet	dct:identifier	main	todo	spec-D10				no		literal	no	E-GEOD-56087
 http://purl.org/dc/terms/description	dataset_desc	skos:exactMatch	intermine:DataSet.description	DataSet.description	semapv:MappingChaining	1.0		DataSet	dct:description	main	sure	term				no		literal	no	Next Generation Sequencing identifying the dosage compensati
-http://purl.obolibrary.org/obo/RO_0002162	taxon	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on DataSet - choose a field, or set status=drop	DataSet	obo:RO_0002162	main	todo					no		iri	no	obo:NCBITaxon_9606
-http://xmlns.com/foaf/0.1/page	dataset_page	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		no match on DataSet - choose a field, or set status=drop	DataSet	foaf:page	main	todo					no		iri	no	<http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087>
+http://purl.obolibrary.org/obo/RO_0002162	taxon	sssom:NoMapping			semapv:UnspecifiedMatching		DataSet has no organism field	DataSet	obo:RO_0002162	main	drop	model:DataSet				no		iri	no	obo:NCBITaxon_9606
+http://xmlns.com/foaf/0.1/page	dataset_page	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		would be DataSet.url; decide with the rest of D10	DataSet	foaf:page	main	todo	spec-D10				no		iri	no	<http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087>
 http://rdf.ebi.ac.uk/terms/expressionatlas/hasPart	dataset_part	sssom:NoMapping			semapv:UnspecifiedMatching			DataSet	gxaterms:hasPart	main_dataset_part	link	structure				no		link	yes	DifferentialAnalysis | BaselineAnalysis | Assay
 http://www.w3.org/2000/01/rdf-schema#label	diff_analysis_label	sssom:NoMapping	sssom:NoTermFound		semapv:UnspecifiedMatching		subject not bound to a class (see subjects.tsv)	DifferentialAnalysis	rdfs:label	drop	todo					no		literal	no	Analysis of 'endometrial carcinoma' vs 'normal'
 http://rdf.ebi.ac.uk/terms/expressionatlas/hasFactorValue	diff_analysis_factor	sssom:NoMapping			semapv:UnspecifiedMatching			DifferentialAnalysis	gxaterms:hasFactorValue	drop	link	structure				no		link	yes	Factor

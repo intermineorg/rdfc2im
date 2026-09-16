@@ -474,6 +474,33 @@ predicates:
   - {source: mesh, pred: "meshv:previousIndexing", column: descriptor_previous_indexing, im: "", status: drop, basis: model:MeshTerm, note: "previous indexing; no MeshTerm field"}
   - {source: mesh, pred: "meshv:considerAlso", column: descriptor_consider_also, im: "", status: drop, basis: model:MeshTerm, note: "see-also text; no MeshTerm field"}
 
+  # reactome.
+  - {source: reactome, pred: "biopax:pathwayComponent", column: pathway_component, im: "", status: todo, basis: spec-section-8, note: "the approved PathwayReaction extension (curation/extensions_additions.xml) - but the reactions and participants subtree is pruned, and it is the same subtree that carries gene/pathway membership. Decide together with whether reactome may replace the stock source"}
+  - {source: reactome, pred: "biopax:db", column: pub_db, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "xref database label ('Pubmed'); the PubMed id identifies the Publication and update-publications fills its details"}
+  - {source: reactome, pred: "biopax:author", column: pub_author, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "author string; the PubMed id identifies the Publication and update-publications fills its details"}
+  - {source: reactome, pred: "biopax:source", column: pub_source, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "citation string; the PubMed id identifies the Publication and update-publications fills its details"}
+  - {source: reactome, pred: "biopax:url", column: pub_url, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "URL; the PubMed id identifies the Publication and update-publications fills its details"}
+  - {source: reactome, pred: "biopax:comment", column: unification_xref_description, im: "", status: drop, basis: model:Pathway, note: "xref description text; no Pathway field"}
+  - {source: reactome, pred: "biopax:idVersion", column: pathway_ver, im: "", status: drop, basis: model:Pathway, note: "stable-id version; no Pathway field"}
+
+  # ncbigene.  NcbiGeneConverter reads none of these.
+  - {source: ncbigene, pred: "insdc:locus_tag", column: locus_tag, im: "", status: drop, basis: java:NcbiGeneConverter, note: "empty for human genes; the converter does not read it"}
+  - {source: ncbigene, pred: "ncbio:nomenclatureStatus", column: nomenclature_status, im: "", status: drop, basis: java:NcbiGeneConverter, note: "the converter does not read it; no Gene field"}
+  - {source: ncbigene, pred: "ncbio:featureType", column: feature_type, im: "", status: drop, basis: java:NcbiGeneConverter, note: "empty for human genes; the converter sets no sequenceOntologyTerm, and typeOfGene is already mapped"}
+  - {source: ncbigene, pred: "dct:modified", column: modified, im: "", status: todo, basis: spec-D1, note: "spec D1 - narrower than it looks: NcbiGeneConverter never stored a modification date, so dropping matches stock; open only if we extend the model"}
+
+  # expressionatlas (spec D10 deferred; see sources.yaml).
+  - {source: expressionatlas, pred: "obo:RO_0002162", column: taxon, im: "", status: drop, basis: model:DataSet, note: "DataSet has no organism field"}
+  - {source: expressionatlas, pred: "dct:identifier", column: dataset_id, im: "", status: todo, basis: spec-D10, note: "the experiment accession - part of how experiments become DataSets under D10"}
+  - {source: expressionatlas, pred: "foaf:page", column: dataset_page, im: "", status: todo, basis: spec-D10, note: "would be DataSet.url; decide with the rest of D10"}
+
+  # homologene - the whole source waits on spec D7 (cluster -> pairwise Homologue expansion).
+  - {source: homologene, pred: "dct:identifier", column: group_id, im: "", status: todo, basis: spec-D7, note: "spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue"}
+  - {source: homologene, pred: "rdfs:label", column: group_label, im: "", status: todo, basis: spec-D7, note: "spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue"}
+
+  # hgnc.
+  - {source: hgnc, pred: "skos:historyNote", column: history_note, im: "", status: drop, basis: model:Gene, note: "approval status ('Approved'); no Gene field"}
+
   # ======================= gene identity: ncbigene (NcbiGeneConverter, taxon 9606) ==========
   - source: ncbigene
     pred: dct:identifier
