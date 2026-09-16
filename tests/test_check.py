@@ -152,3 +152,51 @@ def test_sources_carry_the_bio_sources_project_version(tmp_path):
     src = etree.parse(os.path.join(mine, "project.xml")).getroot().find(".//source")
     assert src.get("version") == "4.3.0"
     assert src.get("type") == "humanmine-items"
+
+
+def test_definitions_from_replaced_sources_are_carried(tmp_path):
+    """Replacing a source removes its _additions.xml, and with it any class it declared.
+
+    GOTerm is not in the bio core model - it exists only in go/go-annotation/interpro-go/
+    uniprot/psi-complexes additions.  `rdfc2im project` drops the stock `go` and `uniprot`
+    sources, so a mine running only our sources has no GOTerm and the load dies in
+    ItemToObjectTranslator with `class "GOTerm" does not exist`.  Being present in the live
+    model is not enough: the live model is built with those sources still in place.
+    """
+    from rdfc2im.model import InterMineModel as IM
+    from rdfc2im.project import gen_project
+    core = ('<model name="genomic" package="org.intermine.model.bio">'
+            '<class name="OntologyTerm" is-interface="true">'
+            '<attribute name="identifier" type="java.lang.String"/></class></model>')
+    go_add = ('<classes><class name="GOTerm" extends="OntologyTerm" is-interface="true">'
+              '<attribute name="namespace" type="java.lang.String"/></class></classes>')
+    (tmp_path / "core.xml").write_text(core)
+    (tmp_path / "go_additions.xml").write_text(go_add)
+    (tmp_path / "k_keys.properties").write_text("OntologyTerm.key_identifier=identifier\n")
+    m = IM()
+    m.load_xml(str(tmp_path / "core.xml"))
+    m.load_xml(str(tmp_path / "go_additions.xml"))
+    m.load_keys(str(tmp_path / "k_keys.properties"))
+    m.finalize()
+    # the live mine HAS GOTerm - it still runs the go source we are about to replace
+    m.live = IM()
+    m.live.load_xml(str(tmp_path / "core.xml"))
+    m.live.load_xml(str(tmp_path / "go_additions.xml"))
+    m.live.finalize()
+
+    out_root = tmp_path / "out"
+    (out_root / "go").mkdir(parents=True)
+    write_tsv(str(out_root / "go" / "columns.tsv"), [
+        _col(0, "GOTerm", "identifier", required="yes"),
+        _col(1, "GOTerm", "namespace"),
+    ], COL_COLUMNS)
+    mine = str(tmp_path / "_mine")
+    gen_project(str(out_root), mine, m, "humanmine-items", "/data", None,
+                {"go": {"replaces": ["go"]}}, None, source_version="4.3.0", log=lambda *a: None)
+    add = etree.parse(os.path.join(mine, "humanmine-items_additions.xml")).getroot()
+    classes = {c.get("name"): c for c in add.iter("class")}
+    assert "GOTerm" in classes, "a class from a replaced source must be carried"
+    assert classes["GOTerm"].get("extends") == "OntologyTerm"
+    assert {f.get("name") for f in classes["GOTerm"]} == {"identifier", "namespace"}
+    # OntologyTerm is core - every mine has it, so do not re-declare it
+    assert "OntologyTerm" not in classes
