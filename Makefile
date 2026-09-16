@@ -22,5 +22,7 @@ project:    ; $(PY) -m rdfc2im project
 check:      ; $(PY) -m rdfc2im check
 docs:       ; $(PY) -m rdfc2im docs
 test:       ; $(PY) -m pytest -q tests 2>/dev/null || $(PY) tests/run.py
-fork-sync:  ; cp out/_mine/humanmine-items_keys.properties out/_mine/humanmine-items_additions.xml humanmine-items/src/main/resources/
+# humanmine-items/build.gradle declares `resources { srcDirs = ['resources'] }` (the layout every
+# Java-less bio-source uses), so the keys/additions must land in resources/, not src/main/resources/.
+fork-sync:  ; mkdir -p humanmine-items/resources && cp out/_mine/humanmine-items_keys.properties out/_mine/humanmine-items_additions.xml humanmine-items/resources/
 clean:      ; rm -rf out/_mine out/_docs
