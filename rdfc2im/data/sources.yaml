@@ -1,0 +1,107 @@
+# Per-source settings for the rdf-config sources in scope.
+#
+#   replaces:  project.xml <source name=...> entries that the rdf-config load supersedes
+#              (moved to replaced_sources.xml by `rdfc2im project`); [] = adds data, replaces nothing
+#   consts:    constant columns appended to every table of the source (Class.field: value)
+#   roots:     which model.yaml subjects start a table set (default: the first subject)
+#   data_source_name / data_set_title: what the delimited loader writes into DataSource/DataSet
+#   types:     which nodes get an `a <type>` triple in the generated SPARQL: root | union | all
+#   distinct:  add DISTINCT to the SELECT (default true)
+#   scope:     good | structural | blocked  (spec section 8 achievability class)
+
+ncbigene:
+  replaces: [ncbi-gene]
+  data_source_name: NCBI
+  data_set_title: NCBI Gene (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+hgnc:
+  replaces: [hgnc]
+  data_source_name: HGNC
+  data_set_title: HGNC identifiers (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+uniprot:
+  replaces: [uniprot]
+  data_source_name: UniProt
+  data_set_title: Swiss-Prot data set (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+go:
+  replaces: [go]
+  data_source_name: GO
+  data_set_title: GO (RDF Portal)
+  consts: {Ontology.name: GO}
+  scope: good
+hpo:
+  replaces: [hpo]
+  data_source_name: HPO
+  data_set_title: Human Phenotype Ontology (RDF Portal)
+  consts: {Ontology.name: Human Phenotype Ontology}
+  scope: good
+mp:
+  replaces: [mammalian-phenotype-ontology]
+  data_source_name: MGI
+  data_set_title: Mammalian Phenotype Ontology (RDF Portal)
+  consts: {Ontology.name: Mammalian Phenotype Ontology}
+  scope: good
+uberon:
+  replaces: []
+  data_source_name: Uberon
+  data_set_title: Uber Anatomy Ontology (RDF Portal)
+  consts: {Ontology.name: Uber Anatomy Ontology}
+  scope: good
+  note: activation only - not in HumanMine's project.xml; needs /uberon/ in the allow list
+reactome:
+  replaces: [reactome]
+  data_source_name: Reactome
+  data_set_title: Reactome pathways (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+gwascatalog:
+  replaces: [huge-gwas]
+  data_source_name: GWAS Catalog
+  data_set_title: GWAS Catalog (TogoVar)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+clinvar:
+  replaces: [clinvar]
+  data_source_name: ClinVar
+  data_set_title: ClinVar (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+pubmed:
+  replaces: []
+  data_source_name: PubMed
+  data_set_title: PubMed (RDF Portal)
+  scope: good
+  note: HumanMine fills Publication via update-publications; this would pre-load details for cited papers
+homologene:
+  replaces: []
+  data_source_name: HomoloGene
+  data_set_title: HomoloGene (RDF Portal)
+  scope: structural
+  note: not in project.xml (panther is); needs the cluster->pairwise transform (D7)
+expressionatlas:
+  replaces: [atlas-express]
+  data_source_name: Expression Atlas
+  data_set_title: Expression Atlas (RDF Portal)
+  scope: structural
+ensembl:
+  replaces: []
+  data_source_name: Ensembl
+  data_set_title: Ensembl genes (RDF Portal)
+  consts: {Organism.taxonId: "9606"}
+  scope: good
+  note: not a HumanMine source today; supplies Ensembl ids/biotypes/locations that ncbi-gene lacks
+mesh:
+  replaces: []
+  data_source_name: MeSH
+  data_set_title: MeSH descriptors (NLM)
+  roots: [Descriptor]
+  scope: good
+  note: endpoint is NLM's (id.nlm.nih.gov), not RDF Portal; update-publications also creates MeshTerm by name
+disgenet:
+  replaces: [disgenet-disease-associations]
+  scope: blocked
+  note: empty rdf-config dir

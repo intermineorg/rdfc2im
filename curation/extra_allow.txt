@@ -1,0 +1,2 @@
+# extra path tokens added to out/humanmine.allow (sources not in project.xml whose additions we still want)
+/uberon/

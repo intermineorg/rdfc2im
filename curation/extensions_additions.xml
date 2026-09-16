@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- Schema extensions approved in SPECIFICATION_15sep26.md section 8, kept out of the per-source
+     additions so they survive regeneration.  Unioned into humanmine-delimited_additions.xml by
+     `rdfc2im project`.  Only the *delta* to the live model is listed (Pathway.identifier/name/
+     shortName/curated and Gene/Protein.pathways already exist in reactome_additions.xml). -->
+<classes>
+  <!-- gene loader: D1 side-stepped - typeOfGene lives here, not in ncbi-gene/human-gene -->
+  <class name="Gene" is-interface="true">
+    <attribute name="typeOfGene" type="java.lang.String"/>
+  </class>
+  <!-- reactome Phase 1 -->
+  <class name="Pathway" is-interface="true">
+    <attribute name="description" type="java.lang.String"/>
+    <reference name="organism" referenced-type="Organism"/>
+    <collection name="reactions" referenced-type="PathwayReaction" reverse-reference="pathway"/>
+  </class>
+  <class name="PathwayReaction" is-interface="true">
+    <attribute name="identifier" type="java.lang.String"/>
+    <attribute name="displayName" type="java.lang.String"/>
+    <attribute name="description" type="java.lang.String"/>
+    <attribute name="reactionType" type="java.lang.String"/>
+    <attribute name="conversionDirection" type="java.lang.String"/>
+    <attribute name="ecNumber" type="java.lang.String"/>
+    <reference name="pathway" referenced-type="Pathway" reverse-reference="reactions"/>
+  </class>
+  <!-- clinvar -->
+  <class name="Allele" is-interface="true">
+    <attribute name="reviewStatus" type="java.lang.String"/>
+    <attribute name="submissionCount" type="java.lang.Integer"/>
+  </class>
+  <!-- mesh: MeshTerm has only `name`; the D-identifier lets pubmed and mesh rows merge -->
+  <class name="MeshTerm" is-interface="true">
+    <attribute name="identifier" type="java.lang.String"/>
+  </class>
+  <!-- huge-gwas -->
+  <class name="GWASResult" is-interface="true">
+    <attribute name="mappedTraitUri" type="java.lang.String"/>
+  </class>
+</classes>

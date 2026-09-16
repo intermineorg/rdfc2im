@@ -1,0 +1,15 @@
+# rdfc2im workspace configuration (paths relative to this file's directory)
+model_dirs: [in/intermine, in/humanmine-bio-sources]
+live_model: in/humanmine_model.xml
+project_xml: in/humanmine_project.xml
+config_root: in/config
+out: out
+# sources: [ncbigene, hgnc, uniprot, go, reactome]   # default: every scope good/structural source in sources.yaml
+type: humanmine-items
+src_data_dir: /micklem/data/rdfc2im      # where items/<source>.xml will live on the build machine
+model_json: in/humanmine_model.json      # for `rdfc2im linkml` (optional)
+include_guess: true
+limit: 20                                # 0 = no LIMIT (full extracts)
+types: root                              # root | union | all - where to emit `a <type>` triples
+extra_allow: curation/extra_allow.txt
+extensions: curation/extensions_additions.xml

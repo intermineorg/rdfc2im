@@ -1,0 +1,1605 @@
+# rdfc2im knowledge table
+#
+# Everything the translator "knows" beyond the term-URI join lives here, so it can be
+# reviewed as data.  Two sections:
+#
+#   subjects:   rdf-config subject -> InterMine class
+#   predicates: rdf-config predicate (in the context of a bound class) -> InterMine attribute
+#
+# Each entry carries the *status* the translator will emit for a row it produces:
+#   sure   - backed by uploaded evidence: a Java converter of the original HumanMine source,
+#            an obo.term.class setting, a keys file, or a one-to-one field name.
+#   guess  - my proposal from general knowledge of the vocabulary; please confirm.
+# and a *basis* string that says where it came from (java:<Converter>, props:<file>, knowledge).
+#
+# Matching:  `type`/`pred` are CURIEs expanded with the prefixes below (or full IRIs).
+#            `class` restricts a predicate entry to subjects bound to that class or a subclass.
+#            `source` restricts an entry to one rdf-config source directory name.
+#            `im` is the attribute to write, "Class.field".  If the class differs from the
+#            subject's class (e.g. Synonym.value on a Gene subject) the row's `via` records the
+#            link field that connects them (Gene.synonyms).
+#            `transform` is applied by `rdfc2im tsv` when cleaning the fetched TSV.
+#            `table` forces the row into a named table (default: derived from cardinality).
+#            `value` fixes the variable to a constant in the query (VALUES clause).
+#
+# Precedence when several rules could fire on one row:
+#   source-specific `sure` entry > term-URI match > generic knowledge entry > exact name match.
+
+prefixes:
+  rdf:      http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  rdfs:     http://www.w3.org/2000/01/rdf-schema#
+  owl:      http://www.w3.org/2002/07/owl#
+  skos:     http://www.w3.org/2004/02/skos/core#
+  dct:      http://purl.org/dc/terms/
+  dc:       http://purl.org/dc/elements/1.1/
+  obo:      http://purl.obolibrary.org/obo/
+  oboinowl: http://www.geneontology.org/formats/oboInOwl#
+  sio:      http://semanticscience.org/resource/
+  foaf:     http://xmlns.com/foaf/0.1/
+  bibo:     http://purl.org/ontology/bibo/
+  prism:    http://prismstandard.org/namespaces/basic/3.0/
+  fabio:    http://purl.org/spar/fabio/
+  core:     http://purl.uniprot.org/core/
+  insdc:    http://ddbj.nig.ac.jp/ontologies/nucleotide/
+  ncbio:    http://ncbi.nlm.nih.gov/gene/ontology#
+  biopax:   http://www.biopax.org/release/biopax-level3.owl#
+  orth:     http://purl.org/net/orth#
+  gwas:     http://rdf.ebi.ac.uk/terms/gwas/
+  terms:    http://rdf.ebi.ac.uk/terms/gwas/
+  cvo:      http://purl.jp/bio/10/clinvar/
+  med2rdf:  http://med2rdf.org/ontology/med2rdf#
+  m2r:      http://med2rdf.org/ontology/med2rdf#
+  idt:      http://identifiers.org/
+  faldo:    http://biohackathon.org/resource/faldo#
+  meshv:    http://id.nlm.nih.gov/mesh/vocab#
+  so:       http://purl.obolibrary.org/obo/so#
+  dcterms:  http://purl.org/dc/terms/
+
+# ----------------------------------------------------------------------------- subjects
+subjects:
+  # --- gene identity (project.xml runs ncbi-gene + hgnc; NcbiGeneConverter/HgncConverter) ---
+  - type: insdc:Gene
+    im_class: Gene
+    status: sure
+    basis: knowledge+java:NcbiGeneConverter
+    note: ncbigene Gene subject; NcbiGeneConverter creates one Gene per record
+  - source: hgnc
+    subject: HGNC
+    im_class: Gene
+    status: sure
+    basis: java:HgncConverter
+    note: HgncConverter creates a Gene keyed by the NCBI Gene id (line[18]); rows without it are skipped
+  - source: hgnc
+    subject: NCBIGene
+    im_class: Gene
+    status: sure
+    basis: java:HgncConverter
+    note: identifiers.org/ncbigene node - its dct:identifier is Gene.primaryIdentifier
+  - source: hgnc
+    subject: Ensembl
+    im_class: Gene
+    status: sure
+    basis: java:HgncConverter
+    note: identifiers.org/ensembl node - its dct:identifier is Gene.secondaryIdentifier (same Gene object in the row)
+  - source: hgnc
+    subject: PubMed
+    im_class: Publication
+    status: sure
+    basis: knowledge
+  - source: hgnc
+    subject: UniProt
+    im_class: Protein
+    status: guess
+    basis: knowledge
+    note: identifiers.org/uniprot node -> Protein.primaryAccession, links Gene.proteins by co-occurrence
+  - source: hgnc
+    subject: OMIM
+    im_class: Disease
+    status: guess
+    basis: knowledge
+    note: OMIM id -> Disease.primaryIdentifier as "OMIM:<id>" (clinvar/hpo-annotation key OMIM this way)
+
+  # hgnc identifiers.org nodes that NcbiGeneConverter would load as CrossReference (createCrossReference for every dbXref)
+  - source: hgnc
+    subject: ENA
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=ENA (CrossReference.source)
+  - source: hgnc
+    subject: INSDC
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=INSDC (CrossReference.source)
+  - source: hgnc
+    subject: RefSeq
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=RefSeq (CrossReference.source)
+  - source: hgnc
+    subject: CCDS
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=CCDS (CrossReference.source)
+  - source: hgnc
+    subject: MGI
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=MGI (CrossReference.source)
+  - source: hgnc
+    subject: RGD
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=RGD (CrossReference.source)
+  - source: hgnc
+    subject: LRG
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=LRG (CrossReference.source)
+  - source: hgnc
+    subject: MiRBase
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=miRBase (CrossReference.source)
+  - source: hgnc
+    subject: EC
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=Enzyme Nomenclature (CrossReference.source)
+  - source: hgnc
+    subject: Orphanet
+    im_class: CrossReference
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    note: xref id -> CrossReference.identifier with DataSource.name=Orphanet (CrossReference.source)
+  # --- ontologies: obo.term.class from each source's .properties ---
+  - source: go
+    subject: Class
+    im_class: GOTerm
+    status: sure
+    basis: props:go.properties obo.term.class=GOTerm
+  - source: hpo
+    subject: Class
+    im_class: HPOTerm
+    status: sure
+    basis: props:hpo.properties obo.term.class=HPOTerm
+  - source: mp
+    subject: Class
+    im_class: MammalianPhenotypeTerm
+    status: sure
+    basis: props:mammalian-phenotype-ontology.properties obo.term.class=MammalianPhenotypeTerm
+  - source: uberon
+    subject: Class
+    im_class: AnatomyTerm
+    status: sure
+    basis: props:uberon.properties obo.term.class=AnatomyTerm (needs /uberon/ in the allow list)
+  # --- uniprot ---
+  - type: core:Protein
+    im_class: Protein
+    status: sure
+    basis: term
+  - type: core:Gene
+    im_class: Gene
+    status: sure
+    basis: knowledge+java:UniProtConverter
+    note: UniProt gene node; skos:prefLabel is the gene symbol used to link Protein->Gene
+  - source: uniprot
+    subject: GO
+    im_class: GOTerm
+    status: sure
+    basis: knowledge+java:UniProtConverter
+    note: object IRI obo:GO_nnnnnnn -> GOTerm.identifier "GO:nnnnnnn"
+  - source: uniprot
+    subject: Keyword
+    im_class: OntologyTerm
+    status: guess
+    basis: knowledge
+    note: UniProt keyword IRI keywords:NNN; Protein.keywords is an OntologyTerm collection (uniprot-keywords source loads names)
+  - source: uniprot
+    subject: Citation
+    im_class: Publication
+    status: sure
+    basis: java:UniProtConverter
+    note: foaf:primaryTopicOf pubmed:NNN gives Publication.pubMedId
+  - source: uniprot
+    subject: SimpleSequence
+    im_class: Sequence
+    status: guess
+    basis: knowledge
+    note: rdf:value -> Sequence.residues; core:mass -> Protein.molecularWeight (term)
+  - source: uniprot
+    subject: RecommendedNameNode
+    im_class: Protein
+    status: sure
+    basis: java:UniProtConverter
+    note: flattened - core:fullName -> Protein.name
+  - source: uniprot
+    subject: SubmittedNameNode
+    im_class: Protein
+    status: guess
+    basis: knowledge
+    note: unreviewed entries have a submitted name instead of a recommended name
+  - source: uniprot
+    subject: AlternativeNameNode
+    im_class: Synonym
+    status: guess
+    basis: knowledge
+    note: alternative full names -> Synonym.value on the Protein
+  - source: uniprot
+    subject: DbResource
+    im_class: CrossReference
+    status: guess
+    basis: knowledge
+    note: rdfs:seeAlso IRIs -> CrossReference.identifier; DataSource from core:database
+  # --- reactome (ReactomeConverter reads BioPAX: Pathway identifier/name, Protein primaryAccession) ---
+  - type: biopax:Pathway
+    im_class: Pathway
+    status: sure
+    basis: term+java:ReactomeConverter
+  - type: biopax:BioSource
+    im_class: Organism
+    status: sure
+    basis: java:ReactomeConverter
+    note: converter parses the BioSource name into Organism
+  - type: biopax:UnificationXref
+    im_class: Pathway
+    status: guess
+    basis: knowledge
+    note: UnificationXref with db Reactome carries the stable id R-HSA-nnn -> Pathway.identifier
+  - type: biopax:PublicationXref
+    im_class: Publication
+    status: guess
+    basis: knowledge
+  - type: biopax:Protein
+    im_class: Protein
+    status: guess
+    basis: java:ReactomeConverter
+    note: converter takes the UniProt accession from the entity reference xref
+  - type: biopax:ProteinReference
+    im_class: Protein
+    status: guess
+    basis: knowledge
+  - type: biopax:BiochemicalReaction
+    im_class: PathwayReaction
+    status: guess
+    basis: spec-section-8
+    note: new class proposed in the specification (Reactome Phase 1)
+  # --- gwas catalog (HugeGwasConverter) ---
+  - type: gwas:Association
+    im_class: GWASResult
+    status: sure
+    basis: term+java:HugeGwasConverter
+  - type: gwas:Study
+    im_class: GWAS
+    status: sure
+    basis: term+java:HugeGwasConverter
+  # --- clinvar (ClinvarConverter creates Allele, Gene, Disease) ---
+  - type: cvo:VariationArchiveType
+    im_class: Allele
+    status: sure
+    basis: java:ClinvarConverter
+  - type: cvo:Gene
+    im_class: Gene
+    status: sure
+    basis: java:ClinvarConverter
+  - type: med2rdf:Disease
+    im_class: Disease
+    status: sure
+    basis: java:ClinvarConverter
+  # --- homologene (HomologeneConverter) ---
+  - type: orth:OrthologsCluster
+    im_class: Homologue
+    status: guess
+    basis: knowledge
+    note: n-ary cluster; Homologue is pairwise - needs the all-pairs transform (spec D7)
+  - type: orth:Gene
+    im_class: Gene
+    status: sure
+    basis: java:HomologeneConverter
+  - type: taxon:Taxon
+    im_class: Organism
+    status: sure
+    basis: knowledge
+  - type: orth:Protein
+    im_class: Protein
+    status: guess
+    basis: knowledge
+  # --- pubmed ---
+  - source: pubmed
+    subject: Pubmed
+    im_class: Publication
+    status: sure
+    basis: knowledge
+  - type: foaf:Person
+    im_class: Author
+    status: sure
+    basis: term
+  # --- mesh (HumanMine MeshTerm has only `name`; identifier is proposed in curation/extensions_additions.xml) ---
+  - source: mesh
+    subject: Descriptor
+    im_class: MeshTerm
+    status: sure
+    basis: knowledge
+    note: MeSH topical descriptors (D-ids) are what PubMed indexing and HumanMine's MeshTerm use
+  # --- ensembl ---
+  - type: terms:EnsemblGene
+    im_class: Gene
+    status: sure
+    basis: knowledge
+  - type: terms:EnsemblTranscript
+    im_class: Transcript
+    status: sure
+    basis: knowledge
+  - type: terms:EnsemblProtein
+    im_class: Protein
+    status: guess
+    basis: knowledge
+    note: ENSP ids are not UniProt accessions - decide whether Protein.secondaryIdentifier or drop
+  - type: obo:SO_0000147
+    im_class: Exon
+    status: sure
+    basis: term
+  # generic fallbacks
+  - type: owl:Class
+    im_class: OntologyTerm
+    status: guess
+    basis: knowledge
+    note: bare owl:Class subject in a non-ontology source; pick the concrete *Term class
+
+# --------------------------------------------------------------------------- predicates
+predicates:
+  # ======================= gene identity: ncbigene (NcbiGeneConverter, taxon 9606) ==========
+  - source: ncbigene
+    pred: dct:identifier
+    class: Gene
+    im: Gene.primaryIdentifier
+    status: sure
+    basis: java:NcbiGeneConverter
+    note: no 9606.xref in ncbigene_config.properties, so primaryIdentifier = the NCBI Gene id
+  - source: ncbigene
+    pred: rdfs:label
+    class: Gene
+    im: Gene.symbol
+    status: sure
+    basis: java:NcbiGeneConverter
+    note: converter sets symbol from the official symbol (the rdfs:label here); term-URI would say name
+  - source: ncbigene
+    pred: insdc:standard_name
+    class: Gene
+    im: Gene.symbol
+    status: drop
+    basis: knowledge
+    note: duplicates rdfs:label
+  - source: ncbigene
+    pred: ncbio:fullName
+    class: Gene
+    im: Gene.name
+    status: sure
+    basis: java:NcbiGeneConverter
+  - source: ncbigene
+    pred: dct:description
+    class: Gene
+    im: Gene.description
+    status: sure
+    basis: term
+    note: same text as fullName in NCBI gene_info; keep both or drop one
+  - source: ncbigene
+    pred: insdc:gene_synonym
+    class: Gene
+    im: Synonym.value
+    status: sure
+    basis: java:NcbiGeneConverter
+    note: converter createSynonym for every synonym
+  - source: ncbigene
+    pred: dct:alternative
+    class: Gene
+    im: Synonym.value
+    status: sure
+    basis: java:NcbiGeneConverter
+    note: the Other_designations column -> synonyms
+  - source: ncbigene
+    pred: insdc:dblink
+    class: Gene
+    im: Gene.secondaryIdentifier
+    status: sure
+    basis: java:NcbiGeneConverter
+    transform: iri_localname
+    filter: "regex:/ensembl/|ENSG"
+    table: main_dblink
+    note: converter sets secondaryIdentifier = Ensembl id; the same dblink predicate also carries HGNC/MIM - filter keeps Ensembl only
+  - source: ncbigene
+    pred: insdc:db_xref
+    class: Gene
+    im: CrossReference.identifier
+    status: sure
+    basis: java:NcbiGeneConverter
+    note: converter createCrossReference for every dbXref
+  - source: ncbigene
+    pred: ncbio:typeOfGene
+    class: Gene
+    im: Gene.typeOfGene
+    status: guess
+    basis: spec-section-8
+    note: new attribute approved in spec section 8 (D1 side-stepped - carried by humanmine-delimited_additions.xml)
+  - source: ncbigene
+    pred: insdc:map
+    class: Gene
+    im: Gene.cytoLocation
+    status: sure
+    basis: java:NcbiGeneConverter
+  - source: ncbigene
+    pred: insdc:chromosome
+    class: Gene
+    im: Chromosome.primaryIdentifier
+    status: guess
+    basis: knowledge
+    note: value like 1 or X -> Chromosome.primaryIdentifier; HumanMine chromosomes are keyed by primaryIdentifier+organism so include the Organism column in this table
+  - source: ncbigene
+    pred: ncbio:taxid
+    class: Gene
+    im: Organism.taxonId
+    status: sure
+    basis: java:NcbiGeneConverter
+    transform: iri_localname
+    value: taxid:9606
+    required: "yes"
+    note: fixed to human (project.xml organisms=9606)
+  - source: ncbigene
+    pred: dct:modified
+    class: Gene
+    im: ""
+    status: todo
+    basis: spec-D1
+    note: spec D1 - no InterMine field for record modification date; drop or add
+  - source: ncbigene
+    pred: ncbio:nomenclatureStatus
+    class: Gene
+    im: ""
+    status: todo
+    basis: knowledge
+    note: no InterMine field; probably drop
+  - source: ncbigene
+    pred: ncbio:featureType
+    class: Gene
+    im: ""
+    status: todo
+    basis: knowledge
+    note: could feed Gene.sequenceOntologyTerm (SOTerm.name) - decide
+  - source: ncbigene
+    pred: insdc:locus_tag
+    class: Gene
+    im: ""
+    status: todo
+    basis: knowledge
+    note: empty for human genes; drop
+
+  # ======================= gene identity: hgnc (HgncConverter) =============================
+  - source: hgnc
+    subject: NCBIGene
+    pred: dct:identifier
+    im: Gene.primaryIdentifier
+    status: sure
+    basis: java:HgncConverter
+    required: "yes"
+    note: line[18] entrez id is the Gene key; HgncConverter skips rows without one
+  - source: hgnc
+    subject: Ensembl
+    pred: dct:identifier
+    im: Gene.secondaryIdentifier
+    status: sure
+    basis: java:HgncConverter
+  - source: hgnc
+    subject: HGNC
+    pred: rdfs:label
+    im: Gene.symbol
+    status: sure
+    basis: java:HgncConverter
+  - source: hgnc
+    subject: HGNC
+    pred: dct:identifier
+    im: Synonym.value
+    status: sure
+    basis: java:HgncConverter
+    transform: "prefix:HGNC:"
+    note: converter createSynonym(hgncId); rdf value is the bare number, HGNC file has "HGNC:11998"
+  - source: hgnc
+    subject: HGNC
+    pred: dct:description
+    im: Gene.name
+    status: guess
+    basis: knowledge
+    note: "e.g. tumor protein p53 - the approved name; HgncConverter does not set name (ncbi-gene does)"
+  - source: hgnc
+    subject: HGNC
+    pred: obo:so_part_of
+    im: Gene.cytoLocation
+    status: guess
+    basis: knowledge
+    note: "e.g. 17p13.1 cytoband; ncbi-gene also writes cytoLocation - genomic_priorities decides"
+  - source: hgnc
+    subject: HGNC
+    pred: skos:altLabel
+    im: Synonym.value
+    status: sure
+    basis: java:HgncConverter
+    note: alias symbols/names -> Synonym
+  - source: hgnc
+    subject: UniProt
+    pred: dct:identifier
+    im: Protein.primaryAccession
+    status: guess
+    basis: knowledge
+  - source: hgnc
+    subject: PubMed
+    pred: dct:identifier
+    im: Publication.pubMedId
+    status: sure
+    basis: knowledge
+  - source: hgnc
+    subject: OMIM
+    pred: dct:identifier
+    im: Disease.primaryIdentifier
+    status: guess
+    basis: knowledge
+    transform: "prefix:OMIM:"
+
+  - source: hgnc
+    subject: ENA
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "ENA"}
+  - source: hgnc
+    subject: INSDC
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "INSDC"}
+  - source: hgnc
+    subject: RefSeq
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "RefSeq"}
+  - source: hgnc
+    subject: CCDS
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "CCDS"}
+  - source: hgnc
+    subject: MGI
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "MGI"}
+  - source: hgnc
+    subject: RGD
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "RGD"}
+  - source: hgnc
+    subject: LRG
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "LRG"}
+  - source: hgnc
+    subject: MiRBase
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "miRBase"}
+  - source: hgnc
+    subject: EC
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "Enzyme Nomenclature"}
+  - source: hgnc
+    subject: Orphanet
+    pred: dct:identifier
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge+java:NcbiGeneConverter
+    const: {DataSource.name: "Orphanet"}
+
+  # ======================= ontologies (obo / oboInOwl) - all *Term classes ================
+  - pred: -self-
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: knowledge
+    note: oboinowl:id carries the identifier; the IRI is redundant
+  - pred: oboinowl:id
+    class: OntologyTerm
+    im: OntologyTerm.identifier
+    status: sure
+    basis: java:OboConverter
+    required: "yes"
+    note: "e.g. GO:0044255 - exactly what the obo source stores in identifier"
+  - pred: skos:notation
+    class: OntologyTerm
+    im: OntologyTerm.identifier
+    status: drop
+    basis: knowledge
+    note: duplicates oboinowl:id
+  - pred: rdfs:label
+    class: OntologyTerm
+    im: OntologyTerm.name
+    status: sure
+    basis: term
+  - pred: obo:IAO_0000115
+    class: OntologyTerm
+    im: OntologyTerm.description
+    status: sure
+    basis: java:OboConverter
+    note: IAO_0000115 = "definition"; obo source stores the def in description
+  - pred: oboinowl:hasOBONamespace
+    class: OntologyTerm
+    im: OntologyTerm.namespace
+    status: sure
+    basis: java:OboConverter
+  - pred: oboinowl:hasExactSynonym
+    class: OntologyTerm
+    im: OntologyTermSynonym.name
+    status: sure
+    basis: java:OboConverter
+    const: {OntologyTermSynonym.type: exact}
+    note: obo source stores each synonym with its scope in OntologyTermSynonym.type
+  - pred: oboinowl:hasRelatedSynonym
+    class: OntologyTerm
+    im: OntologyTermSynonym.name
+    status: sure
+    basis: java:OboConverter
+    const: {OntologyTermSynonym.type: related}
+  - pred: oboinowl:hasBroadSynonym
+    class: OntologyTerm
+    im: OntologyTermSynonym.name
+    status: sure
+    basis: java:OboConverter
+    const: {OntologyTermSynonym.type: broad}
+  - pred: oboinowl:hasNarrowSynonym
+    class: OntologyTerm
+    im: OntologyTermSynonym.name
+    status: sure
+    basis: java:OboConverter
+    const: {OntologyTermSynonym.type: narrow}
+  - pred: oboinowl:hasDbXref
+    class: OntologyTerm
+    im: ""
+    status: todo
+    basis: knowledge
+    note: OntologyTerm.crossReferences is a collection of *OntologyTerm* (not CrossReference); mapping it would create bare OntologyTerm items for the xref ids - decide or drop
+  - pred: oboinowl:hasAlternativeId
+    class: OntologyTerm
+    im: ""
+    status: todo
+    basis: knowledge
+    note: secondary GO/HP ids; no attribute - could become OntologyTermSynonym type=alt_id
+  - pred: oboinowl:inSubset
+    class: OntologyTerm
+    im: ""
+    status: todo
+    basis: spec-D2
+    note: spec D2 - GO slim subsets; extend the model or exclude
+  - pred: rdfs:subClassOf
+    class: OntologyTerm
+    im: OntologyTerm.parents
+    status: guess
+    basis: java:OboConverter
+    transform: "iri_localname,replace:_:\\:"
+    note: "is_a parents (obo source fills OntologyTerm.parents); parents from other ontologies (BFO, CARO) will be dangling items - add a filter if wanted"
+  - pred: rdfs:comment
+    class: OntologyTerm
+    im: ""
+    status: todo
+    basis: knowledge
+    note: free-text comment; no field (description already used for the definition)
+  - pred: owl:deprecated
+    class: OntologyTerm
+    im: OntologyTerm.obsolete
+    status: guess
+    basis: knowledge
+  - pred: obo:IAO_0100001
+    class: OntologyTerm
+    im: ""
+    status: todo
+    basis: knowledge
+    note: term replaced by; obsolete-term bookkeeping - probably drop
+  - pred: obo:IAO_0000231
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: knowledge
+    note: obsolescence reason
+  - pred: rdfs:seeAlso
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: knowledge
+  - pred: oboinowl:consider
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: knowledge
+
+  # ======================= uniprot (UniProtConverter) =====================================
+  - source: uniprot
+    subject: UniProt
+    pred: -self-
+    im: Protein.primaryAccession
+    status: sure
+    basis: java:UniProtConverter
+    transform: iri_localname
+    required: "yes"
+    note: the accession is the local name of the entry IRI (up:Q9BYF1); Protein.key_primaryacc
+  - source: uniprot
+    subject: UniProt
+    pred: rdfs:label
+    im: ""
+    status: drop
+    basis: spec-section-9
+    note: the rdfs:label -> Protein trap named in the spec; the label is uniprot:ACC, not a name
+  - source: uniprot
+    pred: core:reviewed
+    class: Protein
+    im: ""
+    status: todo
+    basis: knowledge
+    note: "Swiss-Prot(1)/TrEMBL(0); the converter loads only reviewed by default - use as a VALUES filter (value: 1) rather than a field?"
+  - source: uniprot
+    pred: core:organism
+    class: Protein
+    im: Organism.taxonId
+    status: sure
+    basis: java:UniProtConverter
+    transform: iri_localname
+    value: taxonomy:9606
+    required: "yes"
+  - source: uniprot
+    subject: RecommendedNameNode
+    pred: core:fullName
+    im: Protein.name
+    status: sure
+    basis: java:UniProtConverter
+  - source: uniprot
+    subject: RecommendedNameNode
+    pred: core:shortName
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    subject: RecommendedNameNode
+    pred: core:ecName
+    im: ECNumber.identifier
+    status: guess
+    basis: knowledge
+    note: Protein.ecNumbers collection
+  - source: uniprot
+    subject: SubmittedNameNode
+    pred: core:fullName
+    im: Protein.name
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    subject: AlternativeNameNode
+    pred: core:fullName
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    subject: AlternativeNameNode
+    pred: core:shortName
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    pred: core:replaces
+    class: Protein
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+    note: secondary accessions
+  - source: uniprot
+    pred: core:oldMnemonic
+    class: Protein
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    subject: Gene
+    pred: skos:prefLabel
+    im: Gene.symbol
+    status: sure
+    basis: term+java:UniProtConverter
+    note: gene symbol - joins to HGNC/NCBI Gene via Gene.key_symbol_org (symbol, organism); include Organism column in this table
+  - source: uniprot
+    subject: Gene
+    pred: skos:altLabel
+    im: ""
+    status: todo
+    basis: knowledge
+    note: gene alias - would become a Synonym on the *Gene*, but the row's Synonym slot is used by protein synonyms; decide
+  - source: uniprot
+    subject: Gene
+    pred: core:orfName
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:enzyme
+    class: Protein
+    im: ECNumber.identifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+  - source: uniprot
+    pred: core:existence
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:proteome
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:created
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:modified
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:version
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:isolatedFrom
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:potentialSequence
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:interaction
+    class: Protein
+    im: ""
+    status: todo
+    basis: spec-D6
+    note: IntAct interactions - spec D6 (traditional psi load)
+  - source: uniprot
+    pred: core:annotation
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+    note: 70 annotation sub-node types; the UniProt converter loads Comment/UniProtFeature from them - a Phase 3 job
+  - source: uniprot
+    pred: core:component
+    class: Protein
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    subject: UniProt
+    pred: core:classifiedWith
+    column: go
+    im: GOTerm.identifier
+    status: sure
+    basis: java:UniProtConverter
+    transform: "iri_localname,replace:_:\\:"
+    note: obo:GO_0001618 -> GO:0001618; produces Protein.ontologyAnnotations? No - GOAnnotation needs evidence; this only links Protein.keywords-style. Treat as a review candidate (spec D4)
+  - source: uniprot
+    subject: UniProt
+    pred: core:classifiedWith
+    column: keyword
+    im: OntologyTerm.identifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+    note: keywords:NNN -> uniprot-keywords source stores identifier KW-NNNN; may need prefix:KW-
+  - source: uniprot
+    subject: Citation
+    pred: foaf:primaryTopicOf
+    im: Publication.pubMedId
+    status: sure
+    basis: java:UniProtConverter
+    transform: iri_localname
+  - source: uniprot
+    subject: Citation
+    pred: core:title
+    im: Publication.title
+    status: guess
+    basis: knowledge
+  - source: uniprot
+    subject: DbResource
+    pred: core:database
+    im: DataSource.name
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+    note: CrossReference.source -> DataSource
+  - source: uniprot
+    pred: rdfs:seeAlso
+    class: Protein
+    column: db_resource
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+  - source: uniprot
+    subject: SimpleSequence
+    pred: rdf:value
+    im: Sequence.residues
+    status: sure
+    basis: term
+  - source: uniprot
+    subject: SimpleSequence
+    pred: core:mass
+    im: Protein.molecularWeight
+    status: sure
+    basis: term
+  - source: uniprot
+    subject: SimpleSequence
+    pred: core:name
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:sequence
+    class: Protein
+    column: modified_sequence
+    im: ""
+    status: drop
+    basis: knowledge
+    note: isoform sequences - keep only the simple_sequence branch
+  - source: uniprot
+    pred: core:sequence
+    class: Protein
+    column: external_sequence
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: uniprot
+    pred: core:sequence
+    class: Protein
+    column: unknown_sequence
+    im: ""
+    status: drop
+    basis: knowledge
+
+  # ======================= reactome ======================================================
+  - source: reactome
+    subject: Pathway
+    pred: biopax:displayName
+    im: Pathway.name
+    status: sure
+    basis: java:ReactomeConverter
+  - source: reactome
+    subject: Pathway
+    pred: biopax:name
+    im: ""
+    status: drop
+    basis: knowledge
+    note: multi-valued alternative names; displayName is the canonical one
+  - source: reactome
+    subject: Pathway
+    pred: biopax:comment
+    im: Pathway.description
+    status: guess
+    basis: knowledge
+    note: Pathway has no description attribute today - it would be a new field (not in spec section 8; decide)
+  - source: reactome
+    subject: UnificationXref
+    pred: biopax:id
+    im: Pathway.identifier
+    status: sure
+    basis: java:ReactomeConverter
+    filter: "regex:^R-HSA-"
+    required: "yes"
+    note: the stable id lives on the xref node; keep only Reactome (R-HSA) ids
+  - source: reactome
+    subject: OrganismXref
+    pred: biopax:id
+    im: Organism.taxonId
+    status: sure
+    basis: knowledge
+    value: '"9606"'
+    required: "yes"
+    note: fixed to human; the Organism key
+  - source: reactome
+    subject: OrganismXref
+    pred: biopax:db
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: reactome
+    subject: UnificationXref
+    pred: biopax:db
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: reactome
+    subject: Organism
+    pred: biopax:name
+    im: Organism.name
+    status: sure
+    basis: java:ReactomeConverter
+    note: Organism.name; the taxonId comes from the OrganismXref node
+  - source: reactome
+    subject: Pathway
+    pred: biopax:pathwayComponent
+    im: ""
+    status: todo
+    basis: spec-section-8
+    note: reactions -> new PathwayReaction class (Phase 1 extension) or defer to Phase 2 BioPAX
+  - source: reactome
+    subject: Pathway
+    pred: biopax:pathwayOrder
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: reactome
+    subject: Pathway
+    pred: biopax:dataSource
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: reactome
+    subject: PublicationXref
+    pred: biopax:id
+    im: Publication.pubMedId
+    status: guess
+    basis: knowledge
+    note: only rows whose pub_db is Pubmed are pubmed ids - filter by hand or add a VALUES on pub_db
+
+  # ======================= gwas catalog (HugeGwasConverter) ==============================
+  - source: gwascatalog
+    pred: terms:p_value
+    class: GWASResult
+    im: GWASResult.pValue
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:risk_allele_frequency
+    class: GWASResult
+    im: GWASResult.riskAlleleFreqInControls
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:strongest_snp_risk_allele
+    class: GWASResult
+    im: GWASResult.associatedVariantRiskAllele
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:mapped_trait
+    class: GWASResult
+    im: GWASResult.phenotype
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:mapped_trait_uri
+    class: GWASResult
+    im: GWASResult.mappedTraitUri
+    status: guess
+    basis: spec-section-8
+    note: new attribute approved in spec section 8
+  - source: gwascatalog
+    pred: terms:snps
+    class: GWASResult
+    im: SNP.primaryIdentifier
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:mapped_genes
+    class: GWASResult
+    im: Gene.symbol
+    status: guess
+    basis: java:HugeGwasConverter
+    note: converter links associatedGenes by symbol; comma-separated list needs splitting (transform split:,)
+    transform: "split:,"
+  - source: gwascatalog
+    pred: terms:reported_genes
+    class: GWASResult
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: gwascatalog
+    pred: dct:identifier
+    class: GWAS
+    im: GWAS.name
+    status: guess
+    basis: knowledge
+    note: GCST accession as the study name (GWAS has no identifier attribute)
+  - source: gwascatalog
+    pred: dct:description
+    class: GWAS
+    im: ""
+    status: todo
+    basis: java:HugeGwasConverter
+    note: "converter uses the study title as GWAS.name; here dct:identifier (GCST id) takes name and this description is the trait - decide (D12)"
+  - source: gwascatalog
+    pred: terms:initial_sample_size
+    class: GWAS
+    im: GWAS.initialSample
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: terms:replication_sample_size
+    class: GWAS
+    im: GWAS.replicateSample
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: gwas:has_pubmed_id
+    class: GWAS
+    im: Publication.pubMedId
+    status: sure
+    basis: java:HugeGwasConverter
+  - source: gwascatalog
+    pred: dct:date
+    class: GWAS
+    im: GWAS.year
+    status: guess
+    basis: knowledge
+    transform: "regex:^(\\d{4})"
+    note: spec D12 - year is denormalised from the publication in the converter
+
+  # ======================= clinvar (ClinvarConverter) =====================================
+  - source: clinvar
+    pred: cvo:accession
+    class: Allele
+    column: vcv
+    im: Allele.primaryIdentifier
+    status: sure
+    basis: java:ClinvarConverter
+    required: "yes"
+  - source: clinvar
+    pred: cvo:variation_name
+    class: Allele
+    im: Allele.name
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:variation_type
+    class: Allele
+    im: Allele.type
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:description
+    class: Allele
+    column: interpretation
+    im: Allele.clinicalSignificance
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:review_status
+    class: Allele
+    im: Allele.reviewStatus
+    status: guess
+    basis: spec-section-8
+  - source: clinvar
+    pred: cvo:submission_count
+    class: Allele
+    im: Allele.submissionCount
+    status: guess
+    basis: spec-section-8
+  - source: clinvar
+    pred: med2rdf:reference_allele
+    class: Allele
+    im: Allele.reference
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: med2rdf:alternative_allele
+    class: Allele
+    im: Allele.alternate
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:gene_id
+    class: Gene
+    im: Gene.primaryIdentifier
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:symbol
+    class: Gene
+    im: Gene.symbol
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: dct:identifier
+    class: Disease
+    im: Disease.primaryIdentifier
+    status: todo
+    basis: spec-D5
+    note: MedGen CUI here; ClinvarConverter keys diseases by OMIM - spec D5 (MONDO/TogoID normalisation)
+  - source: clinvar
+    pred: rdfs:label
+    class: Disease
+    im: Disease.name
+    status: sure
+    basis: java:ClinvarConverter
+  - source: clinvar
+    pred: cvo:species
+    class: Allele
+    im: ""
+    status: drop
+    basis: knowledge
+    note: always Homo sapiens; add a const Organism.taxonId=9606 column instead
+
+  # ======================= homologene / pubmed ============================================
+  - source: homologene
+    subject: Gene
+    pred: rdfs:label
+    im: Gene.symbol
+    status: sure
+    basis: java:HomologeneConverter
+  - source: homologene
+    subject: Group
+    pred: orth:hasHomologousMember
+    im: ""
+    status: todo
+    basis: spec-D7
+    note: cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way
+  - source: pubmed
+    pred: dct:identifier
+    class: Publication
+    im: Publication.pubMedId
+    status: sure
+    basis: knowledge
+    required: "yes"
+  - source: pubmed
+    pred: bibo:pmid
+    class: Publication
+    im: ""
+    status: drop
+    basis: knowledge
+    note: duplicates dct:identifier
+  - source: pubmed
+    pred: prism:doi
+    class: Publication
+    im: Publication.doi
+    status: sure
+    basis: knowledge
+  - source: pubmed
+    pred: fabio:hasPII
+    class: Publication
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: dct:issued
+    class: Publication
+    im: Publication.year
+    status: guess
+    basis: knowledge
+    transform: "regex:^(\\d{4})"
+  - source: pubmed
+    pred: pubmedpurl:dp
+    class: Publication
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: fabio:hasNLMJournalTitleAbbreviation
+    class: Publication
+    im: Publication.journal
+    status: guess
+    basis: knowledge
+    note: HumanMine's Publication.journal holds the NLM abbreviation (update-publications)
+  - source: pubmed
+    pred: prism:publicationName
+    class: Publication
+    im: ""
+    status: drop
+    basis: knowledge
+    note: full journal title; journal takes the abbreviation
+  - source: pubmed
+    pred: dct:source
+    class: Publication
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: prism:startingPage
+    class: Publication
+    im: Publication.pages
+    status: guess
+    basis: knowledge
+    note: pages is start-end; a two-column merge transform is needed or take startingPage only
+  - source: pubmed
+    pred: prism:endingPage
+    class: Publication
+    im: ""
+    status: todo
+    basis: knowledge
+    note: see startingPage
+  - source: pubmed
+    pred: bibo:issue
+    class: Publication
+    im: Publication.issue
+    status: sure
+    basis: term
+  - source: pubmed
+    pred: bibo:volume
+    class: Publication
+    im: Publication.volume
+    status: sure
+    basis: term
+  - source: pubmed
+    pred: foaf:LastName
+    class: Author
+    im: Author.lastName
+    status: sure
+    basis: knowledge
+  - source: pubmed
+    pred: foaf:firstName
+    class: Author
+    im: Author.firstName
+    status: sure
+    basis: knowledge
+  - source: pubmed
+    pred: foaf:name
+    class: Author
+    im: Author.name
+    status: sure
+    basis: term
+  - source: pubmed
+    pred: org:memberOf
+    class: Author
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: olo:index
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: olo:length
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: pubmed
+    pred: fabio:hasSubjectTerm
+    class: Publication
+    im: MeshTerm.identifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+    note: MeshTerm has name only? check - HumanMine loads MeSH via update-publications
+
+
+  # ======================= mesh / ensembl ================================================
+  - source: mesh
+    subject: Descriptor
+    pred: rdfs:label
+    im: MeshTerm.name
+    status: sure
+    basis: knowledge
+    note: MeshTerm.name is the descriptor label (update-publications loads the same)
+  - source: mesh
+    subject: Descriptor
+    pred: meshv:identifier
+    im: MeshTerm.identifier
+    status: guess
+    basis: knowledge
+    required: "yes"
+    note: new field (curation/extensions_additions.xml); pubmed fabio:hasSubjectTerm supplies the same D-ids
+  - source: mesh
+    subject: Descriptor
+    pred: meshv:broaderDescriptor
+    im: ""
+    status: todo
+    basis: knowledge
+    note: MeshTerm has no parents collection; drop or extend the model
+  - source: mesh
+    pred: meshv:dateCreated
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: mesh
+    pred: meshv:dateEstablished
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: mesh
+    pred: meshv:dateRevised
+    im: ""
+    status: drop
+    basis: knowledge
+  - source: ensembl
+    subject: EnsemblGene
+    pred: dcterms:identifier
+    im: Gene.secondaryIdentifier
+    status: sure
+    basis: java:NcbiGeneConverter
+    required: "yes"
+    note: Ensembl ids are Gene.secondaryIdentifier in HumanMine (ncbi-gene/hgnc); Gene.key_secondaryidentifier_org merges on it
+  - source: ensembl
+    subject: EnsemblGene
+    pred: rdfs:label
+    im: Gene.symbol
+    status: sure
+    basis: knowledge
+  - source: ensembl
+    subject: EnsemblGene
+    pred: dcterms:description
+    im: Gene.description
+    status: sure
+    basis: term
+    note: "Ensembl descriptions carry a [Source:HGNC ...] suffix; a regex transform can strip it"
+    transform: "regex:^(.*?)\\s*\\[Source:"
+  - source: ensembl
+    subject: EnsemblGene
+    pred: terms:has_biotype
+    im: Gene.typeOfGene
+    status: guess
+    basis: spec-section-8
+    transform: iri_localname
+    note: ENSGLOSSARY ids; a lookup to the biotype label would be nicer
+  - source: ensembl
+    subject: EnsemblGene
+    pred: so:part_of
+    im: Chromosome.primaryIdentifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+    note: chromosome IRI .../GRCh38/X -> X; HumanMine chromosomes are keyed primaryIdentifier+organism
+  - source: ensembl
+    subject: EnsemblGene
+    pred: skos:altLabel
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - source: ensembl
+    subject: EnsemblGene
+    pred: rdfs:seeAlso
+    im: CrossReference.identifier
+    status: guess
+    basis: knowledge
+    transform: iri_localname
+  - source: ensembl
+    subject: EnsemblTranscript
+    pred: dcterms:identifier
+    im: Transcript.primaryIdentifier
+    status: sure
+    basis: knowledge
+  - source: ensembl
+    subject: EnsemblTranscript
+    pred: rdfs:label
+    im: Transcript.name
+    status: guess
+    basis: knowledge
+  - source: ensembl
+    subject: EnsemblTranscript
+    pred: so:transcribed_from
+    im: Transcript.gene
+    status: sure
+    basis: knowledge
+    note: Transcript.gene reference -> Gene.secondaryIdentifier of the EnsemblGene node
+  - source: ensembl
+    subject: EnsemblProtein
+    pred: dcterms:identifier
+    im: ""
+    status: todo
+    basis: knowledge
+    note: ENSP - not a UniProt accession; decide
+  - source: ensembl
+    pred: faldo:position
+    im: ""
+    status: todo
+    basis: knowledge
+    note: begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide
+
+  # ======================= generic (any source, by class) ================================
+  - pred: dct:identifier
+    class: Publication
+    im: Publication.pubMedId
+    status: guess
+    basis: knowledge
+  - pred: dct:title
+    class: Publication
+    im: Publication.title
+    status: sure
+    basis: term
+  - pred: bibo:abstract
+    class: Publication
+    im: Publication.abstractText
+    status: sure
+    basis: term
+  - pred: dct:identifier
+    class: Gene
+    im: Gene.primaryIdentifier
+    status: guess
+    basis: knowledge
+  - pred: dct:identifier
+    class: Protein
+    im: Protein.primaryAccession
+    status: guess
+    basis: knowledge
+  - pred: dct:identifier
+    class: Pathway
+    im: Pathway.identifier
+    status: sure
+    basis: term
+  - pred: dct:identifier
+    class: OntologyTerm
+    im: OntologyTerm.identifier
+    status: guess
+    basis: knowledge
+  - pred: rdfs:label
+    class: Gene
+    im: Gene.symbol
+    status: guess
+    basis: knowledge
+    note: in gene sources rdfs:label is nearly always the symbol; the term index would say name
+  - pred: skos:prefLabel
+    class: Gene
+    im: Gene.symbol
+    status: sure
+    basis: term
+  - pred: skos:altLabel
+    class: BioEntity
+    im: Synonym.value
+    status: guess
+    basis: knowledge
+  - pred: dct:description
+    class: Gene
+    im: Gene.description
+    status: guess
+    basis: knowledge
+  - pred: obo:RO_0002162
+    class: BioEntity
+    im: Organism.taxonId
+    status: sure
+    basis: knowledge
+    transform: iri_localname
+    note: RO_0002162 = "in taxon"
+  - pred: dct:modified
+    im: ""
+    status: drop
+    basis: knowledge
+  - pred: dct:created
+    im: ""
+    status: drop
+    basis: knowledge

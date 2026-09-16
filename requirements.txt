@@ -1,0 +1,2 @@
+pyyaml>=6
+lxml>=4.9
