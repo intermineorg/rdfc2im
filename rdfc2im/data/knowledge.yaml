@@ -455,9 +455,12 @@ predicates:
   - {source: pubmed, pred: "pav:derivedFrom", column: derived_from, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "provenance; not among the fields update-publications fills, and Publication has no field for it"}
   - {source: pubmed, pred: "fabio:dateLastUpdated", column: date_last_updated, im: "", status: drop, basis: java:EntrezPublicationsRetriever, note: "record update date; not among the fields update-publications fills, and Publication has no field for it"}
   - {source: pubmed, pred: "prism:endingPage", column: ending_page, im: "", status: todo, basis: java:EntrezPublicationsRetriever, note: "Publication.pages is a range ('375-382') and starting_page alone already feeds it; there is no two-column transform to join them. update-publications fills pages authoritatively anyway"}
+  - {source: pubmed, pred: "fabio:hasSubjectTerm", column: mesh_descriptorqualifierpair, im: "", status: drop, basis: rdfconfig:model, note: "not a separate property: an example value of fabio:hasSubjectTerm, which mesh_topicaldescriptor_1 maps; binding it too makes a cross product (same predicate, no type to tell them apart)"}
+  - {source: pubmed, pred: "fabio:hasSubjectTerm", column: mesh_geographicaldescriptor, im: "", status: drop, basis: rdfconfig:model, note: "not a separate property: an example value of fabio:hasSubjectTerm, which mesh_topicaldescriptor_1 maps; binding it too makes a cross product (same predicate, no type to tell them apart)"}
+  - {source: pubmed, pred: "fabio:hasSubjectTerm", column: mesh_checktag, im: "", status: drop, basis: rdfconfig:model, note: "not a separate property: an example value of fabio:hasSubjectTerm, which mesh_topicaldescriptor_1 maps; binding it too makes a cross product (same predicate, no type to tell them apart)"}
   - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_publicationtype, im: "", status: drop, basis: model:MeshTerm, note: "a MeSH PublicationType (e.g. D016428 Journal Article), not a subject heading; the mesh source skips PublicationType"}
   - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_scr_chemical, im: "", status: drop, basis: model:MeshTerm, note: "a supplementary concept record, not a Descriptor; the mesh source skips SCR records"}
-  - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_topicaldescriptor_2, im: "", status: todo, basis: knowledge, note: "a topical descriptor, so MeshTerm.identifier - but pubmed/main already has four MeshTerm.identifier columns and items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so a second value here silently replaces the first - fix that before mapping this"}
+  - {source: pubmed, pred: "rdfs:seeAlso", column: mesh_topicaldescriptor_2, im: "", status: drop, basis: rdfconfig:model, note: "rdfs:seeAlso carries descriptors, publication types and SCR records alike, and publication types are D-numbers too (D016428 Journal Article), so descriptors cannot be told apart; the subject headings come from fabio:hasSubjectTerm"}
 
   # mesh.  The live MeshTerm is `name` + `publications` (rdfc2im adds `identifier`); stock HumanMine
   # only creates MeshTerms by name via update-publications.  Nothing below has a field.
@@ -1787,12 +1790,22 @@ predicates:
     basis: knowledge
   - source: pubmed
     pred: fabio:hasSubjectTerm
+    column: mesh_topicaldescriptor_1
     class: Publication
     im: MeshTerm.identifier
     status: guess
     basis: knowledge
-    transform: iri_localname
-    note: MeshTerm has name only? check - HumanMine loads MeSH via update-publications
+    table: main_mesh_subject_term
+    transform: "iri_localname,regex:^(D[0-9]+)"
+    note: >-
+      The one column for fabio:hasSubjectTerm.  rdf-config's model.yaml lists four example values
+      under this single predicate - a descriptor/qualifier pair, a geographic term, a check tag and
+      a topical term - to illustrate the shapes a value can take, not four properties.  Read as four
+      columns they became four untyped `OPTIONAL { ?Pubmed fabio:hasSubjectTerm ?x }` patterns in
+      `main`: a cross product returning N^4 rows per paper, every main column multiplied with them,
+      all four holding the same IRIs.  One column, in its own table because the predicate is
+      multi-valued.  The regex keeps the descriptor of a qualifier pair (D000428Q000453Q000235 ->
+      D000428), which is the MeSH heading update-publications records.
 
 
   # ======================= mesh / ensembl ================================================

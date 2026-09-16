@@ -160,12 +160,11 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Gene | `dct:modified` | `modified` | 2021-02-07 | spec D1 - narrower than it looks: NcbiGeneConverter never stored a modification date, so dropping matches stock; open only if we extend the model |
 
-**pubmed** - 2 active rows (rows under a pruned branch are not listed):
+**pubmed** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Pubmed | `prism:endingPage` | `ending_page` | 382 | Publication.pages is a range ('375-382') and starting_page alone already feeds it; there is no two-column transform to join them. update-publications fills page |
-| Pubmed | `rdfs:seeAlso` | `mesh_topicaldescriptor_2` | mesh:D000426 | a topical descriptor, so MeshTerm.identifier - but pubmed/main already has four MeshTerm.identifier columns and items.py collapses same class+field columns in o |
 
 **reactome** - 1 active rows (rows under a pruned branch are not listed):
 
@@ -285,17 +284,14 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | Gene | `ncbio:typeOfGene` | `type_of_gene` | `Gene.typeOfGene` | new attribute approved in spec section 8 (D1 side-stepped - carried by humanmine-delimited_additions.xml) |
 | Gene | `insdc:chromosome` | `chromosome` | `Chromosome.primaryIdentifier` | value like 1 or X -> Chromosome.primaryIdentifier; HumanMine chromosomes are keyed by primaryIdentifier+organism so include the Organism column in this table |
 
-**pubmed** - 7 guesses:
+**pubmed** - 4 guesses:
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
 | Pubmed | `prism:startingPage` | `starting_page` | `Publication.pages` | pages is start-end; a two-column merge transform is needed or take startingPage only |
 | Pubmed | `dct:issued` | `date_issued` | `Publication.year` | knowledge |
 | Pubmed | `fabio:hasNLMJournalTitleAbbreviation` | `title_abbrev` | `Publication.journal` | HumanMine's Publication.journal holds the NLM abbreviation (update-publications) |
-| Pubmed | `fabio:hasSubjectTerm` | `mesh_descriptorqualifierpair` | `MeshTerm.identifier` | MeshTerm has name only? check - HumanMine loads MeSH via update-publications |
-| Pubmed | `fabio:hasSubjectTerm` | `mesh_geographicaldescriptor` | `MeshTerm.identifier` | MeshTerm has name only? check - HumanMine loads MeSH via update-publications |
-| Pubmed | `fabio:hasSubjectTerm` | `mesh_checktag` | `MeshTerm.identifier` | MeshTerm has name only? check - HumanMine loads MeSH via update-publications |
-| Pubmed | `fabio:hasSubjectTerm` | `mesh_topicaldescriptor_1` | `MeshTerm.identifier` | MeshTerm has name only? check - HumanMine loads MeSH via update-publications |
+| Pubmed | `fabio:hasSubjectTerm` | `mesh_topicaldescriptor_1` | `MeshTerm.identifier` | The one column for fabio:hasSubjectTerm.  rdf-config's model.yaml lists four example values under this single predicate - a descriptor/qualifier pair, a geograp |
 
 **reactome** - 2 guesses:
 
