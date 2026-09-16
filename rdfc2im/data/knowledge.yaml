@@ -445,6 +445,21 @@ predicates:
   - {source: uniprot, pred: "core:submittedTo", column: submit_to, im: "", status: drop, basis: java:UniprotConverter, note: "submission target; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
   - {source: uniprot, pred: "core:group", column: citation_group, im: "", status: drop, basis: java:UniprotConverter, note: "author group; UniprotConverter stores only pubMedId and update-publications fills the rest from PubMed"}
 
+  # mesh.  The live MeshTerm is `name` + `publications` (rdfc2im adds `identifier`); stock HumanMine
+  # only creates MeshTerms by name via update-publications.  Nothing below has a field.
+  - {source: mesh, pred: "meshv:annotation", column: descriptor_annotation, im: "", status: drop, basis: model:MeshTerm, note: "indexing annotation; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:nlmClassificationNumber", column: descriptor_nlm_classification_number, im: "", status: drop, basis: model:MeshTerm, note: "NLM classification; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:preferredConcept", column: descriptor_preferred_concept, im: "", status: drop, basis: model:MeshTerm, note: "link to a Concept (skipped); no MeshTerm field"}
+  - {source: mesh, pred: "meshv:broaderDescriptor", column: broader_descriptor, im: "", status: drop, basis: model:MeshTerm, note: "hierarchy; MeshTerm has no parents collection; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:historyNote", column: descriptor_history_note, im: "", status: drop, basis: model:MeshTerm, note: "history note; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:publicMeSHNote", column: descriptor_public_mesh_note, im: "", status: drop, basis: model:MeshTerm, note: "public note; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:onlineNote", column: descriptor_online_note, im: "", status: drop, basis: model:MeshTerm, note: "online note; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:active", column: descriptor_active, im: "", status: drop, basis: model:MeshTerm, note: "active flag; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:lastActiveYear", column: descriptor_last_active_year, im: "", status: drop, basis: model:MeshTerm, note: "last active year; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:pharmacologicalAction", column: descriptor_pharmacological_action, im: "", status: drop, basis: model:MeshTerm, note: "descriptor-to-descriptor link; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:previousIndexing", column: descriptor_previous_indexing, im: "", status: drop, basis: model:MeshTerm, note: "previous indexing; no MeshTerm field"}
+  - {source: mesh, pred: "meshv:considerAlso", column: descriptor_consider_also, im: "", status: drop, basis: model:MeshTerm, note: "see-also text; no MeshTerm field"}
+
   # ======================= gene identity: ncbigene (NcbiGeneConverter, taxon 9606) ==========
   - source: ncbigene
     pred: dct:identifier

@@ -155,23 +155,6 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | no match on Homologue - choose a field, or set status=drop |
 | Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
 
-**mesh** - 12 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| Descriptor | `meshv:annotation` | `descriptor_annotation` | coordinate IM with specific bacteria or fungal infection (IM | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:nlmClassificationNumber` | `descriptor_nlm_classification_number` | WG 580 | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:preferredConcept` | `descriptor_preferred_concept` | Concept | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:broaderDescriptor` | `broader_descriptor` | Descriptor | MeshTerm has no parents collection; drop or extend the model |
-| Descriptor | `meshv:historyNote` | `descriptor_history_note` | 87; was ANEURYSM, MYCOTIC 1964-86 (Prov 1964-69) | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:publicMeSHNote` | `descriptor_public_mesh_note` | 87; was ANEURYSM, MYCOTIC 1970-86 | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:onlineNote` | `descriptor_online_note` | use ANEURYSM, INFECTED to search ANEURYSM, MYCOTIC 1966-86 ( | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:active` | `descriptor_active` | True | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:lastActiveYear` | `descriptor_last_active_year` | 2018 | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:pharmacologicalAction` | `descriptor_pharmacological_action` | Descriptor | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:previousIndexing` | `descriptor_previous_indexing` | Nerve Tissue Proteins (1995-2015) | no match on MeshTerm - choose a field, or set status=drop |
-| Descriptor | `meshv:considerAlso` | `descriptor_consider_also` | consider also terms at MYEL- | no match on MeshTerm - choose a field, or set status=drop |
-
 **mp** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
