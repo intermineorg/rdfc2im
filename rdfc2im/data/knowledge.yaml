@@ -783,7 +783,10 @@ predicates:
     im: ""
     status: todo
     basis: spec-D2
-    note: spec D2 - GO slim subsets; extend the model or exclude
+    note: >-
+      spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock
+      HumanMine has never loaded GO-slim membership and dropping this changes nothing.  The only
+      real question is whether to go *beyond* stock by extending the model.
   - pred: rdfs:subClassOf
     class: OntologyTerm
     im: OntologyTerm.parents
@@ -802,9 +805,9 @@ predicates:
   - pred: rdfs:comment
     class: OntologyTerm
     im: ""
-    status: todo
-    basis: knowledge
-    note: free-text comment; no field (description already used for the definition)
+    status: drop
+    basis: java:OboParser
+    note: "OboParser never reads `comment`, and OntologyTerm has no field for it (description holds the definition)"
   - pred: owl:deprecated
     class: OntologyTerm
     im: OntologyTerm.obsolete
@@ -813,9 +816,82 @@ predicates:
   - pred: obo:IAO_0100001
     class: OntologyTerm
     im: ""
-    status: todo
-    basis: knowledge
-    note: term replaced by; obsolete-term bookkeeping - probably drop
+    status: drop
+    basis: java:OboParser
+    note: "term_replaced_by: OboParser never reads `replaced_by`; obsoleteness itself is already loaded as OntologyTerm.obsolete"
+  # Authoring provenance.  OboParser reads none of these tags and OntologyTerm has no field for
+  # any of them, so stock HumanMine has never loaded them.
+  - pred: oboinowl:created_by
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: java:OboParser
+    note: "OboParser never reads `created_by`; no OntologyTerm field"
+  - pred: oboinowl:creation_date
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: java:OboParser
+    note: "OboParser never reads `creation_date`; no OntologyTerm field"
+  - pred: dc:contributor
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: java:OboParser
+    note: "contributor ORCIDs; OboParser never reads them; no OntologyTerm field"
+  - pred: dcterms:contributor
+    class: OntologyTerm
+    im: ""
+    status: drop
+    basis: java:OboParser
+    note: "contributor ORCIDs; OboParser never reads them; no OntologyTerm field"
+  # Ontology annotation properties, mostly Uberon's.  Each OBO source here is loaded with the stock
+  # OBO route (uberon.properties: have.file.obo = true, obo.term.class = AnatomyTerm), and
+  # OboParser reads only id, name, namespace, def, is_obsolete, is_a, alt_id, xref and the synonym
+  # tags.  None of these is among them, and OntologyTerm has no field for any of them.
+  - {pred: obo:IAO_0000116, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "editor_note; OboParser never reads it"}
+  - {pred: obo:IAO_0000232, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "curator_note; OboParser never reads it"}
+  - {pred: obo:IAO_0006012, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "scheduled_for_obsoletion_on_or_after; OboParser never reads it"}
+  - {pred: obo:RO_0002161, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "never_in_taxon - taxon constraint; OboParser never reads it"}
+  - {pred: obo:RO_0002171, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "mutually_spatially_disjoint_with - OWL axiom; OboParser never reads it"}
+  - {pred: obo:RO_0002173, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "ambiguous_for_taxon - taxon constraint; OboParser never reads it"}
+  - {pred: obo:RO_0002174, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "dubious_for_taxon - taxon constraint; OboParser never reads it"}
+  - {pred: obo:RO_0002175, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "present_in_taxon - taxon constraint; OboParser never reads it"}
+  - {pred: obo:RO_0002475, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "has_no_connections_with - OWL axiom; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000001, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "external_definition (the definition proper is already IAO_0000115 -> description); OboParser never reads it"}
+  - {pred: obo:UBPROP_0000002, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "axiom_lost_from_external_ontology; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000003, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "homology_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000004, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "provenance_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000005, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "external_comment; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000006, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "implements_design_pattern; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000007, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "has_relational_adjective; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000008, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "taxon_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000009, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "function_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000010, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "structure_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000011, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "development_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000012, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "external_ontology_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000013, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "terminology_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000014, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "actions_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000015, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "location_notes; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000103, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "pharyngeal_arch_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000104, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "ray_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000105, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "phalanx_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000106, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "rib_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000107, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "vertebra_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000108, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "somite_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000111, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "rhombomere_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000112, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "tooth_number; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000201, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "source_atlas; OboParser never reads it"}
+  - {pred: obo:UBPROP_0000202, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "fma_set_term; OboParser never reads it"}
+  - {pred: owl:equivalentClass, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "OWL equivalence axiom; OboParser never reads it"}
+  - {pred: owl:disjointWith, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "OWL disjointness axiom; OboParser never reads it"}
+  - {pred: foaf:depicted_by, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "image URL; OboParser never reads it"}
+  - {pred: dcterms:date, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "record date; OboParser never reads it"}
+  - {pred: dc:date, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "record date; OboParser never reads it"}
+  - {pred: dc:creator, class: OntologyTerm, im: "", status: drop, basis: java:OboParser, note: "creator ORCID; OboParser never reads it"}
+  # metadata:treeView is added by BioPortal, not the ontology: a browsing hierarchy that duplicates
+  # is_a, which is already loaded as parents.
+  - {pred: "<http://data.bioontology.org/metadata/treeView>", class: OntologyTerm, im: "", status: drop, basis: knowledge, note: "BioPortal browsing artefact; is_a already gives OntologyTerm.parents"}
   - pred: obo:IAO_0000231
     class: OntologyTerm
     im: ""

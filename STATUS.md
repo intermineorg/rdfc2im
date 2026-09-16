@@ -34,13 +34,13 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | gwascatalog | good | huge-gwas | 2/0/0 | 9/4/0/31/3 | 0 | 1 | 1 | yes (1) | yes |
 | hgnc | good | hgnc | 4/12/0 | 7/24/0/1/16 | 0 | 16 | 0 | yes (16) | yes |
 | homologene | structural | - | 0/1/0 | 0/0/0/3/1 | 8 | 0 | 0 | no | no |
-| hpo | good | hpo | 1/0/0 | 12/1/0/1/2 | 0 | 6 | 0 | yes (6) | yes |
+| hpo | good | hpo | 1/0/0 | 12/1/0/0/3 | 0 | 6 | 0 | yes (6) | yes |
 | mesh | good | - | 9/0/0 | 1/1/0/12/4 | 64 | 1 | 1 | yes (1) | yes |
-| mp | good | mammalian-phenotype-ontology | 1/0/0 | 16/2/0/10/4 | 0 | 8 | 0 | yes (8) | yes |
+| mp | good | mammalian-phenotype-ontology | 1/0/0 | 16/2/0/1/13 | 0 | 8 | 0 | yes (8) | yes |
 | ncbigene | good | ncbi-gene | 1/0/0 | 11/2/0/4/2 | 0 | 5 | 1 | yes (5) | yes |
 | pubmed | good | - | 4/0/0 | 9/7/0/11/10 | 0 | 2 | 1 | yes (2) | yes |
 | reactome | good | reactome | 2/3/0 | 7/2/0/7/10 | 374 | 2 | 1 | yes (2) | yes |
-| uberon | good | - | 1/0/0 | 16/2/0/45/3 | 0 | 8 | 0 | yes (8) | yes |
+| uberon | good | - | 1/0/0 | 16/2/0/1/47 | 0 | 8 | 0 | yes (8) | yes |
 | uniprot | good | uniprot | 4/5/0 | 11/13/0/17/96 | 400 | 10 | 0 | yes (10) | yes |
 
 ### Tables per source (each = one SPARQL query; all of a source's tables feed one items file / one `<source>`)

@@ -136,7 +136,7 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Class | `oboinowl:inSubset` | `subset` | go:goslim_pir | spec D2 - GO slim subsets; extend the model or exclude |
+| Class | `oboinowl:inSubset` | `subset` | go:goslim_pir | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
 **gwascatalog** - 31 active rows (rows under a pruned branch are not listed):
 
@@ -183,12 +183,6 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | no match on Homologue - choose a field, or set status=drop |
 | Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
 
-**hpo** - 1 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| Class | `rdfs:comment` | `comment` | Anemia is not a specific entity but can result from many und | free-text comment; no field (description already used for the definition) |
-
 **mesh** - 12 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
@@ -206,20 +200,11 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | Descriptor | `meshv:previousIndexing` | `descriptor_previous_indexing` | Nerve Tissue Proteins (1995-2015) | no match on MeshTerm - choose a field, or set status=drop |
 | Descriptor | `meshv:considerAlso` | `descriptor_consider_also` | consider also terms at MYEL- | no match on MeshTerm - choose a field, or set status=drop |
 
-**mp** - 10 active rows (rows under a pruned branch are not listed):
+**mp** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Class | `metadata:treeView` | `tree_view` | Class | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `obo:IAO_0100001` | `term_replaced_by` | Class | term replaced by; obsolete-term bookkeeping - probably drop |
-| Class | `dc:contributor` | `contributor` | <https://orcid.org/0000-0002-6490-7723> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `dc:creator` | `creator` | <https://orcid.org/0000-0002-6490-7723> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `dc:date` | `date` | 2017-05-22 15:58:02+00:00 | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `dcterms:contributor` | `terms_contributor` | <https://orcid.org/0000-0003-3691-0324> | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `oboinowl:created_by` | `created_by` | csmith | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `oboinowl:creation_date` | `creation_date` | 2010-07-05T10:00:46Z | no match on MammalianPhenotypeTerm - choose a field, or set status=drop |
-| Class | `oboinowl:inSubset` | `in_subset` | obo:mp#CvDC_Terms | spec D2 - GO slim subsets; extend the model or exclude |
-| Class | `rdfs:comment` | `comment` | Heart rate variability (HRV) is the variation of beat-to-bea | free-text comment; no field (description already used for the definition) |
+| Class | `oboinowl:inSubset` | `in_subset` | obo:mp#CvDC_Terms | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
 **ncbigene** - 4 active rows (rows under a pruned branch are not listed):
 
@@ -258,36 +243,11 @@ http://purl.jp/bio/10/clinvar/date_created	date_created	sssom:NoMapping			semapv
 | UnificationXref | `biopax:comment` | `unification_xref_description` | Reactome stable identifier. Use this URL to connect to the w | no match on Pathway - choose a field, or set status=drop |
 | UnificationXref | `biopax:idVersion` | `pathway_ver` | 1 | no match on Pathway - choose a field, or set status=drop |
 
-**uberon** - 45 active rows (rows under a pruned branch are not listed):
+**uberon** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| Class | `obo:IAO_0000116` | `editor_note` | TODO - check frog/fish | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:IAO_0000232` | `curator_note` | See notes for pars intermedia of adenohypophysis. | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:IAO_0006012` | `scheduled_for_obsoletion_on_or_after` | 2023-04-20 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:IAO_0100001` | `term_replaced_by` | UBERON:0002275 | term replaced by; obsolete-term bookkeeping - probably drop |
-| Class | `obo:RO_0002161` | `never_in_taxon` | obo:NCBITaxon_32443 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:RO_0002171` | `mutually_spatially_disjoint_with` | Class | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:RO_0002173` | `ambiguous_for_taxon` | obo:NCBITaxon_8782 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:RO_0002174` | `dubious_for_taxon` | obo:NCBITaxon_10090 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:RO_0002175` | `present_in_taxon` | obo:NCBITaxon_9606 | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:RO_0002475` | `has_no_connections_with` | Class | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000001` | `external_definition` | Dense regular connective tissue that connects muscle to bone | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000002` | `axiom_lost_from_external_ontology` | relationship loss: overlaps hyomandibular-otic region joint  | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000003` | `homology_notes` | (...) an essentially similar sequence of events occurs durin | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000004` | `provenance_notes` | This class was sourced from an external ontology (teleost_an | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000005` | `external_comment` | [In TAO], This term was made obsolete because it is consider | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000006` | `implements_design_pattern` | <https://github.com/obophenotype/uberon/wiki/Modeling-paired | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000007` | `has_relational_adjective` | ventral | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000008` | `taxon_notes` | the basic trilaminar structure of the dentate gyrus is commo | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000009` | `function_notes` | vomiting center in humans | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000010` | `structure_notes` | A secretion of the prostate this is slightly alkaline fluid, | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000011` | `development_notes` | contributes significantly in building up the GABAergic corti | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000012` | `external_ontology_notes` | this is a 'set of anatomical planes' in FMA | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000013` | `terminology_notes` | Gilbert uses visceral endoderm as a synonym for primitive en | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000014` | `actions_notes` | In some mammals these muscles can adjust the direction of th | no match on AnatomyTerm - choose a field, or set status=drop |
-| Class | `obo:UBPROP_0000015` | `location_notes` | Bounded medially by the Lamina orbitalis of the Os ethmoidal | no match on AnatomyTerm - choose a field, or set status=drop |
-| ... | | | | 20 more in the file |
+| Class | `oboinowl:inSubset` | `in_subset` | obo:uberon/core#early_development | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
 **uniprot** - 17 active rows (rows under a pruned branch are not listed):
 
