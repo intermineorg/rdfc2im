@@ -49,7 +49,7 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
         # columns.tsv: order = SELECT order, then constants
         pos = 0
         used = set()
-        for r, var in zip([r for r in qrows if node_by_key.get((r["subject"], r["predicate"], r["column"]))], select):
+        for r, var in zip(qb.kept, select):
             col_rows.append(dict(table=t, position=pos, column=r["column"], variable=var, im_class=r["im_class"],
                                  im_field=r["im_field"], transform=r.get("transform", ""), filter=r.get("filter", ""),
                                  value="", kind=r.get("kind", ""), via=r.get("via", ""), status=r["status"],

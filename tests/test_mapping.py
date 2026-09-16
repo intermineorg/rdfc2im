@@ -295,3 +295,31 @@ def test_human_tsv_role_beats_knowledge_role(tmp_path):
     r2 = translate(m, cfg, out, kn, {})
     subj = {s["subject"]: s for s in r2["subjects"]}
     assert subj["TreeNumber"]["role"] == "node", "the human's role must survive regeneration"
+
+
+def test_columns_pair_with_the_variables_the_query_keeps(tmp_path):
+    """A row the builder skips must not shift later columns onto the wrong variable.
+
+    The pipeline used to zip candidate rows with SELECT variables.  A link row with no single
+    variable is skipped by build(); zipped naively, every column after it takes its
+    neighbour's variable, and clean_table then writes one field's data into another.
+    """
+    m = make_model(tmp_path); cfg = make_cfg(tmp_path); kn = make_knowledge(tmp_path)
+    r = translate(m, cfg, str(tmp_path / "out"), kn, {})
+    rows = {(x["subject"], x["predicate"]): x for x in r["rows"]}   # column alone is ambiguous
+    ident, sym = rows[("Gene", "dct:identifier")], rows[("Gene", "skos:prefLabel")]
+    org = rows[("Gene", "ex:org")]
+    assert org["kind"] == "link"
+    # `org` is a link row; forge one whose sub-node cannot be found, so build() must skip it
+    ghost = dict(org, column="ghost_link", status="sure", im_class="Gene", im_field="name")
+    node_by_key = dict(r["node_by_key"])
+    node_by_key[(ghost["subject"], ghost["predicate"], ghost["column"])] = r["node_by_key"][
+        (org["subject"], org["predicate"], org["column"])]
+    qb = QueryBuilder(r["cfg"], node_by_key)
+    _, select, _ = qb.build("main", [ident, ghost, sym])
+    assert any("ghost_link" in msg for msg in qb.messages), qb.messages
+    assert [k["column"] for k in qb.kept] == ["id", "sym"]
+    assert len(qb.kept) == len(select)
+    # the naive pairing the pipeline used: ghost would have taken sym's variable
+    naive = [c["column"] for c in [ident, ghost, sym]][:len(select)]
+    assert naive != [k["column"] for k in qb.kept]

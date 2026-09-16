@@ -63,7 +63,13 @@ class QueryBuilder:
         self.messages: List[str] = []
 
     def build(self, table: str, qrows: List[dict], limit: int = 0) -> Tuple[str, List[str], Dict[str, str]]:
-        """Return (sparql, select_vars_in_order, parameters)."""
+        """Return (sparql, select_vars_in_order, parameters).
+
+        `self.kept` is set to the rows actually selected, in SELECT order, one per variable.
+        Pair columns with variables through it: a row skipped here (a link with no single
+        variable) would otherwise shift every later column onto the wrong variable.
+        """
+        self.kept = []
         # leaves per node
         leaves: Dict[str, List[dict]] = {}
         nodes: Dict[str, Node] = {}
@@ -111,6 +117,7 @@ class QueryBuilder:
         if table != "main" and all(r.get("required") == "yes" for r in kept):
             self.messages.append(f"{table}: nothing left but the root key after skips - table dropped")
             return "", [], {}
+        self.kept = kept
 
         body = self._emit(root, nodes, leaves, indent=1)
         curies = set(re.findall(r"(?<![<\w])([A-Za-z][\w.-]*):(?=[^\s/])", "\n".join(body)))
