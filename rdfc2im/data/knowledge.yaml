@@ -1362,8 +1362,17 @@ predicates:
     column: vcv
     im: Allele.primaryIdentifier
     status: sure
-    basis: java:ClinvarConverter
+    basis: rdfconfig:model
     required: "yes"
+    note: >-
+      DIVERGES FROM STOCK - decide before replacing clinvar.  This previously claimed
+      basis java:ClinvarConverter, which is false: the converter sets primaryIdentifier from
+      `line[0]` of variant_summary.txt, the numeric AlleleID (e.g. 205807), never the VCV
+      accession.  VCV is what rdf-config's own model uses to identify a record and is a sound
+      identifier, so it stays mapped - but loading it in place of stock clinvar changes every
+      Allele.primaryIdentifier, which breaks saved lists, templates and anything keyed on AlleleID.
+      To match stock instead, key on cvo:allele_id (column allele_id) - that id sits on the
+      SIO_000628 node, not the record root, so it is a structural change, not a one-line swap.
   # ---- clinvar, first curation pass (CURATION_GUIDE 4.2).  The stock ClinvarConverter reads 8
   # columns of variant_summary.txt and writes only Allele.{primaryIdentifier, type,
   # clinicalSignificance, reference, alternate, organism, gene, diseases}, a bare
@@ -1375,6 +1384,10 @@ predicates:
   # showed Allele.reference = http://identifiers.org/hco/12#GRCh37.  The allele base is
   # med2rdf:reference_allele, which the converter's line[21] matches and which stays mapped.
   - {source: clinvar, pred: "faldo:reference", column: reference, im: "", status: drop, basis: java:ClinvarConverter, note: "reference sequence IRI, not the allele base; name-match false positive. Allele.reference comes from med2rdf:reference_allele (converter line[21])"}
+
+  # Other identifiers - part of the AlleleID/VCV decision on cvo:accession above.
+  - {source: clinvar, pred: "cvo:allele_id", column: allele_id, im: "", status: todo, basis: java:ClinvarConverter, note: "the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession"}
+  - {source: clinvar, pred: "cvo:variation_id", column: id, im: "", status: todo, basis: knowledge, note: "ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession"}
 
   - source: clinvar
     pred: cvo:variation_name

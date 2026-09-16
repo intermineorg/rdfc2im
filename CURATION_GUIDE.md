@@ -79,9 +79,9 @@ Each `todo` row's `comment` says why it is open. Set `object_id` to `intermine:C
 | Clinvar | `cvo:number_of_submitters` | `number_of_submitters` | 1 | no match on Allele - choose a field, or set status=drop |
 | Clinvar | `cvo:record_status` | `recode_status` | current | no match on Allele - choose a field, or set status=drop |
 | Clinvar | `cvo:record_type` | `record_type` | classified | no match on Allele - choose a field, or set status=drop |
-| Clinvar | `cvo:variation_id` | `id` | 209597 | no match on Allele - choose a field, or set status=drop |
+| Clinvar | `cvo:variation_id` | `id` | 209597 | ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession |
 | Clinvar | `cvo:version` | `version` | 3 | no match on Allele - choose a field, or set status=drop |
-| Clinvar/classified_record/SIO_000628 | `cvo:allele_id` | `allele_id` | 205807 | no match on Allele - choose a field, or set status=drop |
+| Clinvar/classified_record/SIO_000628 | `cvo:allele_id` | `allele_id` | 205807 | the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession |
 | Clinvar/classified_record/SIO_000628 | `cvo:canonical_spdi` | `spdi` | NC_000013.11:32314942:A:G | no match on Allele - choose a field, or set status=drop |
 | Clinvar/classified_record/SIO_000628 | `cvo:cytogenetic_location` | `variant_location` | 13q13.1 | no match on Allele - choose a field, or set status=drop |
 | Clinvar/classified_record/rcv_list/rcv_accession | `cvo:accession` | `rcv_accession` | RCV000191543 | no match on Allele - choose a field, or set status=drop |
