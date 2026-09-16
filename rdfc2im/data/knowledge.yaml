@@ -635,7 +635,16 @@ predicates:
     status: sure
     basis: java:OboConverter
     required: "yes"
-    note: "e.g. GO:0044255 - exactly what the obo source stores in identifier"
+    filter: "regex:^[A-Za-z][A-Za-z0-9]*:[0-9]+$"
+    note: >-
+      e.g. GO:0044255 - exactly what the obo source stores in identifier.  The filter is not
+      cosmetic: OBO ontologies give oboinowl:id to OWL object and annotation properties as well
+      as to classes, so a full GO extract yields 11 rows whose "identifier" is a relationship
+      name - part_of, occurs_in, regulates, ends_during, happens_during, starts_during, has_part,
+      positively_regulates, negatively_regulates, has_ontology_root_term, term_tracker_item.
+      They loaded as GOTerms and sorted to the top of the class in the UI.  Requiring the
+      PREFIX:digits shape keeps every real term (GO:, HP:, MP:, UBERON:) and drops these; the
+      column is required=yes, so a failing row is dropped rather than blanked.
   - pred: skos:notation
     class: OntologyTerm
     im: OntologyTerm.identifier

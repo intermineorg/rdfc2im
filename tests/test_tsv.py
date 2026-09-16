@@ -77,3 +77,33 @@ def test_filter_runs_before_transform_and_blanks_optional_columns(tmp_path):
     assert got["GO:0000002"] == "", "blank node must not become an identifier"
     assert got["GO:0000003"] == "", "owl:Thing is not a parent term"
     assert st["rows_out"] == 4 and st["filtered"] == 0
+
+
+def test_required_column_filter_drops_owl_property_pseudo_terms(tmp_path):
+    """OBO ontologies give oboinowl:id to object properties, not just classes.
+
+    A full GO extract yields 11 such rows (part_of, occurs_in, regulates, ...) which
+    loaded as GOTerms.  The identifier column is required=yes, so a failing filter must
+    drop the whole row, not blank it.
+    """
+    raw = tmp_path / "raw.tsv"
+    raw.write_text(
+        "?id\t?label\n"
+        '"GO:0000016"\t"lactase activity"\n'
+        '"part_of"\t"part of"\n'
+        '"UBERON:0000955"\t"brain"\n'
+        '"term_tracker_item"\t"term tracker item"\n'
+        '"HP:0000001"\t"All"\n')
+    cols = [
+        {"column": "id", "variable": "id", "im_class": "OntologyTerm", "im_field": "identifier",
+         "transform": "", "filter": "regex:^[A-Za-z][A-Za-z0-9]*:[0-9]+$", "value": "",
+         "kind": "iri", "required": "yes", "position": "0"},
+        {"column": "label", "variable": "label", "im_class": "OntologyTerm", "im_field": "name",
+         "transform": "", "filter": "", "value": "", "kind": "literal", "required": "no",
+         "position": "1"},
+    ]
+    out = tmp_path / "clean.tsv"
+    st = clean_table(str(raw), str(out), cols)
+    ids = [l.split("\t")[0] for l in out.read_text().rstrip("\n").split("\n")[1:]]
+    assert ids == ["GO:0000016", "UBERON:0000955", "HP:0000001"], ids
+    assert st["rows_out"] == 3 and st["filtered"] == 2
