@@ -707,6 +707,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "ENA"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: INSDC
     pred: dct:identifier
@@ -714,6 +715,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "INSDC"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: RefSeq
     pred: dct:identifier
@@ -721,6 +723,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "RefSeq"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: CCDS
     pred: dct:identifier
@@ -728,6 +731,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "CCDS"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: MGI
     pred: dct:identifier
@@ -735,6 +739,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "MGI"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: RGD
     pred: dct:identifier
@@ -742,6 +747,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "RGD"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: LRG
     pred: dct:identifier
@@ -749,6 +755,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "LRG"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: MiRBase
     pred: dct:identifier
@@ -756,6 +763,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "miRBase"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: EC
     pred: dct:identifier
@@ -763,6 +771,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "Enzyme Nomenclature"}
+    const_via: {DataSource.name: CrossReference.source}
   - source: hgnc
     subject: Orphanet
     pred: dct:identifier
@@ -770,6 +779,7 @@ predicates:
     status: guess
     basis: knowledge+java:NcbiGeneConverter
     const: {DataSource.name: "Orphanet"}
+    const_via: {DataSource.name: CrossReference.source}
 
   # ======================= ontologies (obo / oboInOwl) - all *Term classes ================
   - pred: -self-

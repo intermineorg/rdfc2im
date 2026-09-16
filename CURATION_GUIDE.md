@@ -245,16 +245,16 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | MiRBase | `dct:identifier` | `mirbase_id` | `CrossReference.identifier` | knowledge+java:NcbiGeneConverter |
 | Orphanet | `dct:identifier` | `orphanet_id` | `CrossReference.identifier` | knowledge+java:NcbiGeneConverter |
 | EC | `dct:identifier` | `ec_id` | `CrossReference.identifier` | knowledge+java:NcbiGeneConverter |
-| ENA | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for ena_id |
-| INSDC | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for insdc_id |
-| RefSeq | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for refseq_id |
-| CCDS | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for ccds_id |
-| MGI | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for mgi_id |
-| RGD | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for rgd_id |
-| LRG | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for lrg_id |
-| MiRBase | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for mirbase_id |
-| Orphanet | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for orphanet_id |
-| EC | `-const-` | `const_DataSource_name` | `DataSource.name` | constant for ec_id |
+| ENA | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for ena_id |
+| INSDC | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for insdc_id |
+| RefSeq | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for refseq_id |
+| CCDS | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for ccds_id |
+| MGI | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for mgi_id |
+| RGD | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for rgd_id |
+| LRG | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for lrg_id |
+| MiRBase | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for mirbase_id |
+| Orphanet | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for orphanet_id |
+| EC | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for ec_id |
 
 **hpo** - 1 guesses:
 
