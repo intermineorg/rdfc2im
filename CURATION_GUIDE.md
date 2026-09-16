@@ -178,14 +178,12 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `in_subset` | obo:uberon/core#early_development | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**uniprot** - 4 active rows (rows under a pruned branch are not listed):
+**uniprot** - 2 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | UniProt | `core:classifiedWith` | `go` | GO | spec D4, and DO NOT simply re-enable this.  obo:GO_0001618 -> GO:0001618 is right, but there is no correct single-hop target.  Protein's only OntologyTerm colle |
 | AlternativeNameNode | `core:ecName` | `altanative_ec` | 2.1.1.- | a genuine stock EC, but this node is bound to Synonym and Synonym has no link to ECNumber, so it would load unlinked; move it onto a Protein-bound path |
-| AlternativeNameNode | `core:cdAntigenName` | `altanative_antigen` | CD312 | an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so |
-| AlternativeNameNode | `core:allergenName` | `altanative_allergen` | Hom s 3 | an alternative protein name, so Synonym.value - but items.py collapses same class+field columns in one table (groups by (class, via), values keyed by field), so |
 
 ### 4.3 Confirm or correct `guess` rows
 
@@ -307,7 +305,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
 | Class | `owl:deprecated` | `deprecated` | `AnatomyTerm.obsolete` | knowledge |
 
-**uniprot** - 13 guesses:
+**uniprot** - 15 guesses:
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
@@ -321,6 +319,8 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | SubmittedNameNode | `core:fullName` | `submitted_name` | `Protein.name` | knowledge |
 | AlternativeNameNode | `core:fullName` | `altanative_name` | `Synonym.value` | knowledge |
 | AlternativeNameNode | `core:shortName` | `altanative_short_name` | `Synonym.value` | knowledge |
+| AlternativeNameNode | `core:cdAntigenName` | `altanative_antigen` | `Synonym.value` | a CD antigen name (e.g. CD312) is a genuine name of the protein, so a Synonym. BEYOND STOCK: UniprotConverter makes synonyms only from fullName/shortName under  |
+| AlternativeNameNode | `core:allergenName` | `altanative_allergen` | `Synonym.value` | a allergen name (e.g. Hom s 3) is a genuine name of the protein, so a Synonym. BEYOND STOCK: UniprotConverter makes synonyms only from fullName/shortName under  |
 | DbResource | `core:database` | `database` | `DataSource.name` | CrossReference.source -> DataSource |
 | Citation | `dct:identifier` | `citation_doi` | `Publication.doi` | values are doi:10.1016/...; previously mapped to Publication.pubMedId, where it collided with the real PubMed id and would have become a bogus Publication once  |
 | Citation | `core:title` | `citation_title` | `Publication.title` | knowledge |
