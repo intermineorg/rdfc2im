@@ -332,6 +332,8 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
                 soft.append(f"{name}: root class {cls} uses a DRAFT key ({gen_keys[cls]}) - review")
             elif not keys and cls not in gen_keys:
                 soft.append(f"{name}: class {cls} has no integration key - its items are stored without merging")
+        hard.extend(f"{name}: {msg}" for msg in column_collisions(model, out_root, src))
+        hard.extend(f"{name}: {msg}" for msg in cross_products(out_root, src))
         items = os.path.join(out_root, src, "items", f"{src}.xml")
         if os.path.exists(items):
             ids, n, bad = set(), 0, 0
@@ -419,6 +421,59 @@ def replaced_coverage(model: InterMineModel, out_root: str, src: str, replaced: 
         if missing:
             out.append((cls, missing, not written.get(cls)))
     return out
+
+
+def column_collisions(model: InterMineModel, out_root: str, src: str) -> List[str]:
+    """Columns in one table that write the same field of the same object.
+
+    items.py would keep one value and drop the rest without a word.  translate splits these into
+    separate tables, so one reaching columns.tsv means a table was set by hand (or in knowledge)
+    onto a collision - a hard problem, because the load would silently lose data.
+    """
+    from .items import group_key
+    out = []
+    for table, cols in load_columns(out_root, src).items():
+        root = table_root(cols)
+        seen: Dict[tuple, List[str]] = {}
+        for c in cols:
+            if c.get("kind") == "const" or not c.get("im_field"):
+                continue
+            key = group_key(model, root, c["im_class"], c.get("via") or "") + (c["im_field"],)
+            seen.setdefault(key, []).append(c["column"])
+        for (cls, via, fld), columns in seen.items():
+            if len(columns) > 1:
+                out.append(f"table {table}: columns {', '.join(columns)} all write {cls}.{fld}"
+                           f"{' via ' + via if via else ''} on one object - only one value would survive")
+    return out
+
+
+def cross_products(out_root: str, src: str) -> List[str]:
+    """One untyped predicate bound by several columns of one subject in one table.
+
+    rdf-config lists example values of a single predicate as separate objects; read as separate
+    columns they become independent patterns over the same predicate, every variable binds every
+    value, and the table returns N^k rows (PubMed's fabio:hasSubjectTerm returned 625 rows for a
+    paper with 5 headings).  Columns carrying a `filter` or `value` are discriminated and do not
+    count; typed sub-subjects are link rows and never appear here.
+    """
+    from .mapping import LOADABLE
+    from .sssom import read_sssom
+    path = os.path.join(out_root, src, "mapping_predicates.sssom.tsv")
+    if not os.path.exists(path):
+        return []
+    _, rows = read_sssom(path)
+    groups: Dict[tuple, List[str]] = {}
+    for r in rows:
+        if r.get("status") not in LOADABLE or r.get("table") in ("", "drop", "*"):
+            continue
+        if r.get("kind") not in ("literal", "iri") or r.get("predicate") == "-self-":
+            continue
+        if r.get("filter") or r.get("value"):
+            continue
+        groups.setdefault((r["table"], r["subject"], r["predicate"]), []).append(r["column"])
+    return [f"table {t}: {subj} {pred} is bound by {len(cols)} columns ({', '.join(cols)}) - a cross product "
+            f"returning N^{len(cols)} rows; map the predicate once" for (t, subj, pred), cols in groups.items()
+            if len(cols) > 1]
 
 
 def _generated_keys(path: str) -> Dict[str, str]:

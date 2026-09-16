@@ -123,6 +123,22 @@ def table_root(cols: List[dict]) -> str:
     return next((c["im_class"] for c in cols if c.get("required") == "yes"), cols[0]["im_class"])
 
 
+def group_key(model: InterMineModel, root_cls: str, cls: str, via: str) -> Tuple[str, str]:
+    """The object a column writes to, as (class, via) - exactly how emit_items groups columns.
+
+    Columns sharing a key and a field write one attribute of one object, so only one value can
+    survive.  translate uses this same function to keep that from happening, and check to report
+    it, so the three can never disagree about what collides.
+    """
+    via = via or ""
+    if cls != root_cls and not via:
+        via = _via_from(model, root_cls, cls)
+    # same-class link through an ancestor-typed reference: the target is the root class
+    if via and cls != root_cls and model.is_a(root_cls, cls):
+        cls = root_cls
+    return cls, via
+
+
 def _via_from(model: InterMineModel, from_cls: str, to_cls: str) -> str:
     for fname, fd in model.all_fields(from_cls).items():
         if fd.kind != "attribute" and (fd.type == to_cls or model.is_a(to_cls, fd.type)):
@@ -147,15 +163,10 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
         # object groups in column order: (class, via) -> [column dicts]
         groups: List[Tuple[Tuple[str, str], List[dict]]] = []
         for c in cl:
-            cls, via = c["im_class"], c.get("via") or ""
-            if cls != root_cls and not via:
-                via = _via_from(model, root_cls, cls)
-                if not via and f"{table}:{cls}" not in stats["notes"]:
-                    stats["notes"].append(f"{table}: no link from {root_cls} to {cls}; {cls} items are created but unlinked")
-            # same-class link through an ancestor-typed reference: the target is the root class
-            if via and cls != root_cls and model.is_a(root_cls, cls):
-                cls = root_cls
-            key = (cls, via)
+            key = group_key(model, root_cls, c["im_class"], c.get("via") or "")
+            if c["im_class"] != root_cls and not key[1]:
+                stats["notes"].append(f"{table}: no link from {root_cls} to {c['im_class']}; "
+                                      f"{c['im_class']} items are created but unlinked")
             for g in groups:
                 if g[0] == key:
                     g[1].append(c)

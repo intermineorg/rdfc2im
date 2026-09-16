@@ -263,3 +263,32 @@ def test_replacing_a_source_with_no_additions_is_silent(tmp_path):
     out_root = tmp_path / "out"; (out_root / "hgnc").mkdir(parents=True)
     write_tsv(str(out_root / "hgnc" / "columns.tsv"), [_col(0, "Gene", "symbol", required="yes")], COL_COLUMNS)
     assert replaced_coverage(m, str(out_root), "hgnc", "hgnc") == []
+
+
+# -------------------------------------------------- collisions and cross products
+def test_hand_made_collision_is_a_hard_problem(tmp_path):
+    """translate splits collisions; one in columns.tsv means a table was set onto it by hand."""
+    from rdfc2im.project import column_collisions
+    m, out_root, _ = _setup(tmp_path, [
+        _col(0, "Protein", "primaryAccession", required="yes"),
+        _col(1, "Protein", "primaryAccession"),      # a second writer of the key's field
+    ])
+    msgs = column_collisions(m, out_root, "src")
+    assert msgs and "only one value would survive" in msgs[0], msgs
+
+
+def test_untyped_predicate_bound_twice_is_a_cross_product(tmp_path):
+    from rdfc2im.project import cross_products
+    from rdfc2im.sssom import write_sssom
+    from rdfc2im.rdfconfig import RdfConfig
+    out_root = tmp_path / "out"; (out_root / "pubmed").mkdir(parents=True)
+    base = {"subject": "Pubmed", "predicate": "fabio:hasSubjectTerm", "table": "main", "status": "guess",
+            "kind": "iri", "im_class": "MeshTerm", "im_field": "identifier", "filter": "", "value": ""}
+    rows = [dict(base, column="mesh_checktag"), dict(base, column="mesh_topicaldescriptor_1"),
+            dict(base, column="discriminated", filter="regex:^Q")]     # a filter tells this one apart
+    cfg = RdfConfig(name="pubmed", dir=str(tmp_path), subjects=[], prefixes={"fabio": "http://purl.org/spar/fabio/"},
+                    endpoint=None, graphs=[], sparql={})
+    write_sssom(str(out_root / "pubmed" / "mapping_predicates.sssom.tsv"), rows, cfg)
+    msgs = cross_products(str(out_root), "pubmed")
+    assert len(msgs) == 1 and "N^2" in msgs[0], msgs
+    assert "discriminated" not in msgs[0]

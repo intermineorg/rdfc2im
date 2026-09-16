@@ -467,6 +467,7 @@ class CrosswalkBuilder:
     def _assign_tables(self):
         multi_root = len(self.roots) > 1
         pruned = self._pruned_nodes()
+        auto = set()
         for r in self.rows:
             node = r._node
             root_tbl = "main" if not multi_root else _var(node.root.subject.name).lower()
@@ -485,6 +486,8 @@ class CrosswalkBuilder:
                         step = n.objvar if not n.union else f"{n.objvar}_{_var(n.subject.name).lower()}"
                     n = n.parent
             r.table = root_tbl if step is None else f"{root_tbl}_{step}"
+            auto.add(id(r))
+        self._split_collisions(auto)
         # knowledge constants -> extra rows in the same table
         extra = []
         for r in self.rows:
@@ -507,6 +510,41 @@ class CrosswalkBuilder:
                      basis="sources.yaml", value=str(val), kind="const", note="constant on every table")
             cr._node = self.roots[0] if self.roots else None
             self.rows.append(cr)
+
+
+def _split_collisions_impl(self, auto: set):
+    """Give every column that would collide with an earlier one in its table a table of its own.
+
+    items.py groups a table's columns by the object they write (items.group_key) and keys their
+    values by field, so two columns writing the same field of the same object collapse and one
+    silently wins.  UniProt lost either a protein's full or its short alternative name this way,
+    and PubMed three of every four subject headings.  A separate table is the move multi-valued
+    predicates already get: each value then reaches its own object, or - for two sources of one
+    root attribute - an attribute conflict items.py reports instead of a silent overwrite.
+
+    Only tables this run assigned are touched; a table set in knowledge or by hand is left alone,
+    and `check` reports any collision that remains.  Required columns are skipped: they are the
+    key of every table, so a duplicate there is a mapping error to fix, not to move.
+    """
+    from .items import group_key
+    taken = {r.table for r in self.rows if r.table}
+    first = {}
+    for r in self.rows:
+        if id(r) not in auto or r.table in ("drop", "*") or r.kind in ("const", "link", "bnode"):
+            continue
+        if not r.im_class or not r.im_field or r.required == "yes":
+            continue
+        root = r._node.root.im_class if r._node is not None and r._node.root is not None else ""
+        key = (r.table,) + group_key(self.model, root, r.im_class, r.via) + (r.im_field,)
+        if key not in first:
+            first[key] = r
+            continue
+        base = f"{r.table}_{_var(r.column).lower()}"
+        new, i = base, 2
+        while new in taken:
+            new, i = f"{base}_{i}", i + 1
+        taken.add(new)
+        r.table = new
 
 
 def _pruned_nodes_impl(self) -> set:
@@ -536,6 +574,7 @@ def _pruned_nodes_impl(self) -> set:
 CrosswalkBuilder._pruned_nodes = _pruned_nodes_impl
 
 
+CrosswalkBuilder._split_collisions = _split_collisions_impl
 def _var(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", s)
 

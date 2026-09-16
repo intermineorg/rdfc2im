@@ -323,3 +323,42 @@ def test_columns_pair_with_the_variables_the_query_keeps(tmp_path):
     # the naive pairing the pipeline used: ghost would have taken sym's variable
     naive = [c["column"] for c in [ident, ghost, sym]][:len(select)]
     assert naive != [k["column"] for k in qb.kept]
+
+
+# ------------------------------------------------------------- column collisions
+def _collision_setup(tmp_path):
+    """Two different single-valued predicates both mapped to Synonym.value on one Gene -
+    UniProt's full and short alternative names in miniature."""
+    m = make_model(tmp_path)
+    d = tmp_path / "cfg" / "collide"
+    d.mkdir(parents=True)
+    (d / "model.yaml").write_text(textwrap.dedent("""\
+    - Gene ex:1:
+      - a: obo:SO_0000704
+      - dct:identifier:
+        - id: "1"
+      - ex:fullName:
+        - full_name: "Kappa-actin"
+      - ex:shortName:
+        - short_name: "ACTK"
+    """))
+    (d / "prefix.yaml").write_text("ex: <http://ex/>\nobo: <http://purl.obolibrary.org/obo/>\ndct: <http://purl.org/dc/terms/>\n")
+    (d / "endpoint.yaml").write_text("endpoint:\n  - https://ep/sparql\n")
+    p = tmp_path / "kn_collide.yaml"
+    p.write_text(yaml.safe_dump({"prefixes": {"ex": "http://ex/"}, "subjects": [], "predicates": [
+        {"pred": "ex:fullName", "class": "BioEntity", "im": "Synonym.value", "status": "sure", "basis": "test"},
+        {"pred": "ex:shortName", "class": "BioEntity", "im": "Synonym.value", "status": "sure", "basis": "test"},
+    ]}))
+    return m, str(d), Knowledge(str(p))
+
+
+def test_colliding_columns_get_their_own_tables(tmp_path):
+    """items.py keys a table's values by field, so two columns writing Synonym.value on one
+    object collapsed and one name was silently lost.  Each must reach its own table."""
+    m, cfg, kn = _collision_setup(tmp_path)
+    r = translate(m, cfg, str(tmp_path / "out"), kn, {})
+    rows = {x["column"]: x for x in r["rows"] if x["predicate"] in ("ex:fullName", "ex:shortName")}
+    assert rows["full_name"]["table"] != rows["short_name"]["table"], rows
+    assert rows["full_name"]["table"] == "main", "the first column keeps its table"
+    ident = next(x for x in r["rows"] if x["column"] == "id")
+    assert ident["table"] == "main", "required key columns are never moved"
