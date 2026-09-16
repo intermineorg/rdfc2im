@@ -293,7 +293,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
-| Pathway | `biopax:comment` | `pathway_description` | `Pathway.description` | Pathway has no description attribute today - it would be a new field (not in spec section 8; decide) |
+| Pathway | `biopax:comment` | `pathway_description` | `Pathway.description` | The pathway summation.  Pathway.description is an approved section-8 extension (curation/extensions_additions.xml); this note used to say it was not.  biopax:co |
 
 **uberon** - 2 guesses:
 

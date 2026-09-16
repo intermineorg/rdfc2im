@@ -1307,7 +1307,16 @@ predicates:
     im: Pathway.description
     status: guess
     basis: knowledge
-    note: Pathway has no description attribute today - it would be a new field (not in spec section 8; decide)
+    filter: "regex:^(?!(Authored|Edited|Reviewed): )"
+    note: >-
+      The pathway summation.  Pathway.description is an approved section-8 extension
+      (curation/extensions_additions.xml); this note used to say it was not.  biopax:comment is
+      multi-valued: beside the summation each pathway carries curation provenance - across all
+      human pathways (RDF Portal, 2026-09-17) 3,674 "Reviewed:", 2,955 "Authored:" and 2,809
+      "Edited:" comments.  Unfiltered, every one became a candidate description and "first kept"
+      chose by row order.  The filter excludes exactly those three prefixes, not any "Word:"
+      prefix, because a few real summations start that way ("SPOP: ...", "APC: ...").  Filtered,
+      2,883 pathways have 2,884 summations: one pathway genuinely has two, and keeps its first.
   - source: reactome
     subject: UnificationXref
     pred: biopax:id
