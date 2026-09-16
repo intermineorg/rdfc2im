@@ -568,9 +568,16 @@ def replaced_coverage(model: InterMineModel, out_root: str, src: str, replaced: 
 
     out = []
     for cls, fields in sorted(declared.items()):
-        missing = sorted(fields - written.get(cls, set()))
+        # A field declared on a class is written by writing it on any subclass: hpo declares
+        # OntologyTerm.crossReferences, and both it and we fill it on HPOTerms.
+        mine = set()
+        for wcls, wfields in written.items():
+            if model.has_class(wcls) and model.has_class(cls) and model.is_a(wcls, cls):
+                mine |= wfields
+        mine |= written.get(cls, set())
+        missing = sorted(fields - mine)
         if missing:
-            out.append((cls, missing, not written.get(cls)))
+            out.append((cls, missing, not mine))
     return out
 
 

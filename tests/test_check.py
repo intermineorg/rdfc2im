@@ -402,3 +402,25 @@ def test_a_supplement_before_its_stock_source_is_a_hard_problem(tmp_path):
     both = {"reactome": {"replaces": ["reactome"], "alongside": ["reactome"]}}
     check_project(out_root, mine, m, "humanmine-items", px, both, log=msgs.append)
     assert any("both replaces and loads alongside" in x for x in msgs), msgs
+
+
+def test_a_field_written_on_a_subclass_covers_the_declared_one(tmp_path):
+    """hpo declares OntologyTerm.crossReferences; stock and ours both fill it on HPOTerms."""
+    from rdfc2im.model import InterMineModel as IM
+    from rdfc2im.project import replaced_coverage
+    (tmp_path / "core.xml").write_text(
+        '<model name="genomic" package="org.intermine.model.bio">'
+        '<class name="OntologyTerm" is-interface="true"><attribute name="identifier" type="java.lang.String"/></class>'
+        '</model>')
+    stock_dir = tmp_path / "sources" / "hpo"; stock_dir.mkdir(parents=True)
+    (stock_dir / "hpo_additions.xml").write_text(
+        '<classes><class name="OntologyTerm" is-interface="true">'
+        '<collection name="crossReferences" referenced-type="OntologyTerm"/></class>'
+        '<class name="HPOTerm" extends="OntologyTerm" is-interface="true"/></classes>')
+    m = IM(); m.load_xml(str(tmp_path / "core.xml")); m.load_xml(str(stock_dir / "hpo_additions.xml")); m.finalize()
+    out_root = tmp_path / "out"; (out_root / "hpo").mkdir(parents=True)
+    write_tsv(str(out_root / "hpo" / "columns.tsv"), [
+        _col(0, "HPOTerm", "identifier", required="yes"),
+        _col(1, "OntologyTerm", "identifier", via="HPOTerm.crossReferences"),
+    ], COL_COLUMNS)
+    assert replaced_coverage(m, str(out_root), "hpo", "hpo") == []
