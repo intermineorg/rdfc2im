@@ -1364,6 +1364,18 @@ predicates:
     status: sure
     basis: java:ClinvarConverter
     required: "yes"
+  # ---- clinvar, first curation pass (CURATION_GUIDE 4.2).  The stock ClinvarConverter reads 8
+  # columns of variant_summary.txt and writes only Allele.{primaryIdentifier, type,
+  # clinicalSignificance, reference, alternate, organism, gene, diseases}, a bare
+  # Gene.primaryIdentifier and a bare Disease.primaryIdentifier.  Matched by column because the
+  # blank-node subjects these hang off have unstable names.
+
+  # faldo:reference was mapped to Allele.reference by an exact *name* match and marked sure.  It
+  # is the reference SEQUENCE (e.g. hco:13#GRCh37), not the reference allele base - fetched data
+  # showed Allele.reference = http://identifiers.org/hco/12#GRCh37.  The allele base is
+  # med2rdf:reference_allele, which the converter's line[21] matches and which stays mapped.
+  - {source: clinvar, pred: "faldo:reference", column: reference, im: "", status: drop, basis: java:ClinvarConverter, note: "reference sequence IRI, not the allele base; name-match false positive. Allele.reference comes from med2rdf:reference_allele (converter line[21])"}
+
   - source: clinvar
     pred: cvo:variation_name
     class: Allele
