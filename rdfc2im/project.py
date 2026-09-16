@@ -7,8 +7,9 @@ Outputs (in out/_mine/):
   humanmine-items_keys.properties    integration keys for every class the mappings touch
   humanmine-items_additions.xml      union of per-source additions + curation/extensions
   genomic_priorities.properties  HumanMine's priorities with our sources merged in: a replacement
-                                 takes the slot of the source it replaces, and fields written by
-                                 more than one source get an entry
+                                 takes the slot of the source it replaces, a source loaded
+                                 `alongside` sits right after its stock source, and fields written
+                                 by more than one source get an entry
   links_report.txt               per source: classes, links (via) and their reverse references
 """
 from __future__ import annotations
@@ -57,6 +58,9 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
     replaced_names: List[str] = []
     all_classes: List[str] = []
     writers: Dict[str, List[str]] = {}
+    # fields each `alongside` source writes, attributes and references (collections just union)
+    alongside: Dict[str, List[str]] = {}          # our source name -> stock sources it supplements
+    alongside_fields: Dict[str, List[str]] = {}   # Class.field -> [our source names]
     for src in source_dirs(out_root):
         tables = load_columns(out_root, src)
         if not tables:
@@ -93,6 +97,14 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
                     s = f"{root_cls} ~> {c['im_class']} (implicit: first reference/collection from {root_cls})"
                     if s not in links:
                         links.append(s)
+        if scfg.get("alongside"):
+            alongside[name] = list(scfg["alongside"])
+            for table, cols in tables.items():
+                root_cls = table_root(cols)
+                for f in _priority_fields(model, root_cls, cols):
+                    alongside_fields.setdefault(f, [])
+                    if name not in alongside_fields[f]:
+                        alongside_fields[f].append(name)
         for c in classes:
             if c not in all_classes:
                 all_classes.append(c)
@@ -121,8 +133,25 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
                 replaced_el.append(s)
         if insert_at is None:
             insert_at = len(sources_el)
-        for i, el in enumerate(new_sources):
+        block = [el for el in new_sources if el.get("name") not in alongside]
+        for i, el in enumerate(block):
             sources_el.insert(insert_at + i, el)
+        # A supplement loads right after the stock source it supplements, never before: the stock
+        # source's keys decide whether *its* objects merge, and reactome's keys file has no
+        # Pathway key - loaded second, stock reactome would duplicate every pathway of ours.
+        for el in new_sources:
+            stocks = alongside.get(el.get("name"))
+            if not stocks:
+                continue
+            kids = list(sources_el)
+            idx = [i for i, s in enumerate(kids) if s.tag == "source" and s.get("name") in stocks]
+            if not idx:
+                sources_el.append(el)
+                continue
+            at = max(idx) + 1
+            while at < len(kids) and kids[at].get("name") in alongside:
+                at += 1                     # keep earlier supplements of the same source in order
+            sources_el.insert(at, el)
         etree.indent(root, space="  ")
         tree.write(os.path.join(project_out, "project.xml"), pretty_print=True, xml_declaration=True, encoding="UTF-8")
         etree.indent(replaced_el, space="  ")
@@ -199,7 +228,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
         for r in sources_cfg.get(src, {}).get("replaces") or []:
             replaced_by.setdefault(r, []).append(f"humanmine-{src}")
     text = merge_priorities(priorities if priorities and os.path.exists(priorities) else None,
-                            writers, replaced_by, {}, {})
+                            writers, replaced_by, alongside, alongside_fields)
     with open(os.path.join(project_out, "genomic_priorities.properties"), "w") as fh:
         fh.write(text)
     with open(os.path.join(project_out, "links_report.txt"), "w") as fh:
@@ -287,6 +316,37 @@ def merge_priorities(base: Optional[str], writers: Dict[str, List[str]],
     if added:
         lines += ["", "# ---- fields HumanMine does not configure, written by rdfc2im sources"] + added
     return "\n".join(lines) + "\n"
+
+
+def _priority_fields(model: InterMineModel, root_cls: str, cols: List[dict]) -> List[str]:
+    """Class.field for every attribute and reference a table writes.
+
+    Collections are left out: the integration writer unions them from every source.  References
+    are resolved by priority exactly like attributes, so an inferred link (no `via`) and the
+    reverse of each link count too.
+    """
+    from .items import _via_from
+    out: List[str] = []
+
+    def add(key):
+        if key not in out:
+            out.append(key)
+    for c in cols:
+        if c["im_class"] and c["im_field"]:
+            add(f"{c['im_class']}.{c['im_field']}")
+        via = c.get("via") or (_via_from(model, root_cls, c["im_class"]) if c["im_class"] != root_cls else "")
+        if not via:
+            continue
+        vcls, _, vfld = via.partition(".")
+        fd = model.field(vcls, vfld)
+        if fd is None:
+            continue
+        if fd.kind == "reference":
+            add(via)
+        rd = model.field(fd.type, fd.reverse) if fd.reverse else None
+        if rd is not None and rd.kind == "reference":
+            add(f"{fd.type}.{fd.reverse}")
+    return out
 
 
 def _is_core(path: str) -> bool:
@@ -431,7 +491,17 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
             soft.append(f"{name}: {n} items in {items}")
         else:
             soft.append(f"{name}: no items file yet (run fetch, tsv, items)")
+        names = list(active)
         replaces = sources_cfg.get(src, {}).get("replaces") or []
+        for stock in sources_cfg.get(src, {}).get("alongside") or []:
+            if stock in replaces:
+                hard.append(f"{name}: both replaces and loads alongside '{stock}' - pick one")
+            elif stock not in active:
+                soft.append(f"{name}: loads alongside '{stock}', which is not in project.xml - "
+                            f"nothing to supplement; it loads on its own")
+            elif names.index(stock) > names.index(name):
+                hard.append(f"{name}: loads before '{stock}', the stock source it supplements - "
+                            f"'{stock}' merges by its own keys and would duplicate objects")
         for orig in replaces:
             if orig in active:
                 soft.append(f"{name}: original source '{orig}' is still active - duplicate load")

@@ -339,3 +339,66 @@ def test_priorities_without_a_base_file_list_only_shared_fields(tmp_path):
     out = merge_priorities(None, {"Gene.name": ["humanmine-a", "humanmine-b"], "Gene.x": ["humanmine-a"]}, {}, {}, {})
     assert [l for l in out.splitlines() if "=" in l] == ["Gene.name = humanmine-a, humanmine-b"]
 
+
+# ------------------------------------------------------------------ alongside
+ALONGSIDE_PROJECT = """<project type="bio"><sources>
+  <source name="ncbi-gene" type="ncbi-gene"/>
+  <source name="reactome" type="reactome"/>
+  <source name="panther" type="panther"/>
+</sources></project>"""
+
+
+def _alongside_setup(tmp_path):
+    from rdfc2im.model import InterMineModel as IM
+    (tmp_path / "core.xml").write_text(
+        '<model name="genomic" package="org.intermine.model.bio">'
+        '<class name="Organism" is-interface="true"><attribute name="taxonId" type="java.lang.String"/></class>'
+        '<class name="Pathway" is-interface="true"><attribute name="identifier" type="java.lang.String"/>'
+        '<attribute name="description" type="java.lang.String"/>'
+        '<reference name="organism" referenced-type="Organism"/></class></model>')
+    (tmp_path / "k_keys.properties").write_text("Pathway.key_identifier=identifier\nOrganism.key_taxonid=taxonId\n")
+    m = IM(); m.load_xml(str(tmp_path / "core.xml")); m.load_keys(str(tmp_path / "k_keys.properties")); m.finalize()
+    m.live = None
+    out_root = tmp_path / "out"; (out_root / "reactome").mkdir(parents=True)
+    write_tsv(str(out_root / "reactome" / "columns.tsv"), [
+        _col(0, "Pathway", "identifier", required="yes"),
+        _col(1, "Pathway", "description"),
+        _col(2, "Organism", "taxonId", via="Pathway.organism"),
+    ], COL_COLUMNS)
+    (tmp_path / "project.xml").write_text(ALONGSIDE_PROJECT)
+    return m, str(out_root), str(tmp_path / "_mine"), str(tmp_path / "project.xml")
+
+
+def test_a_supplement_loads_after_its_stock_source_with_stock_values_first(tmp_path):
+    """reactome's keys file has no Pathway key: loaded after ours it would duplicate every pathway."""
+    from rdfc2im.project import gen_project
+    m, out_root, mine, px = _alongside_setup(tmp_path)
+    cfg = {"reactome": {"replaces": [], "alongside": ["reactome"]}}
+    gen_project(out_root, mine, m, "humanmine-items", "/data", px, cfg, None, log=lambda *a: None)
+    names = [s.get("name") for s in etree.parse(os.path.join(mine, "project.xml")).getroot().iter("source")]
+    assert names == ["ncbi-gene", "reactome", "humanmine-reactome", "panther"], names
+    prio = open(os.path.join(mine, "genomic_priorities.properties")).read().splitlines()
+    for fld in ("Pathway.identifier", "Pathway.description", "Pathway.organism", "Organism.taxonId"):
+        assert f"{fld} = reactome, humanmine-reactome, *" in prio, (fld, prio)
+
+    rc, msgs = [], []
+    assert check_project(out_root, mine, m, "humanmine-items", px, cfg, log=msgs.append) == 0, msgs
+
+
+def test_a_supplement_before_its_stock_source_is_a_hard_problem(tmp_path):
+    from rdfc2im.project import gen_project
+    m, out_root, mine, px = _alongside_setup(tmp_path)
+    cfg = {"reactome": {"replaces": [], "alongside": ["reactome"]}}
+    gen_project(out_root, mine, m, "humanmine-items", "/data", px, cfg, None, log=lambda *a: None)
+    p = os.path.join(mine, "project.xml")
+    tree = etree.parse(p); srcs = tree.getroot().find("sources")
+    ours = next(s for s in srcs if s.get("name") == "humanmine-reactome")
+    srcs.remove(ours); srcs.insert(0, ours); tree.write(p)
+    msgs = []
+    assert check_project(out_root, mine, m, "humanmine-items", px, cfg, log=msgs.append) == 1
+    assert any("loads before 'reactome'" in x for x in msgs), msgs
+
+    msgs = []
+    both = {"reactome": {"replaces": ["reactome"], "alongside": ["reactome"]}}
+    check_project(out_root, mine, m, "humanmine-items", px, both, log=msgs.append)
+    assert any("both replaces and loads alongside" in x for x in msgs), msgs

@@ -2,6 +2,10 @@
 #
 #   replaces:  project.xml <source name=...> entries that the rdf-config load supersedes
 #              (moved to replaced_sources.xml by `rdfc2im project`); [] = adds data, replaces nothing
+#   alongside: stock sources this one supplements rather than replaces.  It loads right after them,
+#              merges into their objects through the integration keys, and genomic_priorities
+#              lists the stock source first for every field it writes, so existing values stand.
+#              Use it when the stock source loads things this one cannot (replaced_coverage).
 #   consts:    constant columns appended to every table of the source (Class.field: value)
 #   roots:     which model.yaml subjects start a table set (default: the first subject)
 #   data_source_name / data_set_title: what the delimited loader writes into DataSource/DataSet
@@ -22,7 +26,10 @@ hgnc:
   consts: {Organism.taxonId: "9606"}
   scope: good
 uniprot:
-  replaces: [uniprot]
+  # Alongside, not a replacement: stock uniprot loads features, comments, isoforms, components and
+  # canonical-protein links that these queries do not.  Both key Protein on primaryAccession.
+  replaces: []
+  alongside: [uniprot]
   data_source_name: UniProt
   # Not "Swiss-Prot": these queries do not filter on up:reviewed, so they return TrEMBL too
   # (20,431 reviewed vs 190,278 unreviewed human entries), which matches stock HumanMine - see
@@ -57,7 +64,11 @@ uberon:
   scope: good
   note: activation only - not in HumanMine's project.xml; needs /uberon/ in the allow list
 reactome:
-  replaces: [reactome]
+  # Alongside, not a replacement: stock reactome's whole value is Pathway.proteins/genes and their
+  # reverses, which this source never writes.  Pathway merges on identifier (R-HSA-... in both);
+  # this source adds descriptions.
+  replaces: []
+  alongside: [reactome]
   data_source_name: Reactome
   data_set_title: Reactome pathways (RDF Portal)
   consts: {Organism.taxonId: "9606"}
