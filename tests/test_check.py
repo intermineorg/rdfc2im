@@ -424,3 +424,44 @@ def test_a_field_written_on_a_subclass_covers_the_declared_one(tmp_path):
         _col(1, "OntologyTerm", "identifier", via="HPOTerm.crossReferences"),
     ], COL_COLUMNS)
     assert replaced_coverage(m, str(out_root), "hpo", "hpo") == []
+
+
+def test_a_replacement_gap_is_hard_unless_accepted(tmp_path):
+    """The coverage check can only see declarations, so each gap needs a decision, not a shrug."""
+    from rdfc2im.model import InterMineModel as IM
+    core = ('<model name="genomic" package="org.intermine.model.bio">'
+            '<class name="GWAS" is-interface="true"><attribute name="name" type="java.lang.String"/></class></model>')
+    stock_dir = tmp_path / "sources" / "huge-gwas"; stock_dir.mkdir(parents=True)
+    (stock_dir / "huge-gwas_additions.xml").write_text(
+        '<classes><class name="GWAS" is-interface="true">'
+        '<attribute name="firstAuthor" type="java.lang.String"/><attribute name="year" type="java.lang.Integer"/></class>'
+        '<class name="Source" is-interface="true"><attribute name="name" type="java.lang.String"/></class></classes>')
+    (tmp_path / "core.xml").write_text(core)
+    (tmp_path / "k_keys.properties").write_text("GWAS.key_name=name\n")
+    m = IM(); m.load_xml(str(tmp_path / "core.xml")); m.load_xml(str(stock_dir / "huge-gwas_additions.xml"))
+    m.load_keys(str(tmp_path / "k_keys.properties")); m.finalize(); m.live = None
+    out_root = tmp_path / "out"; (out_root / "src").mkdir(parents=True)
+    write_tsv(str(out_root / "src" / "columns.tsv"), [_col(0, "GWAS", "name", required="yes")], COL_COLUMNS)
+    mine = tmp_path / "_mine"; mine.mkdir()
+    (mine / "project.xml").write_text(PROJECT)
+
+    def run(cfg):
+        msgs = []
+        rc = check_project(str(out_root), str(mine), m, "humanmine-items", None, {"src": cfg}, log=msgs.append)
+        return rc, [x for x in msgs if "huge-gwas" in x or "accepted_gaps" in x]
+
+    rc, msgs = run({"replaces": ["huge-gwas"]})
+    assert rc == 1 and sum(x.startswith("HARD") for x in msgs) == 2, msgs
+
+    rc, msgs = run({"replaces": ["huge-gwas"], "accepted_gaps": {
+        "GWAS.firstAuthor": {"basis": "data:x", "reason": "not in the RDF"},
+        "Source": {"basis": "java:X", "reason": "never created"}}})
+    assert rc == 1, msgs                                    # GWAS.year is still open
+    assert any(x.startswith("HARD") and "GWAS.{year}" in x for x in msgs), msgs
+    assert any("without GWAS.firstAuthor - accepted (data:x): not in the RDF" in x for x in msgs), msgs
+
+    rc, msgs = run({"replaces": ["huge-gwas"], "accepted_gaps": {
+        "GWAS": {"basis": "b", "reason": "r"}, "Source": {"basis": "b", "reason": "r"},
+        "Gene.symbol": {"basis": "b", "reason": "stale"}}})
+    assert rc == 0, msgs
+    assert any("accepted_gaps entry Gene.symbol matches no gap" in x for x in msgs), msgs

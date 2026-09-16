@@ -502,16 +502,38 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
             elif names.index(stock) > names.index(name):
                 hard.append(f"{name}: loads before '{stock}', the stock source it supplements - "
                             f"'{stock}' merges by its own keys and would duplicate objects")
+        accepted = sources_cfg.get(src, {}).get("accepted_gaps") or {}
+        used = set()
         for orig in replaces:
             if orig in active:
                 soft.append(f"{name}: original source '{orig}' is still active - duplicate load")
             for cls, missing, whole in replaced_coverage(model, out_root, src, orig):
-                if whole:
-                    soft.append(f"{name}: replaces '{orig}', which declares {cls} ({', '.join(missing)}); "
-                                f"this source writes none of it - loading it may delete that data")
+                # A gap is fatal unless sources.yaml accepts it, with its evidence: the check only
+                # sees what the replaced source *declares*, so a false alarm needs a basis too.
+                open_, hit = [], []
+                for f in missing:
+                    key = cls if cls in accepted else f"{cls}.{f}"
+                    if key not in accepted:
+                        open_.append(f)
+                    elif key not in hit:
+                        hit.append(key)
+                used.update(hit)
+                for key in hit:
+                    a = accepted[key] or {}
+                    soft.append(f"{name}: replaces '{orig}' without {key} - accepted "
+                                f"({a.get('basis', 'no basis')}): {a.get('reason', '')}".rstrip(": "))
+                if not open_:
+                    continue
+                if whole and len(open_) == len(missing):
+                    hard.append(f"{name}: replaces '{orig}', which declares {cls} ({', '.join(open_)}); "
+                                f"this source writes none of it - loading it may delete that data.  "
+                                f"Load alongside instead, map it, or accept it in sources.yaml")
                 else:
-                    soft.append(f"{name}: replaces '{orig}', which declares {cls}.{{{', '.join(missing)}}}; "
-                                f"this source never writes those - check whether '{orig}' populated them")
+                    hard.append(f"{name}: replaces '{orig}', which declares {cls}.{{{', '.join(open_)}}}; "
+                                f"this source never writes those - map them, or accept them in "
+                                f"sources.yaml with the reason they are not a loss")
+        for key in sorted(set(accepted) - used):
+            soft.append(f"{name}: accepted_gaps entry {key} matches no gap - remove it")
     hard, soft = list(dict.fromkeys(hard)), list(dict.fromkeys(soft))
     for h in hard:
         log("HARD  " + h)
@@ -530,9 +552,10 @@ def replaced_coverage(model: InterMineModel, out_root: str, src: str, replaced: 
     metadata, and reactome to replace a source whose whole purpose is gene/pathway membership.
 
     This is a PROXY: it compares against the fields the replaced source *declares* in its
-    _additions.xml, which is not proof it *populates* them - hence `check` reports it as a
-    note.  "What this source writes" counts explicit columns, the link items.py infers when a
-    column has no `via`, and the reverse reference it writes for every link.
+    _additions.xml, which is not proof it *populates* them.  `check` makes every gap a hard
+    problem unless sources.yaml's `accepted_gaps` records why it is not a loss.  "What this
+    source writes" counts explicit columns, the link items.py infers when a column has no `via`,
+    and the reverse reference it writes for every link.
     """
     from .items import _via_from
     declared: Dict[str, set] = {}

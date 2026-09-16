@@ -6,6 +6,8 @@
 #              merges into their objects through the integration keys, and genomic_priorities
 #              lists the stock source first for every field it writes, so existing values stand.
 #              Use it when the stock source loads things this one cannot (replaced_coverage).
+#   accepted_gaps: what a replaced source declares that this one never writes, and why that is
+#              not a loss ({Class.field or Class: {basis, reason}}).  `check` fails on any other gap.
 #   consts:    constant columns appended to every table of the source (Class.field: value)
 #   roots:     which model.yaml subjects start a table set (default: the first subject)
 #   data_source_name / data_set_title: what the delimited loader writes into DataSource/DataSet
@@ -80,6 +82,20 @@ gwascatalog:
   # No source-level Organism constant: nothing on the root, GWASResult, can hold an organism, so it
   # loaded unlinked.  The organism is declared where it belongs - SNP.organism and Gene.organism -
   # on the terms:snps and terms:mapped_genes entries in knowledge.yaml.
+  accepted_gaps:
+    GWAS.firstAuthor:
+      basis: data:togovar
+      reason: >-
+        Not in the RDF: no gwas:Study or gwas:Association at grch38.togovar.org has an author
+        predicate (every Study predicate, and those of a 2,000-association sample, listed
+        2026-09-17).  The first author stays reachable as GWAS.publication.firstAuthor, which
+        update-publications (loadFullRecord) fills.
+    GWASResult.source:
+      basis: java:HugeGwasConverter
+      reason: declared in huge-gwas_additions.xml, never set by the converter
+    Source:
+      basis: java:HugeGwasConverter
+      reason: declared in huge-gwas_additions.xml, never created by the converter
   scope: good
 clinvar:
   replaces: [clinvar]
