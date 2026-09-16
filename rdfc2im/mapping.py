@@ -420,6 +420,8 @@ class CrosswalkBuilder:
                     hit["via"] = self._via(node.im_class, hit["im_class"])
             if e.get("const"):
                 hit["_const"] = e["const"]
+            if e.get("const_via"):
+                hit["_const_via"] = e["const_via"]
             return hit
         return None
 
@@ -493,10 +495,19 @@ class CrosswalkBuilder:
         for r in self.rows:
             c = getattr(r, "_const", None)
             if c:
+                # `const_via` names the link a constant hangs off.  Without it a constant can only
+                # attach to the table's root: HGNC's DataSource.name for an xref belongs on
+                # CrossReference.source, not the Gene, and GWAS's organism on SNP and Gene, not
+                # GWASResult - with no declared link, items.py created them unlinked.
+                vias = getattr(r, "_const_via", None) or {}
                 for im, val in c.items():
                     cls, fld = im.split(".", 1)
+                    via = vias.get(im, "")
+                    # the column name is part of the merge key, so two constants for one field
+                    # hanging off different links must not share it
+                    col = f"const_{cls}_{fld}" + (f"_{via.replace('.', '_')}" if via else "")
                     cr = Row(table=r.table, subject=r.subject, predicate="-const-",
-                             column=f"const_{cls}_{fld}", im_class=cls, im_field=fld,
+                             column=col, im_class=cls, im_field=fld, via=via,
                              status=r.status, basis=r.basis, value=str(val), kind="const",
                              note=f"constant for {r.column}")
                     cr._node = r._node

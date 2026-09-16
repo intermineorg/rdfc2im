@@ -56,13 +56,15 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
                                  required=r.get("required", "no"), root=table_root))
             pos += 1
         for c in const_rows(rows, t, include_guess):
-            k = (c["im_class"], c["im_field"])
+            # one constant per field per link: the same field may hang off two different links
+            k = (c["im_class"], c["im_field"], c.get("via", ""))
             if k in used:
                 continue
             used.add(k)
             col_rows.append(dict(table=t, position=pos, column=c["column"], variable="", im_class=c["im_class"],
                                  im_field=c["im_field"], transform="", filter="", value=c.get("value", ""),
-                                 kind="const", via="", status=c["status"], required="no", root=table_root))
+                                 kind="const", via=c.get("via", ""), status=c["status"], required="no",
+                                 root=table_root))
             pos += 1
         root_var = cfg.subjects[0].name if not res["builder"].roots else res["builder"].roots[0].subject.name
         variables = [root_var] + [r["column"] for r in qrows]

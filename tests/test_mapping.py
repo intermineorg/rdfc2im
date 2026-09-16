@@ -362,3 +362,26 @@ def test_colliding_columns_get_their_own_tables(tmp_path):
     assert rows["full_name"]["table"] == "main", "the first column keeps its table"
     ident = next(x for x in r["rows"] if x["column"] == "id")
     assert ident["table"] == "main", "required key columns are never moved"
+
+
+def test_constants_can_declare_the_link_they_hang_off(tmp_path):
+    """GWAS needs the organism on SNP *and* Gene: two constants, one field, two links.
+
+    Both used to be written with via="" and the same column name - which is also the merge key -
+    so they could not coexist, and each attached to the table root or nothing.
+    """
+    m = make_model(tmp_path); cfg = make_cfg(tmp_path)
+    p = tmp_path / "kn_cvia.yaml"
+    p.write_text(yaml.safe_dump({"prefixes": {"ex": "http://ex/"},
+        "subjects": [{"type": "ex:Organism", "im_class": "Organism", "status": "sure", "basis": "test"}],
+        "predicates": [
+            # source-specific, so they outrank the term matches these predicates also have
+            {"source": "mysrc", "pred": "skos:prefLabel", "class": "Gene", "im": "Gene.symbol", "status": "sure", "basis": "test",
+             "const": {"Organism.taxonId": "9606"}, "const_via": {"Organism.taxonId": "Gene.organism"}},
+            {"source": "mysrc", "pred": "dct:description", "class": "Gene", "im": "Gene.description", "status": "sure", "basis": "test",
+             "const": {"Organism.taxonId": "9606"}, "const_via": {"Organism.taxonId": "Synonym.subject"}},
+        ]}))
+    r = translate(m, cfg, str(tmp_path / "out"), Knowledge(str(p)), {})
+    consts = [x for x in r["rows"] if x["kind"] == "const" and x["im_field"] == "taxonId"]
+    assert {c["via"] for c in consts} == {"Gene.organism", "Synonym.subject"}, consts
+    assert len({c["column"] for c in consts}) == 2, "same field, different links: distinct columns"

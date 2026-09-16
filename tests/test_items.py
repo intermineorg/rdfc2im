@@ -63,3 +63,32 @@ def test_unlinked_items_are_reported_not_discarded(tmp_path):
     xml, notes = _rooted_table(tmp_path, with_root=False)
     assert '<collection name="synonyms">' not in xml
     assert any("no link from Organism to Synonym" in n for n in notes), notes
+
+
+def test_a_constant_attaches_through_its_declared_link(tmp_path):
+    """HGNC's xref DataSource is a constant; it belongs on CrossReference.source, not the Gene."""
+    model = """<model name="genomic" package="org.intermine.model.bio">
+    <class name="Gene" is-interface="true"><attribute name="primaryIdentifier" type="java.lang.String"/>
+      <collection name="crossReferences" referenced-type="CrossReference" reverse-reference="subject"/></class>
+    <class name="CrossReference" is-interface="true"><attribute name="identifier" type="java.lang.String"/>
+      <reference name="subject" referenced-type="Gene" reverse-reference="crossReferences"/>
+      <reference name="source" referenced-type="DataSource"/></class>
+    <class name="DataSource" is-interface="true"><attribute name="name" type="java.lang.String"/></class>
+    </model>"""
+    (tmp_path / "core.xml").write_text(model)
+    m = InterMineModel(); m.load_xml(str(tmp_path / "core.xml")); m.finalize(); m.live = None
+    out = tmp_path / "out"; (out / "tsv").mkdir(parents=True)
+    hdr = "table\tposition\tcolumn\tvariable\tim_class\tim_field\ttransform\tfilter\tvalue\tkind\tvia\tstatus\trequired\troot"
+    (out / "columns.tsv").write_text("\n".join([hdr,
+        "main\t0\tid\tid\tGene\tprimaryIdentifier\t\t\t\tliteral\t\tsure\tyes\tGene",
+        "main\t1\txref\txref\tCrossReference\tidentifier\t\t\t\tliteral\t\tsure\tno\tGene",
+        "main\t2\tsrc\t\tDataSource\tname\t\t\tENA\tconst\tCrossReference.source\tsure\tno\tGene",
+    ]) + "\n")
+    (out / "tsv" / "main.tsv").write_text("Gene.primaryIdentifier\tCrossReference.identifier\tDataSource.name\n1\tAB001\tENA\n")
+    notes = []
+    emit_items(m, str(out), "t", {"data_source_name": "HGNC"}, log=notes.append)
+    xml = (out / "items" / "t.xml").read_text()
+    xref = xml[xml.index('class="CrossReference"'):]
+    xref = xref[:xref.index("</item>")]
+    assert '<reference name="source"' in xref, "the DataSource must hang off the CrossReference"
+    assert not any("no link" in n for n in notes), notes
