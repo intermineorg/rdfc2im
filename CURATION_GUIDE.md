@@ -134,36 +134,12 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 |---|---|---|---|---|
 | Class | `oboinowl:inSubset` | `subset` | go:goslim_pir | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
-**gwascatalog** - 31 active rows (rows under a pruned branch are not listed):
+**gwascatalog** - 2 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
-| GWASAssociation | `terms:region` | `region` | 18q21.32 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:chr_id` | `chr_id` | 18 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:chr_pos` | `chr_pos` | 60161902 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:upstream_gene_id` | `upstream_gene_id` | ensg:ENSG00000242060 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:downstream_gene_id` | `downstream_gene_id` | ensg:ENSG00000202468 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:snp_gene_ids` | `snp_gene_ids` |  | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:upstream_gene_distance` | `upstream_gene_distance` | 11537 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:downstream_gene_distance` | `downstream_gene_distance` | 1665 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `rdfs:seeAlso` | `see_also` | dbsnp:rs6567160 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:merged` | `merged_` | 0 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:snp_id_current` | `snp_id_current` | 6567160 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:context` | `context` | upstream_gene_variant | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:intergenic` | `inetergenic` | 1 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:p_value_mlog` | `p_value_mlog` | 28.0 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:p_value_text` | `p_value_text` | (women) | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:odds_ratio` | `odds_ratio` | NA | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:beta` | `beta` | 0.0542 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:beta_unit` | `beta_unit` | kg/m2 decrease | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:ci_text` | `ci_text` | [0.045-0.064] | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:platform_snp_passing_qc` | `platform_snp_passing_qc` |  | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:cnv` | `cnv` | N | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `terms:genotyping_technology` | `genotyping_technology_assoc` | Genome-wide genotyping array | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `dct:date` | `date` | 2017-08-10 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `dct:references` | `refpubmed` | 28443625 | no match on GWASResult - choose a field, or set status=drop |
-| GWASAssociation | `gwas:has_pubmed_id` | `has_pubmed_id_association` | 28443625 | no match on GWASResult - choose a field, or set status=drop |
-| ... | | | | 6 more in the file |
+| GWASAssociation | `terms:snp_gene_ids` | `snp_gene_ids` |  | DIVERGES FROM STOCK: the converter fills associatedGenes from line[17] (SNP_GENE_IDS, Ensembl ids) and uses them as Gene.primaryIdentifier; this source maps ter |
+| GWASStudy | `dct:description` | `study_description` | BMI (adjusted for smoking behaviour) | spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead |
 
 **hgnc** - 1 active rows (rows under a pruned branch are not listed):
 

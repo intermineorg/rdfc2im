@@ -31,7 +31,7 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 | ensembl | good | - | 8/1/0 | 5/5/0/2/0 | 0 | 4 | 1 | yes (4) | yes |
 | expressionatlas | structural | - | 1/0/0 | 1/1/0/3/0 | 33 | 1 | 0 | yes (1) | yes |
 | go | good | go | 1/0/0 | 8/1/0/1/1 | 0 | 4 | 0 | yes (4) | yes |
-| gwascatalog | good | huge-gwas | 2/0/0 | 9/4/0/31/3 | 0 | 1 | 1 | yes (1) | yes |
+| gwascatalog | good | huge-gwas | 2/0/0 | 9/4/0/2/32 | 0 | 1 | 1 | yes (1) | yes |
 | hgnc | good | hgnc | 4/12/0 | 7/24/0/1/16 | 0 | 16 | 0 | yes (16) | yes |
 | homologene | structural | - | 0/1/0 | 0/0/0/3/1 | 8 | 0 | 0 | no | no |
 | hpo | good | hpo | 1/0/0 | 12/1/0/0/3 | 0 | 6 | 0 | yes (6) | yes |

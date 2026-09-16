@@ -1263,6 +1263,49 @@ predicates:
     note: only rows whose pub_db is Pubmed are pubmed ids - filter by hand or add a VALUES on pub_db
 
   # ======================= gwas catalog (HugeGwasConverter) ==============================
+  # ---- gwascatalog, first curation pass (CURATION_GUIDE 4.2).  HugeGwasConverter (huge-gwas,
+  # which this source replaces) writes GWASResult.{SNP, associatedGenes, phenotype, pValue, study,
+  # associatedVariantRiskAllele, riskAlleleFreqInControls}, GWAS.{firstAuthor, year, name,
+  # initialSample, replicateSample, publication}, and bare SNP/Gene/Publication identifiers.
+  # Column indices below are the GWAS Catalog associations file the converter reads.
+
+  # Not written by the converter; no field on GWASResult/GWAS/SNP.
+  - {source: gwascatalog, pred: "terms:region", column: region, im: "", status: drop, basis: java:HugeGwasConverter, note: "cytogenetic region (line[10]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:chr_id", column: chr_id, im: "", status: drop, basis: java:HugeGwasConverter, note: "chromosome (line[11]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:chr_pos", column: chr_pos, im: "", status: drop, basis: java:HugeGwasConverter, note: "position (line[12]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:upstream_gene_id", column: upstream_gene_id, im: "", status: drop, basis: java:HugeGwasConverter, note: "upstream gene (line[15]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:downstream_gene_id", column: downstream_gene_id, im: "", status: drop, basis: java:HugeGwasConverter, note: "downstream gene (line[16]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:upstream_gene_distance", column: upstream_gene_distance, im: "", status: drop, basis: java:HugeGwasConverter, note: "upstream distance (line[18]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:downstream_gene_distance", column: downstream_gene_distance, im: "", status: drop, basis: java:HugeGwasConverter, note: "downstream distance (line[19]); the converter never writes it"}
+  - {source: gwascatalog, pred: "rdfs:seeAlso", column: see_also, im: "", status: drop, basis: java:HugeGwasConverter, note: "dbSNP link; SNP.primaryIdentifier already comes from terms:snps; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:merged", column: merged_, im: "", status: drop, basis: java:HugeGwasConverter, note: "dbSNP merge flag (line[22]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:snp_id_current", column: snp_id_current, im: "", status: drop, basis: java:HugeGwasConverter, note: "current dbSNP id (line[23]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:context", column: context, im: "", status: drop, basis: java:HugeGwasConverter, note: "variant consequence (line[24]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:intergenic", column: inetergenic, im: "", status: drop, basis: java:HugeGwasConverter, note: "intergenic flag (line[25]); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:p_value_mlog", column: p_value_mlog, im: "", status: drop, basis: java:HugeGwasConverter, note: "-log10 p (derived; pValue is mapped); the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:p_value_text", column: p_value_text, im: "", status: drop, basis: java:HugeGwasConverter, note: "p-value qualifier text; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:odds_ratio", column: odds_ratio, im: "", status: drop, basis: java:HugeGwasConverter, note: "odds ratio; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:beta", column: beta, im: "", status: drop, basis: java:HugeGwasConverter, note: "beta; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:beta_unit", column: beta_unit, im: "", status: drop, basis: java:HugeGwasConverter, note: "beta unit; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:ci_text", column: ci_text, im: "", status: drop, basis: java:HugeGwasConverter, note: "confidence interval; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:platform_snp_passing_qc", column: platform_snp_passing_qc, im: "", status: drop, basis: java:HugeGwasConverter, note: "platform / SNPs passing QC; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:cnv", column: cnv, im: "", status: drop, basis: java:HugeGwasConverter, note: "CNV flag; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:genotyping_technology", column: genotyping_technology_assoc, im: "", status: drop, basis: java:HugeGwasConverter, note: "genotyping technology; the converter never writes it"}
+  - {source: gwascatalog, pred: "dct:date", column: date, im: "", status: drop, basis: java:HugeGwasConverter, note: "association date; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:platform_snps_passing_qc", column: platform_snps_passing_qc, im: "", status: drop, basis: java:HugeGwasConverter, note: "platform / SNPs passing QC; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:genotyping_technology", column: genotyping_technology_study, im: "", status: drop, basis: java:HugeGwasConverter, note: "genotyping technology; the converter never writes it"}
+  - {source: gwascatalog, pred: "terms:association_count", column: association_count, im: "", status: drop, basis: java:HugeGwasConverter, note: "association count; the converter never writes it"}
+
+  # Duplicates of rows already mapped.
+  - {source: gwascatalog, pred: "dct:references", column: refpubmed, im: "", status: drop, basis: knowledge, note: "same PubMed id as gwas:has_pubmed_id on GWASStudy, already Publication.pubMedId"}
+  - {source: gwascatalog, pred: "gwas:has_pubmed_id", column: has_pubmed_id_association, im: "", status: drop, basis: knowledge, note: "association-level copy of the study PubMed id, already Publication.pubMedId"}
+  - {source: gwascatalog, pred: "dct:references", column: study_references, im: "", status: drop, basis: knowledge, note: "pubmed:NNN form of the study PubMed id, already Publication.pubMedId"}
+  - {source: gwascatalog, pred: "terms:mapped_trait", column: mapped_trait, im: "", status: drop, basis: knowledge, note: "study-level trait; the association-level mapped_trait_uri is already GWASResult.mappedTraitUri"}
+
+  # Genuine decisions.
+  - {source: gwascatalog, pred: "terms:snp_gene_ids", column: snp_gene_ids, im: "", status: todo, basis: java:HugeGwasConverter, note: "DIVERGES FROM STOCK: the converter fills associatedGenes from line[17] (SNP_GENE_IDS, Ensembl ids) and uses them as Gene.primaryIdentifier; this source maps terms:mapped_genes (MAPPED_GENE, line[14]) to Gene.symbol instead. Stock's choice clashes with HumanMine's NCBI-keyed genes, so decide which to follow"}
+  - {source: gwascatalog, pred: "dct:description", column: study_description, im: "", status: todo, basis: spec-D12, note: "spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead"}
+
   - source: gwascatalog
     pred: terms:p_value
     class: GWASResult
