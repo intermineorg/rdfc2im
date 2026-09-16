@@ -156,7 +156,7 @@ class CrosswalkBuilder:
         # 1. source-specific knowledge by subject name
         for e in self.kn.subjects:
             if e.get("source") == self.src and e.get("subject") == s.name:
-                return e["im_class"], e.get("status", "guess"), e.get("basis", "knowledge"), e.get("note", "")
+                return e.get("im_class", ""), e.get("status", "guess"), e.get("basis", "knowledge"), e.get("note", "")
         # 2. term URI on the class
         for t in types:
             for cls, fld in self.model.find_by_term(t):
@@ -167,12 +167,32 @@ class CrosswalkBuilder:
             if e.get("source") and e.get("source") != self.src:
                 continue
             if "type" in e and _norm(self.kn.expand(e["type"], self.cfg)) in types:
-                return e["im_class"], e.get("status", "guess"), e.get("basis", "knowledge"), e.get("note", "")
+                return e.get("im_class", ""), e.get("status", "guess"), e.get("basis", "knowledge"), e.get("note", "")
         # 4. subject name equals a model class name
         if self.model.has_class(s.name):
             return s.name, "sure", "name", f"subject name is the model class {s.name}"
         # 5. inline blank nodes inherit the parent's class (flattened) unless typed
         return "", "todo", "", "no term/knowledge/name match - bind by hand or set role=skip"
+
+    def subject_role(self, s: Subject) -> str:
+        """The `role` a knowledge entry gives this subject, or "".
+
+        Follows bind_subject's knowledge precedence (source-specific by name, then by rdf
+        type).  It sits *below* the on-disk mapping_subjects.tsv: a role the human set there
+        always wins.  This lets a decision such as "skip MeSH TreeNumber" live in
+        knowledge.yaml with its evidence, instead of being written into the TSV where it
+        would have to be marked `human`.
+        """
+        for e in self.kn.subjects:
+            if e.get("source") == self.src and e.get("subject") == s.name:
+                return e.get("role", "")
+        types = [_norm(self.cfg.expand(t)) for t in s.types]
+        for e in self.kn.subjects:
+            if e.get("source") and e.get("source") != self.src:
+                continue
+            if "type" in e and _norm(self.kn.expand(e["type"], self.cfg)) in types:
+                return e.get("role", "")
+        return ""
 
     # ---------------------------------------------------------- traversal
     def build(self, subject_overrides: Dict[str, dict]):
@@ -206,7 +226,8 @@ class CrosswalkBuilder:
                 cls, st, basis, note = self.bind_subject(s, s.name)
                 o = subject_overrides.get(s.name, {})
                 self.subject_rows.append(dict(
-                    subject=s.name, im_class=o.get("im_class", cls), role=o.get("role") or "skip",
+                    subject=s.name, im_class=o.get("im_class", cls),
+                    role=o.get("role") or self.subject_role(s) or "skip",
                     status=o.get("status", st), basis=basis, rdf_types=" ".join(s.types),
                     path="(unreachable from a root)", example=s.example, note=o.get("note", note)))
         self._assign_tables()
@@ -217,7 +238,7 @@ class CrosswalkBuilder:
             cls, st, basis = node.parent.im_class, node.parent.status, "inherit:parent"
             note = "inline blank node - flattened onto the parent's class"
         o = overrides.get(node.display, {})
-        role = o.get("role") or ("root" if node.parent is None else "node")
+        role = o.get("role") or self.subject_role(node.subject) or ("root" if node.parent is None else "node")
         node.im_class = o.get("im_class", cls)
         node.status = o.get("status", st)
         self.nodes[node.display] = node

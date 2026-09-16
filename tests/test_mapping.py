@@ -1,4 +1,5 @@
 import os, textwrap
+import yaml
 from rdfc2im.model import InterMineModel
 from rdfc2im.mapping import translate, Knowledge, read_tsv, write_tsv, three_way_merge, CW_COLUMNS
 from rdfc2im.sssom import read_sssom, write_sssom
@@ -231,3 +232,66 @@ def test_table_with_only_key_columns_is_not_emitted(tmp_path):
     tables = [t for t in table_names(rows) if t != "main"]
     for t in tables:
         assert query_rows(rows, t, True) == [], f"{t} should be dropped, not queried"
+
+
+# ----------------------------------------------------- knowledge-level roles
+def _role_setup(tmp_path, kn_subjects):
+    m = make_model(tmp_path)
+    d = tmp_path / "cfg" / "rolesrc"
+    d.mkdir(parents=True)
+    (d / "model.yaml").write_text(textwrap.dedent("""\
+    - Gene ex:1:
+      - a: obo:SO_0000704
+      - dct:identifier:
+        - id: "1"
+      - ex:tree*:
+        - tree: TreeNumber
+    - TreeNumber ex:t1:
+      - a: ex:TreeNumber
+      - ex:label:
+        - label: "C04.557"
+    - Orphan ex:o1:
+      - a: ex:Orphan
+      - ex:label:
+        - olabel: "x"
+    """))
+    (d / "prefix.yaml").write_text("ex: <http://ex/>\nobo: <http://purl.obolibrary.org/obo/>\ndct: <http://purl.org/dc/terms/>\n")
+    (d / "endpoint.yaml").write_text("endpoint:\n  - https://ep/sparql\n")
+    p = tmp_path / "kn_roles.yaml"
+    p.write_text(yaml.safe_dump({"prefixes": {"ex": "http://ex/"}, "subjects": kn_subjects, "predicates": []}))
+    return m, str(d), Knowledge(str(p))
+
+
+def test_knowledge_can_skip_a_reachable_subject(tmp_path):
+    """A skip decision can live in knowledge.yaml with its evidence, not only in the TSV."""
+    m, cfg, kn = _role_setup(tmp_path, [
+        {"source": "rolesrc", "subject": "TreeNumber", "role": "skip", "status": "sure",
+         "basis": "model", "note": "no InterMine field holds a MeSH tree number"},
+    ])
+    r = translate(m, cfg, str(tmp_path / "out"), kn, {})
+    subj = {s["subject"]: s for s in r["subjects"]}
+    assert subj["TreeNumber"]["role"] == "skip"
+    assert subj["TreeNumber"]["status"] == "sure", "a skip-only entry must not need im_class"
+    assert subj["TreeNumber"]["im_class"] == ""
+    # skipping prunes the subtree: its rows must not reach any table
+    tree_rows = [x for x in r["rows"] if x["subject"] == "TreeNumber"]
+    assert tree_rows and all(x["table"] == "drop" for x in tree_rows), tree_rows
+
+
+def test_human_tsv_role_beats_knowledge_role(tmp_path):
+    """Precedence: what the human wrote in mapping_subjects.tsv wins over knowledge."""
+    m, cfg, kn = _role_setup(tmp_path, [
+        {"source": "rolesrc", "subject": "TreeNumber", "role": "skip", "status": "sure", "basis": "model"},
+    ])
+    out = str(tmp_path / "out2")
+    translate(m, cfg, out, kn, {})
+    path = os.path.join(out, "mapping_subjects.tsv")
+    rows = read_tsv(path)
+    for row in rows:
+        if row["subject"] == "TreeNumber":
+            row["role"] = "node"
+    from rdfc2im.mapping import SUBJ_COLUMNS
+    write_tsv(path, rows, SUBJ_COLUMNS)
+    r2 = translate(m, cfg, out, kn, {})
+    subj = {s["subject"]: s for s in r2["subjects"]}
+    assert subj["TreeNumber"]["role"] == "node", "the human's role must survive regeneration"
