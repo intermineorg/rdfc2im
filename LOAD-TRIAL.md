@@ -554,3 +554,56 @@ Neither was attempted further; forcing it risked the stability of a mine several
 already depend on, for a page (Browse Sources) that was already broken before this session
 started. Flagging this as an explicit, deliberate decision point for the user rather than a
 "still working on it."
+
+## Quicksearch for "cyp" found one wrong gene and a phantom duplicate - two distinct bugs
+
+Reported: searching "cyp" showed only one Gene (CYP4F2, out of 121 real CYP-family genes), and
+clicking through it showed two Gene objects, one throwing InterMine's classic "may have existed
+before and been assigned a new ID" error. Confirmed before any fix: `/service/search?q=cyp` -
+`totalHits: 25`, `Gene: 1`, and that one Gene hit was **PPIG**, textually unrelated to "cyp" at
+all. Two separate, real bugs, both found by direct investigation rather than assumption:
+
+**1. Orphaned `intermineobject` rows** - InterMine's generic object store (`intermineobject`:
+`id`, `class`, a serialized snapshot) is separate from each class's own typed table (`gene`,
+`pathway`, ...); every real object needs a row in both. Found 5802 rows that only had the
+generic one: 113 Gene (stub objects with just a symbol and id, e.g. `id=22001211,
+symbol=CYP4F2` - the exact phantom duplicate reported) and 5687 Pathway, both leftovers from
+earlier manual SQL cleanups this session that deleted rows from the typed table but never
+touched their `intermineobject` counterpart - the 113 from the DataSource.url retrofit's failed
+`humanmine-ncbigene`/hgnc/etc. re-integration attempts (see that section above), the 5687 from
+the very first reactome Pathway-duplicate cleanup, several sections above, which predates this
+finding entirely. `create-search-index` indexes from `intermineobject`, so these orphans became
+phantom search hits with almost no real content, and any object lookup by their id - e.g.
+clicking through from search - correctly finds nothing in the typed table, producing exactly
+the "assigned a new ID" error InterMine gives for this situation. A full sweep confirmed these
+were the only two affected classes (every other class checked both directions, zero orphans);
+deleted all 5802, confirmed zero orphans remain in either direction afterward.
+
+**2. Solr's auto-guessed field type had no partial-word matching at all.** This trial stack's
+Solr cores use the `_default` schemaless configset (the same one used to create them - see the
+`solr` service's own compose comment), which infers each field's type from the first value
+written to it. The inferred `analyzed_string` type (used for every InterMine content field -
+`gene_symbol`, `gene_name`, `publication_title`, ...) came out as plain whitespace-tokenize +
+lowercase, nothing more. InterMine's own quicksearch never appends a wildcard server-side
+(confirmed reading `SolrKeywordSearchHandler.java`: the raw query string reaches Solr
+unmodified), so a bare term like "cyp" could only ever exact-match a whole token - "cyp4f2" is
+one token under whitespace tokenization, so it never matched, while `gene_symbol:cyp*` (with an
+explicit wildcard) matched fine. With no real match anywhere, edismax's boost query
+(`bq=classname:Gene^1.5`) was apparently enough on its own to surface *something* - hence PPIG,
+not a "no results" empty page. Fixed by giving `analyzed_string` an `EdgeNGramFilter` on the
+index-side analyzer only (`tools/solr-search-schema-fix.sh`) so a query term matches any
+indexed prefix-gram without needing a wildcard. A first attempt at `maxGramSize=25` reproducibly
+OOM'd the indexing JVM against this build's longer free-text fields (publication abstracts,
+pathway descriptions - EdgeNGram generates a token per gram length per word, and a paragraph
+has a lot of words); `maxGramSize=10` indexed cleanly in ~70s with no cap on document count.
+
+Verified thoroughly, not just "no errors": `/service/search?q=cyp` now returns `totalHits: 600`,
+`Gene: 172` (real matches - CYP-family genes and pseudogenes, plus genes whose description text
+mentions "cyp", both legitimate). CYP4F2, CYP2D6, CYP3A4 and CYP1A1 all resolve to exactly one
+real Gene each on an exact-symbol search (ids 4191380, 4168641, 4168665, 4168584), and every one
+of those ids round-trips through a direct REST query with no error. The specific phantom
+(id 22001211) no longer exists in the search index at all. PPIG's own search now correctly shows
+PPIG and its real pseudogene PPIGP1, not CYP4F2. Unrelated searches (TPMT, VKORC1, "clinical
+significance", "rs123") still return real, sensible results. Response time is unaffected
+(~20ms). Templates and the QueryBuilder class list, both fixed earlier this session, are
+unaffected by any of this.

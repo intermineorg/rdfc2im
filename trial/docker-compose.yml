@@ -48,6 +48,10 @@ services:
     #   docker exec rdfc2im-solr solr create_core -c humanmine-search
     #   docker exec rdfc2im-solr solr create_core -c humanmine-autocomplete
     # They persist in the solrdata volume across `down`/`up`; only `trial-destroy` loses them.
+    # Then run tools/solr-search-schema-fix.sh (once, against humanmine-search only) - the
+    # default schemaless configset's auto-guessed field types have no partial-word matching,
+    # so a bare quicksearch term never matches anything without it. See that script's own
+    # header comment for the full story and the re-index command to run after it.
     volumes:
       - solrdata:/var/solr
     ports:
