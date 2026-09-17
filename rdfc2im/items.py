@@ -200,6 +200,44 @@ def _via_from(model: InterMineModel, from_cls: str, to_cls: str) -> str:
     return ""
 
 
+def resolve_key_ambiguity(store: ItemStore, cls: str, field: str,
+                           prefer_field: Optional[str] = None, prefer_value: Optional[str] = None) -> int:
+    """A field this source did not use as ITS OWN merge key (see ItemStore.key_for) can still be
+    one InterMine uses in a cross-source integration key - Gene.secondaryIdentifier is not
+    ncbigene's key (primaryIdentifier is), but `key_secondaryidentifier_org` merges on it against
+    other sources.  If the *upstream data itself* gives two distinct objects in this source's own
+    output the same value (real: 255 Ensembl gene ids in NCBI Gene's own cross-reference data are
+    each shared by two or more different NCBI Entrez records, an overlapping-transcript/antisense
+    annotation ambiguity, not an rdfc2im mapping error - see STATUS.md D14), loading it past that
+    key either fails or merges the wrong two objects.
+
+    Grouped by (field value, organism ref) since the key it stands in for is organism-scoped too.
+    If prefer_field/prefer_value picks out exactly one holder of a duplicated value, the field is
+    kept only there; otherwise the ambiguity has no principled answer and it is dropped from every
+    holder - the same "can't resolve cleanly, so don't corrupt" rule `clean_table` already applies
+    to a filter-failing required column. Returns the number of items the field was blanked on."""
+    groups: Dict[tuple, List[Item]] = {}
+    for it in store.items.values():
+        if it.cls != cls:
+            continue
+        v = it.attrs.get(field)
+        if v:
+            groups.setdefault((v, it.refs.get("organism")), []).append(it)
+    blanked = 0
+    for (_, items) in ((k, v) for k, v in groups.items() if len(v) > 1):
+        keep = None
+        if prefer_field and prefer_value:
+            matches = [it for it in items if it.attrs.get(prefer_field) == prefer_value]
+            if len(matches) == 1:
+                keep = matches[0]
+        for it in items:
+            if it is keep:
+                continue
+            del it.attrs[field]
+            blanked += 1
+    return blanked
+
+
 def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, log=print) -> dict:
     cols = read_tsv(os.path.join(out_dir, "columns.tsv"))
     tables: Dict[str, List[dict]] = {}
@@ -257,6 +295,11 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
                     if src_key is None or src_key == k:
                         continue
                     store.link(src_key, vf, k)
+    for cls, kcfg in (source_cfg.get("key_ambiguity") or {}).items():
+        n = resolve_key_ambiguity(store, cls, kcfg["field"], kcfg.get("prefer_field"), kcfg.get("prefer_value"))
+        if n:
+            stats["notes"].append(f"{cls}.{kcfg['field']}: blanked on {n} items - ambiguous in this "
+                                   f"source's own data, not an rdfc2im mapping error (STATUS.md D14)")
     # DataSet / DataSource
     ds_title = source_cfg.get("data_set_title") or f"{src} (rdf-config)"
     ds_name = source_cfg.get("data_source_name") or src

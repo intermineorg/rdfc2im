@@ -28,6 +28,12 @@ ncbigene:
   data_set_title: NCBI Gene (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   gene_scope_field: primaryIdentifier
+  # STATUS.md D14: 255 Ensembl gene ids in NCBI's own cross-reference data are each shared by
+  # two or more distinct NCBI Entrez records (overlapping-transcript/antisense annotations, e.g.
+  # ENSG00000248767 <- both FOXL3-OT1 and FOXL3) - real upstream ambiguity, not an rdfc2im bug,
+  # but it makes Gene.secondaryIdentifier non-unique, which key_secondaryidentifier_org assumes.
+  key_ambiguity:
+    Gene: {field: secondaryIdentifier, prefer_field: typeOfGene, prefer_value: protein-coding}
   scope: good
 hgnc:
   replaces: [hgnc]
