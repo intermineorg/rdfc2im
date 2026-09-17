@@ -132,6 +132,8 @@ Row counts are over *active* rows; `pruned` = rows under a dropped/undecided bra
 
 D1 side-stepped (`typeOfGene` in `curation/extensions_additions.xml`); D2 `inSubset` rows are `todo`; D4 uniprot `classifiedWith`/GO is `sure` but flagged; D5 disease ids are `todo` in clinvar/hgnc; D7 homologene `todo`; D12 GWAS year is a `guess` with a `regex` transform; D13 ClinVar coordinates are `link` rows (blank nodes) not mapped.
 
+**D14 (new, from the hgnc load trial 2026-09-17): `Gene.key_secondaryidentifier_org` is not actually unique.** 255 distinct Ensembl gene ids in ncbigene's own fetched data (secondaryIdentifier) are each claimed by 2+ different NCBI Entrez ids - a genuine upstream ambiguity (likely readthrough transcripts sharing one Ensembl id), not an rdfc2im bug. This is what blocks hgnc's *full* load from merging cleanly at scale: the integration key InterMine uses to merge ncbigene's and hgnc's Gene rows assumes secondaryIdentifier+organism is unique, and for these 255 genes it is not. Not yet decided: drop `secondaryIdentifier` for the affected 255 genes, pick one Entrez id as canonical per Ensembl id (and on what basis), or accept the resulting merge duplication for just those genes. Affects any future full-scale load of ncbigene+hgnc together; does not affect a gene-panel-scoped load unless the panel happens to include one of the 255 (none of the food/drug-metabolism demo panel do, checked).
+
 ## Findings that shape the design (verified against the uploaded code)
 
 1. **The delimited loader (v0.1 route, now dropped) links by *exact declared type* and allows one object
