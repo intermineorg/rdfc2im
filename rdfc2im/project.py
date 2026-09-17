@@ -97,14 +97,23 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
                     s = f"{root_cls} ~> {c['im_class']} (implicit: first reference/collection from {root_cls})"
                     if s not in links:
                         links.append(s)
+        for table, cols in tables.items():
+            root_cls = table_root(cols)
+            for f in _priority_fields(model, root_cls, cols):
+                # Every source's reference fields (Gene.chromosome via a Chromosome-mapped
+                # column, not just its own direct attributes) need to compete for priority the
+                # same way attributes do - found only by an actual load: this loop used to run
+                # only for `alongside` sources, so two *replacing* sources (humanmine-ncbigene
+                # and humanmine-ensembl, neither alongside anything) both writing Gene.chromosome
+                # had no priority entry at all, and the build refused with "Conflicting values
+                # for field Gene.chromosome ... needs configuring" even though plain attribute
+                # conflicts on the very same two sources (Gene.symbol, Gene.description) were
+                # already handled correctly via `writers` below.
+                writers.setdefault(f, [])
+                if name not in writers[f]:
+                    writers[f].append(name)
         if scfg.get("alongside"):
             alongside[name] = list(scfg["alongside"])
-            for table, cols in tables.items():
-                root_cls = table_root(cols)
-                for f in _priority_fields(model, root_cls, cols):
-                    alongside_fields.setdefault(f, [])
-                    if name not in alongside_fields[f]:
-                        alongside_fields[f].append(name)
         for c in classes:
             if c not in all_classes:
                 all_classes.append(c)
