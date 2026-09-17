@@ -34,6 +34,36 @@ def test_key_for_tries_every_single_field_key_not_just_the_class_wide_preferred_
     assert k3 == ("Gene", "primaryIdentifier", "1")
 
 
+def test_a_value_that_does_not_parse_as_the_declared_numeric_type_is_dropped_not_written(tmp_path):
+    """Regression for a real bug found only by an actual load: GWAS Catalog uses the literal
+    string "NR" ("Not Reported") for riskAlleleFreqInControls (java.lang.Double) on most of its
+    rows. Writing that straight through produced items.xml the loader could never accept -
+    InterMine failed the WHOLE retrieve with a bare `NumberFormatException: For input string:
+    "NR"` and no indication of which item or field caused it. The attribute must be dropped
+    (silently as far as the item goes - everything else about it still loads) rather than
+    written, with the drop itself visible via ItemStore.dropped, not hidden entirely."""
+    model = """<model name="genomic" package="org.intermine.model.bio">
+    <class name="GWASResult" is-interface="true">
+      <attribute name="riskAlleleFreqInControls" type="java.lang.Double"/>
+      <attribute name="replicateSample" type="java.lang.String"/>
+      <attribute name="year" type="java.lang.Integer"/>
+    </class>
+    </model>"""
+    (tmp_path / "core.xml").write_text(model)
+    m = InterMineModel(); m.load_xml(str(tmp_path / "core.xml")); m.finalize(); m.live = None
+    store = ItemStore(m)
+    k = store.get("GWASResult", {"riskAlleleFreqInControls": "NR", "replicateSample": "NR",
+                                 "year": "2019"})
+    it = store.items[k]
+    assert "riskAlleleFreqInControls" not in it.attrs          # numeric type, bad value - dropped
+    assert it.attrs["replicateSample"] == "NR"                 # String type - "NR" is a legitimate value
+    assert it.attrs["year"] == "2019"                          # a value that DOES parse is untouched
+    assert len(store.dropped) == 1 and "riskAlleleFreqInControls" in store.dropped[0]
+
+    k2 = store.get("GWASResult", {"riskAlleleFreqInControls": "0.7603"})
+    assert store.items[k2].attrs["riskAlleleFreqInControls"] == "0.7603"  # a real value still writes
+
+
 def test_to_ascii_transliterates_what_the_intermine_loader_cannot_take():
     """Regression for a confirmed InterMine bug: have.large.file.xml.tgt's postgres COPY BINARY
     writer fails the whole retrieve ("invalid byte sequence for encoding UTF8: 0x00") on a

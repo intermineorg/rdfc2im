@@ -79,11 +79,32 @@ class Item:
         self.colls: Dict[str, List[tuple]] = {}
 
 
+_INTEGER_TYPES = {"int", "java.lang.Integer", "long", "java.lang.Long", "short", "java.lang.Short"}
+_FLOAT_TYPES = {"double", "java.lang.Double", "float", "java.lang.Float"}
+
+
+def _parses_as_declared_type(typ: str, v: str) -> bool:
+    """True unless `typ` is a numeric Java type and `v` does not parse as one - GWAS Catalog
+    uses the literal string "NR" ("Not Reported") for a numeric field (riskAlleleFreqInControls)
+    on the majority of its rows; found only by an actual load, where InterMine's own loader fails
+    the whole retrieve with a bare `NumberFormatException: For input string: "NR"` and no
+    indication of which item or field caused it."""
+    try:
+        if typ in _INTEGER_TYPES:
+            int(v)
+        elif typ in _FLOAT_TYPES:
+            float(v)
+        return True
+    except ValueError:
+        return False
+
+
 class ItemStore:
     def __init__(self, model: InterMineModel):
         self.model = model
         self.items: Dict[tuple, Item] = {}
         self.conflicts: List[str] = []
+        self.dropped: List[str] = []
 
     def key_for(self, cls: str, values: Dict[str, str]) -> Optional[tuple]:
         # Try every single-field key this class has, not just the model-wide preferred one -
@@ -107,6 +128,11 @@ class ItemStore:
             self.items[k] = it
         for f, v in values.items():
             if not v:
+                continue
+            fd = self.model.field(cls, f)
+            if fd is not None and fd.kind == "attribute" and not _parses_as_declared_type(fd.type, v):
+                if len(self.dropped) < 50:
+                    self.dropped.append(f"{cls} {k[2]}: {f} = {v!r} does not parse as {fd.type} - dropped")
                 continue
             if f in it.attrs and it.attrs[f] != v:
                 if len(self.conflicts) < 50:
@@ -320,8 +346,10 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
         stats["items"] = store.write(path)
     stats["classes"] = classes_seen
     stats["conflicts"] = store.conflicts
+    stats["dropped"] = store.dropped
     log(f"  {src}: {stats['tables']} tables, {stats['rows']} rows -> {stats['items']} items ({', '.join(classes_seen)})"
-        + (f"; {len(store.conflicts)} attribute conflicts" if store.conflicts else ""))
+        + (f"; {len(store.conflicts)} attribute conflicts" if store.conflicts else "")
+        + (f"; {len(store.dropped)} attributes dropped (wrong type)" if store.dropped else ""))
     # These used to be collected and never shown, which is how every UniProt table stayed
     # mis-rooted: the warnings existed, nobody could see them.
     for note in dict.fromkeys(stats["notes"]):
