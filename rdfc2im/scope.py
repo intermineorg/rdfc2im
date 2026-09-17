@@ -64,6 +64,14 @@ def restrict_field(rows: List[dict], im_class: str, im_field: str, terms: List[s
         prefix = _curie_prefix(r.get("value", "")) or prefer_prefix
         if prefix:
             r["value"] = " ".join(f"{prefix}:{t}" for t in terms)
+        elif r.get("transform") == "iri_localname":
+            # The query's own SPARQL value is a full IRI even though items.py later truncates
+            # it to a bare local name for the InterMine attribute (e.g. GWAS Catalog's
+            # snp_gene_ids -> http://identifiers.org/ensembl/ENSG...) - confirmed live: TogoVar
+            # returns the IRI, not a literal, so `STR(?x) = "ENSG..."` equality never matches.
+            # Suffix-match the raw IRI instead; sparql.py's _constraint() renders the `~` marker
+            # as STRENDS.
+            r["value"] = " ".join(f'~"{t}"' for t in terms)
         else:
             # quoted-literal style (e.g. reactome's FILTER(STR(?x) = "9606")) - sparql.py's
             # _constraint() OR's multiple space-joined quoted terms together.

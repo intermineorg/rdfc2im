@@ -189,8 +189,15 @@ def _constraint(var: str, value: str) -> str:
     A value can hold more than one space-joined quoted literal (build-scope restriction to
     several taxa on a source whose filter is FILTER-style rather than VALUES-style, e.g.
     reactome's taxonomy_id) - those OR together. A single quoted value keeps the original
-    FILTER(STR(?x) = "...") form unchanged."""
+    FILTER(STR(?x) = "...") form unchanged.
+
+    A `~"term"` marker (scope.py's restrict_field, for a field whose raw SPARQL value is an
+    IRI that only gets truncated to a bare local name later, in items.py) suffix-matches the
+    raw IRI via STRENDS instead of comparing it for equality, which would never match."""
     v = value.strip()
+    if v.startswith('~"'):
+        terms = re.findall(r'~("(?:[^"\\]|\\.)*")', v)
+        return "FILTER(" + " || ".join(f"STRENDS(STR(?{var}), {t})" for t in terms) + ")"
     if v.startswith('"'):
         terms = re.findall(r'"(?:[^"\\]|\\.)*"', v)
         if len(terms) > 1:
