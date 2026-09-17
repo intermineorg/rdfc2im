@@ -102,8 +102,30 @@ def _normalise(body: bytes, fmt: str) -> bytes:
     return body
 
 
+SORTED_TOP_CAP = 200_000  # Virtuoso's hard ceiling on any ORDER BY + LIMIT/OFFSET query
+
+
 def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
-    """LIMIT page OFFSET k*page until a short page; LIMIT (total) still caps the extract."""
+    """LIMIT page OFFSET k*page until a short page; LIMIT (total) still caps the extract.
+
+    A table whose true row count exceeds SORTED_TOP_CAP cannot be paged this way to completion:
+    Virtuoso refuses any ORDER BY + LIMIT/OFFSET request once offset+limit exceeds 200000
+    ("SR353: Sorted TOP clause specifies more then N rows to sort. Only 200000 are allowed").
+    That request is never made - the loop stops one page short of the cap and reports "partial"
+    - rather than treating the error as an ordinary page failure and writing a truncated file
+    that looks complete. Confirmed on ncbigene/main_gene_synonym: server COUNT(*) is 239974, so
+    stopping cleanly at 200000 still leaves 39974 rows (16.7%) unfetched; the caller must know
+    that, which is why this returns "partial" distinctly from "fetched".
+
+    A keyset rewrite (page via FILTER(?var > last-seen-value) instead of a growing OFFSET, which
+    would sidestep the cap entirely) was tried and reverted: RDF Portal's Virtuoso evaluates `>`
+    on plain-literal values unreliably. FILTER(?id > "1") on ncbigene's own data excludes "2"
+    through "9" while admitting "10", "100", ... - confirmed against the live endpoint. That
+    silently dropped 28487 of 193288 genes (14.7%) from a table that fetched fully under the old
+    OFFSET method, which is worse than the cap this was meant to fix. Paging a table past the cap
+    needs a comparison-free strategy (e.g. batching a known key set through VALUES, which RDF
+    Portal does evaluate correctly) - real follow-up work, not attempted here.
+    """
     base = _order_by(LIMIT_RE.sub("", q).rstrip("\n") + "\n")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     total, k, header = 0, 0, None
@@ -112,7 +134,13 @@ def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
             size = page if not limit else min(page, int(limit) - total)
             if size <= 0:
                 break
-            pq = base + f"LIMIT {size} OFFSET {k * page}\n"
+            offset = k * page
+            if offset + size > SORTED_TOP_CAP:
+                log(f"  PARTIAL {out_path}: stopping at {total} rows - Virtuoso refuses any "
+                    f"ORDER BY + LIMIT/OFFSET request past {SORTED_TOP_CAP} rows (offset+limit "
+                    f"{offset + size} would exceed it); more rows exist")
+                return "partial"
+            pq = base + f"LIMIT {size} OFFSET {offset}\n"
             body, fmt, err = _fetch_once(pq, ep, timeout)
             if body is None:
                 log(f"  FAILED page {k + 1} of {out_path}: {err}")

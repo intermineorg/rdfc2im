@@ -162,3 +162,35 @@ Only `go` was loaded, into an otherwise empty mine. Nothing here exercises integ
 doing real work - merging a Gene arriving from both `humanmine-ncbigene` and `humanmine-hgnc` -
 or the priorities file resolving a genuine conflict. That needs two sources loaded in sequence
 and is the obvious next trial.
+
+## ncbigene: three tables exceed Virtuoso's 200000-row page cap
+
+The next trial, fetching `ncbigene` in full. Virtuoso refuses any `ORDER BY` + `LIMIT`/`OFFSET`
+request once offset+limit exceeds 200000 ("SR353: Sorted TOP clause specifies more then N rows to
+sort. Only 200000 are allowed"). `main_alternative`, `main_dblink` and `main_gene_synonym` are all
+per-gene multi-valued and each cross that line; `main` (193289 genes) and `main_db_xref` (193967
+rows) stay under it and fetch complete. Before the fix, the page that crossed 200000 simply failed
+and was swallowed as an ordinary "partial" page failure - indistinguishable from a genuinely short
+final page - so the truncated file was written and treated as complete data by everything
+downstream. Confirmed on `main_gene_synonym`: server `COUNT(*)` is 239974, 39974 rows (16.7%)
+silently missing. `_fetch_paged` now recognises the cap before making the doomed request and
+reports `"partial"` distinctly from `"fetched"`.
+
+The obvious general fix - page via `FILTER(?var > last-seen-value)` instead of a growing OFFSET,
+which sidesteps the cap entirely since every request's own offset stays 0 - was built, unit
+tested, and then found unsafe against the real endpoint: RDF Portal's Virtuoso evaluates `>` on
+plain-literal values unreliably. `FILTER(?id > "1")` on ncbigene's own data excludes `"2"` through
+`"9"` while admitting `"10"`, `"100"`, ... - reproduced directly against the live endpoint, not
+inferred. Shipping it would have silently dropped 28487 of 193288 genes (14.7%) from a table that
+fetched fully under the old method - a worse, harder-to-notice bug than the one it fixed. Reverted;
+not committed.
+
+**Still open**: fully extracting a table past the cap needs a comparison-free strategy - e.g.
+fetching the full (sub-200000) set of `main`'s gene ids first, then batching them through
+`VALUES ?id { ... }` for the wide tables, since RDF Portal does evaluate `VALUES`-equality
+correctly (confirmed: `FILTER(?id = "9997")` finds the right rows). Not implemented - it needs its
+own live-verification pass with the same care this finding took, not a same-session follow-on to
+an already-reverted fix. `ncbigene` is not yet loaded into the trial mine: three of its five raw
+tables are now honestly incomplete rather than silently wrong, and loading honestly-incomplete
+gene identifier/synonym/xref data as if it were the real load is a decision for a human, not a
+default to fall into.
