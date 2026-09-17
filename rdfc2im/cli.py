@@ -94,6 +94,10 @@ def main(argv=None):
                        "to restrict the build to. Applies only to sources that declare a "
                        "`gene_scope_field` (see rdfc2im/data/sources.yaml) - others are skipped with "
                        "a message, same as an unsupported --taxon.")
+        p.add_argument("--pmids", help="comma-separated PubMed ids, or @path/to/file (one per line), "
+                       "to restrict the build to. Applies only to sources that declare `pmid_scope: "
+                       "true` (see rdfc2im/data/sources.yaml) - PubMed has no Gene field of its own, "
+                       "so this is separate from --genes.")
     a = ap.parse_args(argv)
     if not os.path.exists(a.workspace):
         sys.exit(f"rdfc2im: no {a.workspace} in {os.getcwd()} - run from the workspace directory "
@@ -133,23 +137,36 @@ def _resolve_taxa(a, ws) -> list:
     return list(y.get("taxon") or DEFAULT_TAXA)
 
 
-def _resolve_genes(a) -> list:
-    """CLI --genes: a comma list, or @path/to/file (whitespace-separated symbols, one or more
-    per line, '#'-comments ok - a curated panel is easier to read grouped a dozen to a line
-    under a category comment than strictly one per line, so a line is split on any whitespace
-    rather than treated as a single token)."""
-    g = getattr(a, "genes", None)
-    if not g:
+def _parse_list_arg(value: str) -> list:
+    """A comma list, or @path/to/file (whitespace-separated tokens, one or more per line,
+    '#'-comments ok - a curated list is easier to read grouped a dozen to a line under a
+    category comment than strictly one per line, so a line is split on any whitespace rather
+    than treated as a single token). Shared by --genes and --pmids."""
+    if not value:
         return []
-    if g.startswith("@"):
-        genes = []
-        with open(g[1:]) as fh:
+    if value.startswith("@"):
+        out = []
+        with open(value[1:]) as fh:
             for line in fh:
                 line = line.strip()
                 if line and not line.startswith("#"):
-                    genes.extend(line.split())
-        return genes
-    return [s.strip() for s in g.split(",") if s.strip()]
+                    out.extend(line.split())
+        return out
+    return [s.strip() for s in value.split(",") if s.strip()]
+
+
+def _resolve_genes(a) -> list:
+    """CLI --genes: see _parse_list_arg."""
+    return _parse_list_arg(getattr(a, "genes", None))
+
+
+def _resolve_pmids(a) -> list:
+    """CLI --pmids: see _parse_list_arg. Independent of --genes: PubMed has no Gene field of its
+    own to restrict a gene-panel build against, so a demo build instead scopes it to the PMIDs
+    already referenced by the genes/variants/associations loaded from every other source - see
+    scope.py's extract_publication_pmids for gathering that list, and apply_publication_scope
+    for how it restricts PubMed's own queries."""
+    return _parse_list_arg(getattr(a, "pmids", None))
 
 
 def run(a, ws) -> int:
@@ -186,6 +203,7 @@ def run(a, ws) -> int:
         kn = Knowledge(ws.get("knowledge"))
         taxa = _resolve_taxa(a, ws)
         genes = _resolve_genes(a)
+        pmids = _resolve_pmids(a)
         results = {}
         for s in sources:
             scfg = sources_cfg.get(s, {})
@@ -215,7 +233,8 @@ def run(a, ws) -> int:
             results[s] = run_source(m, os.path.join(ws["config_root"], s), os.path.join(out, s), kn,
                                     scfg, include_guess=ws["include_guess"], limit=ws["limit"],
                                     types=ws["types"], use_from=ws["use_from"], taxa=taxa,
-                                    gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier")
+                                    gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier",
+                                    pmids=pmids if scfg.get("pmid_scope") else None)
         return results
 
     def do_fetch():

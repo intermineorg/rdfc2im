@@ -126,6 +126,7 @@ pubmed:
   data_source_name: PubMed
   data_set_title: PubMed (RDF Portal)
   scope: good
+  pmid_scope: true
   note: HumanMine fills Publication via update-publications; this would pre-load details for cited papers
 homologene:
   replaces: []

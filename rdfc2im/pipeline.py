@@ -12,7 +12,7 @@ from .sparql import (QueryBuilder, table_names, query_rows, const_rows, write_sp
                      yaml_block, block_name)
 from .tsv import clean_table
 from .fetch import fetch_query
-from .scope import apply_taxon_scope, apply_gene_scope, DEFAULT_TAXA
+from .scope import apply_taxon_scope, apply_gene_scope, apply_publication_scope, DEFAULT_TAXA
 
 COL_COLUMNS = ["table", "position", "column", "variable", "im_class", "im_field", "transform",
                "filter", "value", "kind", "via", "status", "required", "root"]
@@ -21,12 +21,15 @@ COL_COLUMNS = ["table", "position", "column", "variable", "im_class", "im_field"
 def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, source_cfg: dict,
                include_guess: bool = True, limit: int = 0, types: str = "root",
                use_from: bool = True, log=print, taxa: Optional[List[str]] = None,
-               gene_ids: Optional[List[str]] = None, gene_field: str = "primaryIdentifier") -> dict:
-    """`taxa`/`gene_ids` restrict THIS run's generated queries only - mapping_predicates.sssom.tsv
-    is written by translate() above before either is applied, so the committed mapping always
-    reflects the default (human, no gene restriction) regardless of what a given run asks for.
-    See scope.py. `taxa=None`/`["9606"]` and `gene_ids=None`/`[]` are both the identity case:
-    every existing caller that does not pass these gets exactly today's behaviour."""
+               gene_ids: Optional[List[str]] = None, gene_field: str = "primaryIdentifier",
+               pmids: Optional[List[str]] = None) -> dict:
+    """`taxa`/`gene_ids`/`pmids` restrict THIS run's generated queries only -
+    mapping_predicates.sssom.tsv is written by translate() above before any of them is applied,
+    so the committed mapping always reflects the default (human, no restriction) regardless of
+    what a given run asks for. See scope.py. `taxa=None`/`["9606"]` and `gene_ids`/`pmids=None`/
+    `[]` are both the identity case: every existing caller that does not pass these gets exactly
+    today's behaviour. `pmids` is for PubMed specifically - see apply_publication_scope - and is
+    independent of gene_ids/gene_field since PubMed has no Gene field of its own to restrict."""
     res = translate(model, config_dir, out_dir, knowledge, source_cfg)
     cfg, rows, node_by_key = res["cfg"], res["rows"], res["node_by_key"]
     skip_reason = None
@@ -34,6 +37,8 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
         rows, skip_reason = apply_taxon_scope(rows, list(taxa))
     if not skip_reason and gene_ids:
         rows, skip_reason = apply_gene_scope(rows, gene_field, list(gene_ids))
+    if not skip_reason and pmids:
+        rows, skip_reason = apply_publication_scope(rows, list(pmids))
     if skip_reason:
         log(f"{cfg.name}: skipped this run - {skip_reason}")
         for old in glob.glob(os.path.join(out_dir, "queries", "*.sparql")):
