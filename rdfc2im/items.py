@@ -86,9 +86,14 @@ class ItemStore:
         self.conflicts: List[str] = []
 
     def key_for(self, cls: str, values: Dict[str, str]) -> Optional[tuple]:
-        ka = self.model.key_attribute(cls)
-        if ka and values.get(ka):
-            return (cls, ka, values[ka])
+        # Try every single-field key this class has, not just the model-wide preferred one -
+        # different sources populate different keys for the same class (Gene.primaryIdentifier
+        # for ncbigene/hgnc, Gene.secondaryIdentifier only for ensembl), and committing to one
+        # choice regardless leaves a source that never populates it with no real key at all -
+        # see InterMineModel.key_attributes' docstring for what that silently breaks.
+        for ka in self.model.key_attributes(cls):
+            if values.get(ka):
+                return (cls, ka, values[ka])
         vals = "|".join(f"{k}={v}" for k, v in sorted(values.items()) if v)
         return (cls, "*", vals) if vals else None
 

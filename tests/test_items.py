@@ -1,7 +1,38 @@
 import os, textwrap
 from rdfc2im.model import InterMineModel
-from rdfc2im.items import emit_items, to_ascii
+from rdfc2im.items import emit_items, to_ascii, ItemStore
 from test_mapping import make_model
+
+def test_key_for_tries_every_single_field_key_not_just_the_class_wide_preferred_one(tmp_path):
+    """Regression for a real bug found only by an actual load: Gene has two single-field keys
+    (primaryIdentifier, used by ncbigene/hgnc, and a bare secondaryIdentifier, the only one
+    ensembl ever populates since Ensembl ids are never HumanMine's primary Gene key).
+    Committing to one class-wide choice (primaryIdentifier) regardless left every ensembl row
+    keyed on the fragile "*" all-values fallback - which any two rows for the same real gene
+    disagree on somewhere (a second description string, a satellite table with fewer columns) -
+    silently splitting one gene into several Gene items. key_for must fall through to
+    secondaryIdentifier when primaryIdentifier is not what this row's own source populates."""
+    model = """<model name="genomic" package="org.intermine.model.bio">
+    <class name="Gene" is-interface="true">
+      <attribute name="primaryIdentifier" type="java.lang.String"/>
+      <attribute name="secondaryIdentifier" type="java.lang.String"/>
+      <attribute name="description" type="java.lang.String"/>
+    </class>
+    </model>"""
+    (tmp_path / "core.xml").write_text(model)
+    (tmp_path / "x_keys.properties").write_text(
+        "Gene.key_primaryidentifier=primaryIdentifier\nGene.key_secondaryidentifier=secondaryIdentifier\n")
+    m = InterMineModel(); m.load_xml(str(tmp_path / "core.xml")); m.load_keys(str(tmp_path / "x_keys.properties"))
+    m.finalize(); m.live = None
+    store = ItemStore(m)
+    k1 = store.get("Gene", {"secondaryIdentifier": "ENSG1", "description": "flavin containing dimethylaniline monoxygenase 3"})
+    k2 = store.get("Gene", {"secondaryIdentifier": "ENSG1", "description": "flavin containing monooxygenase 3"})
+    assert k1 == k2 == ("Gene", "secondaryIdentifier", "ENSG1")
+    assert len(store.items) == 1
+    # a class-wide-preferred key that IS populated still wins, unchanged from before
+    k3 = store.get("Gene", {"primaryIdentifier": "1", "secondaryIdentifier": "ENSG1"})
+    assert k3 == ("Gene", "primaryIdentifier", "1")
+
 
 def test_to_ascii_transliterates_what_the_intermine_loader_cannot_take():
     """Regression for a confirmed InterMine bug: have.large.file.xml.tgt's postgres COPY BINARY

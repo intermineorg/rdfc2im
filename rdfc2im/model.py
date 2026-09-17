@@ -153,6 +153,29 @@ class InterMineModel:
                 return a, self.keys[a]
         return cls, {}
 
+    def key_attributes(self, cls: str) -> List[str]:
+        """Every single-field key attribute cls has, in the same preference order
+        key_attribute() uses to commit to just one - for a caller (items.py's in-memory object
+        merging) that needs to try each in turn against what one particular row actually has,
+        rather than one class-wide choice regardless of which key that row's own source
+        populates. Two single-field keys on the same class is real, not an edge case: Gene has
+        both key_primaryidentifier and a bare key_secondaryidentifier, and ncbigene/hgnc key on
+        the former while ensembl - writing only Gene.secondaryIdentifier, since Ensembl ids are
+        never HumanMine's primary Gene key - can only ever populate the latter. Committing to
+        "primaryIdentifier" class-wide for ensembl's own rows left every one of them keyed on
+        the fallback (a hash of everything the row happens to carry), which any two rows for the
+        same real gene disagree on somewhere (multi-valued dcterms:description, a satellite
+        table with fewer columns than main, ...) - silently splitting one gene into several
+        Gene items instead of merging them, found only once ensembl was actually loaded
+        (InterMine's own loader then refuses with "Duplicate objects found for pk
+        Gene.key_secondaryidentifier" the moment two of those splintered items, or one of them
+        and an already-loaded ncbigene row, turn out to share the same real secondaryIdentifier)."""
+        owner, keys = self.keys_for(cls)
+        single = [v[0] for v in keys.values() if len(v) == 1]
+        ordered = [p for p in ("primaryIdentifier", "identifier", "primaryAccession", "taxonId",
+                                "pubMedId", "name", "value", "symbol") if p in single]
+        return ordered + [s for s in single if s not in ordered]
+
     def key_attribute(self, cls: str) -> Optional[str]:
         """The single attribute best used to identify an object of cls in a TSV row."""
         owner, keys = self.keys_for(cls)
