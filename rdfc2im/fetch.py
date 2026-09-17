@@ -329,13 +329,18 @@ class _NoRedirectPost(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if req.get_method() == "POST":
+            # req.headers.items() only, like the base class - req.header_items() also drags
+            # in unredirected headers such as Host, which stays pinned to the ORIGINAL host and
+            # sends the wrong Host header to the redirect target; togovar.org's Cloudflare front
+            # end uses that mismatched Host to keep re-issuing the same redirect forever (confirmed
+            # live: this looped until HTTPRedirectHandler's own repeat-visit guard gave up).
+            new_headers = dict(req.headers.items())
             q = urllib.parse.parse_qs(req.data.decode())["query"][0]
             sep = "&" if "?" in newurl else "?"
             get_url = newurl + sep + urllib.parse.urlencode({"query": q})
             if len(get_url) <= self.MAX_GET_URL:
-                return urllib.request.Request(get_url, headers=dict(req.header_items()))
-            return urllib.request.Request(newurl, data=req.data, method="POST",
-                                          headers=dict(req.header_items()))
+                return urllib.request.Request(get_url, headers=new_headers)
+            return urllib.request.Request(newurl, data=req.data, method="POST", headers=new_headers)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
