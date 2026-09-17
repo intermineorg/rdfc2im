@@ -226,10 +226,28 @@ def resolve_ensembl_symbols(symbols: List[str], taxon: str = "9606", timeout: in
     if body is None:
         raise RuntimeError(f"resolve_ensembl_symbols: {err}")
     lines = _normalise(body, fmt).decode("utf-8").splitlines()
+    seen_labels = set()
     ids = []
     for line in lines[1:]:
         if not line.strip():
             continue
-        cell = line.split("\t", 1)[0]
-        ids.append(cell.strip().strip('"'))
+        cells = line.split("\t")
+        ensg_id, label = cells[0].strip().strip('"'), cells[1].strip().strip('"') if len(cells) > 1 else ""
+        # Ensembl's own RDF is not one-symbol-one-gene: rdfs:label is not exclusive to a gene's
+        # current/canonical symbol, and the same label can legitimately tag more than one real
+        # locus in a complex region - confirmed live for three panel genes in the UGT1A/CYP2D
+        # gene clusters (e.g. "UGT1A1" labels both the real UGT1A1 gene, ENSG00000241635, AND
+        # ENSG00000242366, whose own description says "UDP glucuronosyltransferase family 1
+        # member A8" - i.e. UGT1A8 under an alternate label). Restricting to every id a symbol
+        # resolves to would load both as an ambiguous "UGT1A1", which InterMine's own Gene
+        # merge key (symbol + organism) then correctly refuses as a real duplicate the moment a
+        # second one is integrated - confirmed the hard way (three separate integrate failures,
+        # one per gene, before this loop existed). First match per label wins; not a claim it is
+        # always the right one, a documented, deliberate simplification for a demo panel, where
+        # loading 110-ish unambiguous genes cleanly is worth more than blocking the whole build
+        # chasing which of two Ensembl labels is "canonical" for the rare cluster gene.
+        if label in seen_labels:
+            continue
+        seen_labels.add(label)
+        ids.append(ensg_id)
     return ids
