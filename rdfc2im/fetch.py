@@ -319,12 +319,22 @@ def _fetch_once(q, ep, timeout):
 
 
 class _NoRedirectPost(urllib.request.HTTPRedirectHandler):
-    """Re-issue a redirected POST as a GET with the query in the URL (what SPARQL servers expect)."""
+    """Re-issue a redirected POST as a GET with the query in the URL (what SPARQL servers
+    expect) - unless the query is long enough that the resulting URL would likely be rejected
+    with 414, in which case the POST is retried at the new URL instead. Servers that redirect
+    a POST but still accept POST at the target handle this fine, and it sidesteps the URL
+    length limit entirely (confirmed live: grch38.togovar.org 414s a ~113-condition FILTER
+    query as GET but accepts the identical query as POST)."""
+    MAX_GET_URL = 4000
+
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if req.get_method() == "POST":
             q = urllib.parse.parse_qs(req.data.decode())["query"][0]
             sep = "&" if "?" in newurl else "?"
-            return urllib.request.Request(newurl + sep + urllib.parse.urlencode({"query": q}),
+            get_url = newurl + sep + urllib.parse.urlencode({"query": q})
+            if len(get_url) <= self.MAX_GET_URL:
+                return urllib.request.Request(get_url, headers=dict(req.header_items()))
+            return urllib.request.Request(newurl, data=req.data, method="POST",
                                           headers=dict(req.header_items()))
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 

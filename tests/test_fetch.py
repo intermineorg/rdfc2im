@@ -1,6 +1,8 @@
 import re
+import urllib.parse
+import urllib.request
 import rdfc2im.fetch as fetch_mod
-from rdfc2im.fetch import _json_to_tsv, _csv_to_tsv, _term, with_limit, _order_by, _sniff
+from rdfc2im.fetch import _json_to_tsv, _csv_to_tsv, _term, with_limit, _order_by, _sniff, _NoRedirectPost
 from rdfc2im.tsv import clean_term
 
 def test_json_to_tsv_roundtrip():
@@ -188,3 +190,30 @@ def test_fetch_paged_recovers_past_the_cap_by_batching_the_required_key_domain(t
         got.setdefault(gid.strip('"'), []).append(syn.strip('"'))
     assert set(got.keys()) == set(genes)  # every gene present, including id "5" with no synonym
     assert got["1"] == ["A1", "A2"] and got["9"] == ["I1", "I2", "I3"] and got["5"] == [""]
+
+
+def _post_request(query):
+    return urllib.request.Request(
+        "http://example.org/sparql",
+        data=urllib.parse.urlencode({"query": query}).encode(),
+        headers={"Content-Type": "application/x-www-form-urlencoded", "Accept": "text/tab-separated-values"},
+    )
+
+
+def test_no_redirect_post_converts_short_query_to_get():
+    handler = _NoRedirectPost()
+    req = handler.redirect_request(_post_request("SELECT * WHERE { ?s ?p ?o }"), None, 302, "Found",
+                                    {}, "http://example.org/redirected/sparql")
+    assert req.get_method() == "GET"
+    assert req.full_url.startswith("http://example.org/redirected/sparql?")
+    assert urllib.parse.parse_qs(urllib.parse.urlparse(req.full_url).query)["query"][0] == "SELECT * WHERE { ?s ?p ?o }"
+
+
+def test_no_redirect_post_retries_as_post_when_get_url_would_be_too_long():
+    long_query = "SELECT * WHERE { " + " || ".join(f'?x = "{i}"' for i in range(500)) + " }"
+    handler = _NoRedirectPost()
+    req = handler.redirect_request(_post_request(long_query), None, 302, "Found",
+                                    {}, "http://example.org/redirected/sparql")
+    assert req.get_method() == "POST"
+    assert req.full_url == "http://example.org/redirected/sparql"
+    assert urllib.parse.parse_qs(req.data.decode())["query"][0] == long_query
