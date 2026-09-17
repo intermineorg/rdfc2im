@@ -1972,7 +1972,17 @@ predicates:
     status: guess
     basis: knowledge
     transform: iri_localname
-    note: chromosome IRI .../GRCh38/X -> X; HumanMine chromosomes are keyed primaryIdentifier+organism
+    filter: "regex:.*/(?:[1-9]|1[0-9]|2[0-2]|X|Y|MT)$"
+    note: >-
+      so:part_of is multi-valued and not chromosome-specific: a gene is part_of both its actual
+      chromosome (.../110/homo_sapiens/GRCh38/1) and the assembly it belongs to
+      (.../110/homo_sapiens/GRCh38), same predicate, different granularity. Without the filter,
+      the assembly row's iri_localname is "GRCh38" itself, which loaded as if it were a
+      Chromosome - found only by an actual load: Gene.chromosome conflicted between
+      humanmine-ncbigene's real "1" and humanmine-ensembl's "GRCh38" for the same gene, with no
+      genomic_priorities.properties entry able to make that a sane choice, because it never
+      should have been a candidate value at all. The filter runs on the raw IRI before
+      iri_localname, requiring it end in an actual human chromosome name (1-22, X, Y, MT).
   - source: ensembl
     subject: EnsemblGene
     pred: skos:altLabel
