@@ -1913,6 +1913,22 @@ predicates:
     note: Ensembl ids are Gene.secondaryIdentifier in HumanMine (ncbi-gene/hgnc); Gene.key_secondaryidentifier_org merges on it
   - source: ensembl
     subject: EnsemblGene
+    pred: obo:RO_0002162
+    im: Organism.taxonId
+    status: sure
+    basis: data:rdfportal
+    transform: iri_localname
+    value: "taxonomy:9606"
+    required: "yes"
+    note: >-
+      Confirmed live against https://rdfportal.org/ebi/sparql (dataset ensembl, 2026-09-17):
+      10354911 EnsemblGene records across 348 species, of which only 87693 (0.85%) are
+      taxonomy:9606 (Homo_sapiens). Without this, ensg_taxonomy was an unfiltered OPTIONAL
+      column while sources.yaml's Organism.taxonId const=9606 applied unconditionally to every
+      row regardless of species - fetching would pull ~10.35M non-human rows and mislabel every
+      one of them as human. Required+filtered here the same way ncbigene's ncbio:taxid is.
+  - source: ensembl
+    subject: EnsemblGene
     pred: rdfs:label
     im: Gene.symbol
     status: sure
