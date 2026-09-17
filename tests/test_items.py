@@ -1,7 +1,22 @@
 import os, textwrap
 from rdfc2im.model import InterMineModel
-from rdfc2im.items import emit_items
+from rdfc2im.items import emit_items, to_ascii
 from test_mapping import make_model
+
+def test_to_ascii_transliterates_what_the_intermine_loader_cannot_take():
+    """Regression for a confirmed InterMine bug: have.large.file.xml.tgt's postgres COPY BINARY
+    writer fails the whole retrieve ("invalid byte sequence for encoding UTF8: 0x00") on a
+    single non-ASCII character in an attribute value - reproduced on HGNC's own alt_label data
+    (a real Greek letter in a real synonym). Known Greek letters and "smart" punctuation get a
+    specific ASCII rendering; general Unicode (accents, ligatures) goes through NFKD; anything
+    left with no ASCII form at all becomes "?" rather than silently vanishing or crashing."""
+    assert to_ascii("ERα-regulated") == "ERalpha-regulated"
+    assert to_ascii("TNF-α/β") == "TNF-alpha/beta"
+    assert to_ascii("café") == "cafe"        # e-acute, NFKD path
+    assert to_ascii("ﬁsh") == "fish"          # fi-ligature, NFKD path
+    assert to_ascii("‘quoted’") == "'quoted'"
+    assert to_ascii("plain ascii") == "plain ascii"
+    assert to_ascii("中") == "?"               # no ASCII form at all
 
 def test_items_links_and_merging(tmp_path):
     m = make_model(tmp_path)

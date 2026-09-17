@@ -13,11 +13,60 @@ Output: out/<src>/items/<src>.xml, loadable by the stock `intermine-items-xml-fi
 from __future__ import annotations
 import csv
 import os
+import unicodedata
 from typing import Dict, List, Optional, Tuple
 from xml.sax.saxutils import quoteattr
 
 from .mapping import read_tsv
 from .model import InterMineModel
+
+# InterMine's have.large.file.xml.tgt loader (FullXmlConverterTask -> the postgres COPY BINARY
+# writer) cannot handle non-ASCII bytes: confirmed on a minimal repro that a single "alpha"
+# (Greek letter, U+03B1) in one attribute value is enough to fail the whole retrieve with
+# "PSQLException: invalid byte sequence for encoding UTF8: 0x00" - the writer appears to
+# mis-handle multi-byte UTF-8 rather than reject it cleanly. have.file.xml.tgt (XmlDataLoaderTask)
+# does not have this bug, but at real data volumes it opens far more concurrent connections than
+# Postgres's default allows and is markedly slower - not a viable swap for every source. Rather
+# than block every source with any non-ASCII text (HGNC's alt_label synonyms legitimately carry
+# Greek letters, e.g. "ERalpha"), transliterate attribute values to their closest ASCII on the
+# way into the items file. This only affects what InterMine loads, not rdfc2im's own tables,
+# filters or dedup, which still see the real Unicode text.
+_GREEK_TO_ASCII = {
+    "α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta",
+    "ε": "epsilon", "ζ": "zeta", "η": "eta", "θ": "theta",
+    "ι": "iota", "κ": "kappa", "λ": "lambda", "μ": "mu",
+    "ν": "nu", "ξ": "xi", "ο": "omicron", "π": "pi",
+    "ρ": "rho", "σ": "sigma", "ς": "sigma", "τ": "tau",
+    "υ": "upsilon", "φ": "phi", "χ": "chi", "ψ": "psi",
+    "ω": "omega", "ɣ": "gamma",
+}
+_PUNCT_TO_ASCII = {
+    "‐": "-", "‑": "-", "‒": "-", "–": "-", "—": "-",
+    "‘": "'", "’": "'", "“": '"', "”": '"', "−": "-",
+}
+
+
+def to_ascii(s: str) -> str:
+    """Closest-ASCII transliteration for InterMine's items-loading path; see the module note.
+    Known Greek letters spell out by name; known "smart" punctuation maps to its ASCII form;
+    anything else goes through NFKD (handles ligatures and accented Latin - e.g. "fi" from the
+    fi-ligature, "e" from "e-acute") and drops what still isn't ASCII, so no attribute value can
+    ever carry a byte this loader chokes on. A character with no ASCII form at all becomes "?"
+    rather than vanishing silently."""
+    if s.isascii():
+        return s
+    out = []
+    for ch in s:
+        if ch in _GREEK_TO_ASCII:
+            out.append(_GREEK_TO_ASCII[ch])
+        elif ch in _PUNCT_TO_ASCII:
+            out.append(_PUNCT_TO_ASCII[ch])
+        elif ch.isascii():
+            out.append(ch)
+        else:
+            decomposed = "".join(c for c in unicodedata.normalize("NFKD", ch) if not unicodedata.combining(c))
+            out.append(decomposed if decomposed.isascii() and decomposed else "?")
+    return "".join(out)
 
 
 class Item:
@@ -92,7 +141,7 @@ class ItemStore:
             for k, it in self.items.items():
                 fh.write(f'  <item id="{ids[k]}" class="{it.cls}" implements="">\n')
                 for f, v in it.attrs.items():
-                    fh.write(f'    <attribute name="{f}" value={quoteattr(v)}/>\n')
+                    fh.write(f'    <attribute name="{f}" value={quoteattr(to_ascii(v))}/>\n')
                 for f, dk in it.refs.items():
                     if dk in ids:
                         fh.write(f'    <reference name="{f}" ref_id="{ids[dk]}"/>\n')
