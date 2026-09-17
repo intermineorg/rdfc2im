@@ -34,12 +34,34 @@ services:
       retries: 20
     restart: unless-stopped
 
+  solr:
+    image: docker.io/library/solr:8.6.2
+    container_name: rdfc2im-solr
+    # Backs create-search-index/create-autocomplete-index (dbmodel:postProcess) and the
+    # webapp's own /service/search + autocomplete lookups. The two cores it needs
+    # (humanmine-search, humanmine-autocomplete - names come from this mine's own
+    # keyword_search.properties/objectstoresummary.config.properties, baked into
+    # dbmodel.jar and patched by trial-stage.sh to point at this service instead of the
+    # sandbox's own localhost:8983) are NOT created by this compose file - Solr's image
+    # only supports precreating one core via `command`. Create both once, after the
+    # first `make up` (see LOAD-TRIAL.md "Connecting"):
+    #   docker exec rdfc2im-solr solr create_core -c humanmine-search
+    #   docker exec rdfc2im-solr solr create_core -c humanmine-autocomplete
+    # They persist in the solrdata volume across `down`/`up`; only `trial-destroy` loses them.
+    volumes:
+      - solrdata:/var/solr
+    ports:
+      - "127.0.0.1:8983:8983"
+    restart: unless-stopped
+
   mine:
     image: docker.io/library/tomcat:8.5-jdk8-temurin
     container_name: rdfc2im-mine
     depends_on:
       postgres:
         condition: service_healthy
+      solr:
+        condition: service_started
     environment:
       CATALINA_OPTS: "-Xmx3g -Djava.awt.headless=true"
     volumes:
@@ -82,3 +104,5 @@ services:
 volumes:
   pgdata:
     name: rdfc2im-pgdata
+  solrdata:
+    name: rdfc2im-solrdata

@@ -52,6 +52,32 @@ for f in WEB-INF/classes/intermine.properties WEB-INF/web.properties; do
     fi
 done
 
+# keyword_search.properties (search) and objectstoresummary.config.properties
+# (autocomplete) - both baked into dbmodel.jar at build time, unlike the DB host and
+# title above which live as loose files - point at localhost:8983, same host-vs-container
+# problem as the DB host: postprocess ran natively in the sandbox against a Solr container
+# published to the sandbox's own localhost, but the *webapp* runs inside rdfc2im-mine and
+# needs the compose network's own hostname for that same Solr container instead.
+DBMODEL_JAR="$ART/humanmine/WEB-INF/lib/dbmodel.jar"
+if [ -f "$DBMODEL_JAR" ]; then
+    python3 - "$DBMODEL_JAR" <<'PYEOF'
+import sys, zipfile, os
+jar = sys.argv[1]
+targets = ("keyword_search.properties", "objectstoresummary.config.properties")
+tmp = jar + ".tmp"
+patched = []
+with zipfile.ZipFile(jar, "r") as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+    for item in zin.infolist():
+        data = zin.read(item.filename)
+        if item.filename in targets and b"localhost:8983" in data:
+            data = data.replace(b"localhost:8983", b"solr:8983")
+            patched.append(item.filename)
+        zout.writestr(item, data)
+os.replace(tmp, jar)
+print("  patched in dbmodel.jar: " + ", ".join(patched) if patched else "  dbmodel.jar: nothing to patch (already solr:8983, or no solr URL present)")
+PYEOF
+fi
+
 # ---- bluegenes ---------------------------------------------------------------
 echo "staging BlueGenes jars"
 rm -rf "$ART/bluegenes-lib"

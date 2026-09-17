@@ -375,3 +375,64 @@ title from PubMed, MeshTerm links resolve (e.g. PMID 10022751 -> 5 MeSH descript
 
 This completes the demo panel build: ncbigene (full) + hgnc/ensembl/uniprot/clinvar/gwascatalog
 (gene-panel-scoped) + reactome (full) + pubmed (PMID-scoped) all loaded and cross-verified.
+
+## Postprocessing and public templates: two gaps found in the running mine, not rdfc2im itself
+
+Neither is an rdfc2im bug - both are steps the trial stack never exercised until asked to check
+the classic webapp's own features (search, autocomplete, the QueryBuilder class list) rather than
+just the REST API and BlueGenes, which don't need either.
+
+**No postprocess had ever been run** - every source went through `dbmodel:integrate` only. Real
+symptoms this caused, none of them data loss (every class was fully populated in the database the
+whole time): the classic webapp's QueryBuilder class selector didn't bold `Gene`/`Protein` (it
+reads counts from the object-store summary, which had never been generated), and
+`/service/search` 500'd (no search index existed). Ran, in the order `project.xml`'s own
+`<post-processing>` block declares: `create-references`, `create-attribute-indexes` (2 harmless
+failures - `pathway__description_equals`/`_like`, a CLOB column too long for a plain btree index),
+`create-search-index`, `create-autocomplete-index`, `summarise-objectstore`. Skipped the
+genomic-location-specific ones (`create-chromosome-locations-and-lengths`, `transfer-sequences`,
+`create-gene-flanking-features`, `create-location-overlap-index`, `create-overlap-view`,
+`populate-child-features`) - confirmed live that `location` has 0 rows and there is no `sequence`
+table at all, so none of this build's sources populate the coordinate/sequence data these need;
+running them would either no-op or fail on a missing prerequisite, not produce anything real.
+Also skipped `do-sources` (an umbrella that runs every configured source's own postprocess hook,
+including several sources this build never fetched - too broad to run blind) and the
+`update-data-sources`/`update-publications` *sources* (not postprocess tasks): `update-data-sources`
+needs `/micklem/data/uniprot/xrefs/current/dbxref.txt`, a Micklem-lab path that does not exist in
+this sandbox - an expected limitation of a reduced, non-lab environment, not something to
+manufacture fake data to satisfy.
+
+`create-search-index`/`create-autocomplete-index` need a Solr server the trial stack never had.
+Added one (`trial/docker-compose.yml`'s new `solr` service, `solr:8.6.2`, the same version
+InterMine's own CI uses) with a persistent volume so the two cores it needs
+(`humanmine-search`, `humanmine-autocomplete` - create once after the first `make up`, see the
+compose file's own comment) survive `down`/`up`, same as `pgdata`. The webapp's own copy of the
+Solr URL (`keyword_search.properties`/`objectstoresummary.config.properties`, baked into
+`dbmodel.jar` inside the war at build time - not loose files like the DB host, so patching them
+needs rewriting a zip entry, not a plain `sed`) defaults to `localhost:8983`, correct for
+`dbmodel:postProcess` running natively in the sandbox against Solr's published port, but wrong
+for the *webapp*, which runs inside `rdfc2im-mine` and needs the compose network's own `solr`
+hostname instead - same class of problem as the DB host, fixed the same way: `trial-stage.sh` now
+rewrites the jar entry after exploding the war, same idempotent, re-run-after-every-build pattern.
+
+**Only 3 of HumanMine's stock templates survive** "reducing a mine" (see that section above) -
+expected, they're the only ones that don't reference a class/field this build doesn't load. Added
+6 new public templates for the demo panel (GO term structure, cross-source gene identifiers,
+UniProt proteins, ClinVar alleles, GWAS associations, cited publications), each with its
+identifying constraint `editable="true"`, matching the stored XML shape of the 3 survivors
+exactly (`savedtemplatequery.templatequery`, one row per template, owned by the superuser
+account) plus an `im:public` row in `tag` for each. Both tables are 3-column-ish and have no
+`id` default (i.e. no Postgres sequence backs them for these rows), so new ids were picked well
+clear of the existing rows and of `objectstore_unique_integer`'s own low range. **This only lives
+in the running `humanmine-userprofile` database - the webapp caches its template list at startup,
+so a change needs a `docker restart rdfc2im-mine` to show up, and neither table is part of any
+config file rdfc2im or the mine checkout writes.** It survives `docker compose down`/`up` (keeps
+the userprofile volume) but not `make trial-destroy` or a fresh build. Saved the exact SQL as
+`curation/demo_public_templates.sql`, with the re-apply command, so this is at least one command
+away from durable rather than living only in a database only this session touched. Verified all 9
+templates appear via `/service/templates`, ran each of the 6 new ones via
+`/service/template/results` with its default value (real results for all six - e.g. GO:0000016
+resolves to "lactase activity" with its real parent term, TPMT resolves to a real cited
+publication), and re-ran `Gene_MultiSource_Identifiers` with `Gene.symbol=TPMT` instead of its
+default `CYP2D6` to confirm it is a genuine parameterised template, not a query with the look of
+one.
