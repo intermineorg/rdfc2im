@@ -249,3 +249,53 @@ neither famous gene among the 255 ambiguous ids. Verified via the REST API: BRCA
 both sources - including HGNC's own id ("HGNC:1100") loaded as a Synonym. No duplicate rows.
 `hgnc` is not loaded into the trial mine at full scale; the verification subset was not left
 loaded either (project.xml points back at the full `hgnc.xml`, currently absent from the database).
+
+## gwascatalog: four transport/data bugs, all found only by an actual load
+
+GWAS Catalog is served through TogoVar (`togovar.org`), a completely different SPARQL endpoint
+from RDF Portal - every one of these was specific to that endpoint's behaviour, not a repeat of
+an earlier finding:
+
+1. **A redirected POST's GET fallback breaks once the query is long.** `togovar.org/sparql`
+   302-redirects every request to `grch38.togovar.org/sparql`; `_NoRedirectPost` converted the
+   retry to a GET with the query embedded in the URL (`fetch.py:321`, pre-existing, written for
+   whatever endpoint motivated it originally). Fine for a short query, but the gene-panel filter
+   (113 OR'd conditions) makes a GET URL long enough that `grch38.togovar.org` 414s it. Fixed by
+   retrying as POST at the redirect target instead, once the GET URL would exceed a safe length
+   (`bd3d198`).
+2. **That POST retry carried the wrong Host header.** `req.header_items()` (used to copy headers
+   onto the retried request) also returns *unredirected* headers, including `Host`, still pinned
+   to `togovar.org`. Cloudflare used the mismatched `Host` to keep re-issuing the same redirect
+   forever, until urllib's own repeat-visit guard gave up with an "infinite loop" error. Fixed by
+   using `req.headers.items()` instead, same as the base class's own `redirect_request` (`1794061`).
+3. **Gene-scope filtering assumed a literal that TogoVar returns as an IRI.** `snp_gene_ids` is
+   `http://identifiers.org/ensembl/ENSG...` on the live endpoint, not a bare `"ENSG..."` literal -
+   `resolve_ensembl_symbols`'s docstring claim that it matched ensembl's own literal scheme was
+   wrong for this source. `STR(?x) = "ENSG..."` equality can never match an IRI, so every
+   gene-scoped fetch came back with zero rows. Fixed by suffix-matching (`STRENDS`) fields whose
+   `transform` is `iri_localname` instead of comparing by equality (`043664b`).
+4. **TogoVar's own Sorted TOP cap is far smaller than RDF Portal's.** RDF Portal allows 200000
+   rows past an `ORDER BY`+`LIMIT`/`OFFSET`; TogoVar's Virtuoso instance allows only 10000. The
+   panel-scoped table's true count (30108) sits comfortably under the first and over the second,
+   so the existing upfront COUNT(*) pre-check never triggered batching, and paging 500'd once
+   offset+limit passed 10000. Fixed by reading the HTTPError body (previously discarded) and
+   reacting to Virtuoso's "Sorted TOP clause" message live, mid-paging, exactly like the upfront
+   check does - switching to VALUES-batching and discarding whatever partial pages were already
+   written (`898fd63`, `db4969a`).
+
+A fifth bug, once fetch itself worked: **`riskAlleleFreqInControls` (`java.lang.Double`) is `"NR"`
+("Not Reported") on 10853 of 30108 rows.** Writing that straight through produced an items.xml
+InterMine's own loader could not accept - the whole retrieve failed with a bare
+`NumberFormatException: For input string: "NR"` and no indication of which item or field caused
+it. Fixed generally, not just for this one field: `ItemStore.get()` now checks a value against
+its field's declared type for the numeric Java types and drops (not writes) one that does not
+parse, logged via the same mechanism as attribute conflicts (`56e3224`).
+
+Loaded clean after all five fixes: `BUILD SUCCESSFUL`, 33140 items, verified via the REST API that
+CYP2D6 and TAS2R38 (both in the demo panel) each show multiple `GWASResult`s with real p-values,
+and that a `riskAlleleFreqInControls` sourced from `"NR"` comes back `null` rather than crashing
+the load. Also found live: the mine's system Java default is now 25 (a sandbox change made after
+the last successful build in this trial), which Gradle 4.9 cannot start a daemon under; every
+`./gradlew` invocation in this checkout needs `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64`
+until the mine's own build tooling is upgraded - not an rdfc2im issue, noted here so the next
+session does not re-diagnose it.
