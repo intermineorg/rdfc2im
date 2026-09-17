@@ -1,0 +1,125 @@
+# Ensembl gene IDs for the 113-gene food/drug-metabolism demo panel (curation/demo_gene_panel.txt)
+#
+# Pulled live from this mine (Gene.symbol -> Gene.secondaryIdentifier) on 2026-09-17, i.e.
+# the actual Ensembl ID each gene merged onto after ncbigene+hgnc+ensembl integration -
+# not looked up independently, so this reflects what is really loaded, not just what
+# Ensembl itself would say in isolation.
+#
+# One gene, GSTT1, has no Ensembl ID: confirmed genuine upstream gap, not an rdfc2im bug -
+# even NCBI's own gene2ensembl cross-reference data has no mapping for it, most likely
+# because of its well-known common deletion/copy-number polymorphism.
+#
+# symbol             ensembl_id
+ABCB1               ENSG00000085563
+ABCC2               ENSG00000023839
+ABCG2               ENSG00000118777
+ABCG5               ENSG00000138075
+ABCG8               ENSG00000143921
+ADH1B               ENSG00000196616
+ADH1C               ENSG00000248144
+ADRB1               ENSG00000043591
+ADRB2               ENSG00000169252
+AHR                 ENSG00000106546
+ALB                 ENSG00000163631
+ALDH2               ENSG00000111275
+ALDOB               ENSG00000136872
+APOA5               ENSG00000110243
+APOB                ENSG00000084674
+APOC3               ENSG00000110245
+APOE                ENSG00000130203
+BCHE                ENSG00000114200
+BCO1                ENSG00000135697
+CACNA1S             ENSG00000081248
+CES1                ENSG00000198848
+CES2                ENSG00000172831
+CETP                ENSG00000087237
+COMT                ENSG00000093010
+CYP1A1              ENSG00000140465
+CYP1A2              ENSG00000140505
+CYP1B1              ENSG00000138061
+CYP24A1             ENSG00000019186
+CYP27B1             ENSG00000111012
+CYP2A6              ENSG00000255974
+CYP2B6              ENSG00000197408
+CYP2C19             ENSG00000165841
+CYP2C8              ENSG00000138115
+CYP2C9              ENSG00000138109
+CYP2D6              ENSG00000100197
+CYP2E1              ENSG00000130649
+CYP2J2              ENSG00000134716
+CYP2R1              ENSG00000186104
+CYP3A4              ENSG00000160868
+CYP3A5              ENSG00000106258
+CYP4F2              ENSG00000186115
+CYP7A1              ENSG00000167910
+DPYD                ENSG00000188641
+EPHX1               ENSG00000143819
+FADS1               ENSG00000149485
+FADS2               ENSG00000134824
+FMO3                ENSG00000007933
+FUT2                ENSG00000176920
+G6PD                ENSG00000160211
+GALT                ENSG00000213930
+GC                  ENSG00000145321
+GSTA1               ENSG00000243955
+GSTM1               ENSG00000134184
+GSTP1               ENSG00000084207
+GSTT1               (none)
+HFE                 ENSG00000010704
+HGD                 ENSG00000113924
+HMGCR               ENSG00000113161
+HNMT                ENSG00000150540
+INS                 ENSG00000254647
+INSIG1              ENSG00000186480
+INSR                ENSG00000171105
+LCT                 ENSG00000115850
+LEP                 ENSG00000174697
+LEPR                ENSG00000116678
+LPL                 ENSG00000175445
+MC4R                ENSG00000166603
+MCM6                ENSG00000076003
+MTHFR               ENSG00000177000
+MTRR                ENSG00000124275
+NAT1                ENSG00000171428
+NAT2                ENSG00000156006
+NPC1L1              ENSG00000015520
+NQO1                ENSG00000181019
+NR1H4               ENSG00000012504
+OPRM1               ENSG00000112038
+PAH                 ENSG00000171759
+PCSK9               ENSG00000169174
+PNPLA3              ENSG00000100344
+PPARA               ENSG00000186951
+PPARG               ENSG00000132170
+RYR1                ENSG00000196218
+SCARB1              ENSG00000073060
+SLC15A1             ENSG00000088386
+SLC19A1             ENSG00000173638
+SLC22A1             ENSG00000175003
+SLC22A2             ENSG00000112499
+SLC2A1              ENSG00000117394
+SLC2A2              ENSG00000163581
+SLC30A8             ENSG00000164756
+SLC40A1             ENSG00000138449
+SLCO1B1             ENSG00000134538
+SREBF1              ENSG00000072310
+SREBF2              ENSG00000198911
+SULT1A1             ENSG00000196502
+SULT2A1             ENSG00000105398
+TAS1R2              ENSG00000179002
+TAS1R3              ENSG00000169962
+TAS2R38             ENSG00000257138
+TCF7L2              ENSG00000148737
+TCN2                ENSG00000185339
+TF                  ENSG00000091513
+TFR2                ENSG00000106327
+TPMT                ENSG00000137364
+TTR                 ENSG00000118271
+UGT1A1              ENSG00000241635
+UGT1A4              ENSG00000244474
+UGT1A6              ENSG00000167165
+UGT1A9              ENSG00000241119
+UGT2B15             ENSG00000196620
+UGT2B7              ENSG00000171234
+VDR                 ENSG00000111424
+VKORC1              ENSG00000167397
