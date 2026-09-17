@@ -299,3 +299,42 @@ the last successful build in this trial), which Gradle 4.9 cannot start a daemon
 `./gradlew` invocation in this checkout needs `JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64`
 until the mine's own build tooling is upgraded - not an rdfc2im issue, noted here so the next
 session does not re-diagnose it.
+
+## reactome: loaded clean, but 5687 pathways was wrong - flagged from outside, not caught by `check`
+
+Reactome's own `BUILD SUCCESSFUL` and `check`'s "0 hard problems" both looked clean on the first
+load, and it was only questioned because the loaded pathway count (5687) was roughly double the
+real number of human Reactome pathways (~2884) - a sanity check against outside knowledge, not
+anything internal to the pipeline. Investigating found a genuine merge bug: `key_attributes()`
+(the plural helper `items.py`'s in-memory merging uses, added earlier in this same session) had
+no fallback for a class with no curated key in any keys file - only its sibling `key_attribute()`
+(singular, used by `project` to propose a DRAFT key) had one. Pathway is exactly that class:
+`project` can only ever propose a DRAFT `Pathway.key_identifier=identifier`, generated too late
+in the pipeline (project runs after items) for items.py's own run to see it. Every Pathway row
+fell back to the fragile all-values hash key instead, and RDF Portal binding Reactome's
+multi-valued `biopax:comment` once per value meant 2803 of 2883 real pathways loaded as two
+separate, never-merged items (one row with a real description, one with the filter-blanked
+"Edited:"/"Authored:" comment). Fixed by giving `key_attributes()` the same fallback (`d1ade30`).
+
+Re-loading the corrected 2886-item file into the already-loaded (buggy) database needed three
+rounds of manual cleanup beyond just restaging the file, none of them an rdfc2im bug - all
+InterMine data-tracking state left over from integrating the same source twice, which had never
+come up earlier in this trial (every other source's fix was applied before its first load, not
+after):
+1. Deleted the stale `pathway`/`datasetspathway` rows (5687 each) directly - safe, since nothing
+   else in the shared production DB referenced them (no `genespathways`/`pathwayproteins` rows
+   yet at this build stage).
+2. First retry failed: "There is already an equivalent in the database from this source... noticed
+   problem while merging field species" on the shared `Organism` row (taxonId 9606, used by
+   every source) - `humanmine-reactome`'s own leftover rows in the `tracker` table (InterMine's
+   per-object-per-field-per-source provenance log) from the first load conflicted with the fresh
+   contribution. Fixed by deleting `tracker` rows where `sourcename='humanmine-reactome'`.
+3. Second retry failed: "Object o1 is not in the data tracking system... DataSet:26000002" -
+   deleting *all* of reactome's tracker rows in step 2 left the reactome-only `DataSet`/
+   `DataSource` rows ("Reactome pathways (RDF Portal)" / "Reactome") without the tracking history
+   the loader expected for an *update*. Fixed by deleting those two rows outright (both were
+   reactome-exclusive, confirmed via `bioentitiesdatasets`/`datasourcepublications` having zero
+   references to either), so the reload creates them fresh instead of trying to update them.
+
+Loaded clean after that: `BUILD SUCCESSFUL`, pathway count 2883 (matches the real number of human
+Reactome pathways almost exactly), verified via the REST API.
