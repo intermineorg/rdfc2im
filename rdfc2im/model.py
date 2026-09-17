@@ -174,7 +174,22 @@ class InterMineModel:
         single = [v[0] for v in keys.values() if len(v) == 1]
         ordered = [p for p in ("primaryIdentifier", "identifier", "primaryAccession", "taxonId",
                                 "pubMedId", "name", "value", "symbol") if p in single]
-        return ordered + [s for s in single if s not in ordered]
+        result = ordered + [s for s in single if s not in ordered]
+        if result:
+            return result
+        # No curated key at all - same fallback key_attribute() uses, so a class no keys file
+        # declares a key for (e.g. Reactome's Pathway, which project.py can only ever propose a
+        # DRAFT key for, generated too late for items.py's own run to see it) still gets a
+        # stable single-field key here, not the fragile all-values-hash fallback: found only by
+        # an actual load, where two rows for the same real Pathway differing solely in an
+        # OPTIONAL biopax:comment (Reactome's own comment field is multi-valued, and RDF Portal
+        # binds the query once per value) hashed to two different keys and loaded as two
+        # separate, never-merged Pathway items.
+        for pref in ("primaryIdentifier", "identifier", "primaryAccession", "name"):
+            fd = self.field(cls, pref)
+            if fd and fd.kind == "attribute":
+                return [pref]
+        return []
 
     def key_attribute(self, cls: str) -> Optional[str]:
         """The single attribute best used to identify an object of cls in a TSV row."""

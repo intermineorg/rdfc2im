@@ -64,6 +64,35 @@ def test_a_value_that_does_not_parse_as_the_declared_numeric_type_is_dropped_not
     assert store.items[k2].attrs["riskAlleleFreqInControls"] == "0.7603"  # a real value still writes
 
 
+def test_a_class_with_no_curated_key_still_merges_on_its_identifier_attribute(tmp_path):
+    """Regression for a real bug found only by an actual load: Reactome's Pathway has no key in
+    any curated keys file - project.py can only ever propose a DRAFT one (key_attribute()'s own
+    "no keys at all" fallback), generated too late for items.py's own run to see it, since
+    project runs after items in the per-source pipeline. key_attributes() (plural, what
+    ItemStore.key_for actually calls) did not share that fallback, so a class in this state fell
+    through to the fragile "*" all-values hash key - and two rows for the same real pathway
+    differing solely in an OPTIONAL comment (Reactome's own comment predicate is multi-valued,
+    RDF Portal binds the query once per value) hashed to two different keys and loaded as two
+    separate, never-merged Pathway items instead of one with 2883 pathways duplicating in
+    exactly this way in a real reactome load."""
+    model = """<model name="genomic" package="org.intermine.model.bio">
+    <class name="Pathway" is-interface="true">
+      <attribute name="identifier" type="java.lang.String"/>
+      <attribute name="description" type="java.lang.String"/>
+      <attribute name="name" type="java.lang.String"/>
+    </class>
+    </model>"""
+    (tmp_path / "core.xml").write_text(model)
+    m = InterMineModel(); m.load_xml(str(tmp_path / "core.xml")); m.finalize(); m.live = None
+    assert m.keys_for("Pathway")[1] == {}  # no curated key at all - project would call this DRAFT
+    store = ItemStore(m)
+    k1 = store.get("Pathway", {"identifier": "R-HSA-1", "name": "Signaling", "description": "a real description"})
+    k2 = store.get("Pathway", {"identifier": "R-HSA-1", "name": "Signaling", "description": ""})
+    assert k1 == k2 == ("Pathway", "identifier", "R-HSA-1")
+    assert len(store.items) == 1
+    assert store.items[k1].attrs["description"] == "a real description"
+
+
 def test_to_ascii_transliterates_what_the_intermine_loader_cannot_take():
     """Regression for a confirmed InterMine bug: have.large.file.xml.tgt's postgres COPY BINARY
     writer fails the whole retrieve ("invalid byte sequence for encoding UTF8: 0x00") on a
