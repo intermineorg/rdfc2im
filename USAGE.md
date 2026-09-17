@@ -46,6 +46,34 @@ Variables: `SRC=ncbigene` (repeatable) restricts to sources; `LIMIT=0` removes t
 (`--source/-s`, `--limit`, `--no-guess`, `--types root|union|all`, `--no-from`, `--dry-run`, `--force`, `--sleep`, `--timeout`).
 `ITERATE=n` pages every query (`LIMIT n OFFSET k`, `ORDER BY` the root variable) until a short page comes back - default 5000, `0` = one request per query; `SLEEP=s` waits between requests (default 1). Fetch also honours the environment variables `DRY_RUN=1`, `FORCE=1`, `SLEEP`, `ITERATE`. Typical full extract: `make fetch LIMIT=0 FORCE=1` (add `SRC=<source>` to do one at a time). A failing endpoint is logged and skipped (POST then GET; SPARQL-JSON, then TSV, then CSV are tried - JSON first because it is dialect-free; all are converted to W3C TSV in raw/); a query that returns no rows is flagged `<-- no rows`. Re-fetch one source with `make fetch SRC=<source> FORCE=1`.
 
+## Build scope: taxon and gene list
+
+By default every source builds for human (NCBI taxon 9606) with no gene restriction - this is
+`translate`'s only behaviour if you never touch scope, and it is exactly what is committed under
+`out/*/queries/`. Two flags on `translate` (and therefore `all`) narrow that, for a smaller or
+faster demo build, or a genuinely different organism:
+
+- `--taxon 9606,10090` - one or more NCBI taxon ids. Applies only to sources whose own SPARQL can
+  actually filter by species (currently `ncbigene`, `uniprot`, `reactome` - each already restricts
+  itself to human this way). A source that is human-only *by definition*, with no other species in
+  its upstream data at all (`hgnc`, `clinvar`, `gwascatalog`), is **skipped** rather than
+  mislabelled if you ask for anything other than the default - there is nothing in its own data to
+  restrict, and stamping it with a different taxon would be actively wrong. A source with no
+  organism dimension at all (the ontologies, `pubmed`) is left untouched either way.
+- `--genes CYP2D6,TP53` or `--genes @path/to/list.txt` (one symbol per line) - restrict to a gene
+  list. Only sources declaring `gene_scope_field` in `rdfc2im/data/sources.yaml` support this
+  today (`ncbigene`, resolving symbols to NCBI Gene ids via a live lookup against the same
+  endpoint it fetches from); a source without a resolver wired up is skipped with a message rather
+  than silently ignoring the restriction. Extending this to another source means adding its
+  `gene_scope_field` (the `Gene.<field>` it maps with `required=yes` - so the restriction reaches
+  every one of its tables, not just the one that happens to carry a human-readable label) and a
+  resolver from gene symbol into that source's own identifier scheme, in `rdfc2im/scope.py`.
+
+Neither flag ever changes what lands in the committed `mapping_predicates.sssom.tsv` files - both
+are applied in memory, after `translate` has already written the mapping to disk, purely to shape
+the SPARQL this one run generates. `rdfc2im.yaml`'s `scope: {taxon: [...]}` sets a workspace-wide
+default; `--taxon` on the command line overrides it for one run.
+
 ## The workflow
 
 ```
