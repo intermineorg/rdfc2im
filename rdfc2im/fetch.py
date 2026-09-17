@@ -344,6 +344,10 @@ def _fetch_once(q, ep, timeout):
                 # 10000 are allowed"; e.reason alone would just say "Internal Server Error".
                 detail = e.read()[:500].decode("utf-8", "replace")
                 err = f"HTTP {e.code} {e.reason} ({method}, Accept: {accept}): {detail}"
+                if SORTED_TOP_ERROR_RE.search(detail):
+                    return None, None, err  # a cap hit is a property of the query, not this
+                    # method/accept combo - trying GET next would just overwrite this error with
+                    # a GET-specific one (e.g. 414, once the query is long) and hide the real cause
                 if e.code not in (406, 415, 405, 400, 302, 303):
                     break
             except Exception as e:  # network errors: report and give up on this query
