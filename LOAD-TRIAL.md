@@ -474,3 +474,18 @@ worth knowing about, since "recreate" sounds alarming next to a stateful service
 and every count checked after the fact (193288 Genes, 2883 Pathways, 9 templates) matched exactly
 what was there before. No data was at risk, but an `up -d` that recreates more than the one
 service you asked for is worth a second look before assuming it did.
+
+## Two stock templates still defaulted to Plasmodium falciparum
+
+`All_Proteins_In_Organism_To_Publications` and `Organism_Protein` (both pre-existing stock
+templates, not the 6 added for the demo panel) had their editable `Protein.organism.name`
+constraint defaulting to `"Plasmodium falciparum 3D7"` - a leftover from HumanMine's full stock
+template set. Harmless but confusing on a human-only build: running either with no override
+returned zero results, reading as broken rather than "wrong default organism". Verified this
+mine's actual `Organism.name` string live (`Homo sapiens`, not e.g. `H. sapiens`) rather than
+assuming it, then repointed both stored templates at it with a plain `UPDATE ... replace(...)` on
+`savedtemplatequery` (same table the 6 new templates live in). Verified via
+`/service/template/results` with `value1=Homo sapiens` (the now-correct default) that both return
+real data - `All_Proteins_In_Organism_To_Publications` includes a real cited publication (PMID
+26871637), `Organism_Protein` returns real Protein accessions. The UPDATE is appended to
+`curation/demo_public_templates.sql` so it reapplies alongside the 6 INSERTs after a fresh build.

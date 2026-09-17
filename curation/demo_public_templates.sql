@@ -35,3 +35,13 @@ INSERT INTO tag (id, objectidentifier, type, tagname, userprofileid) VALUES (200
 
 INSERT INTO savedtemplatequery (id, templatequery, userprofileid) VALUES (2000006, '<template name="Gene_Publications" title="Gene to cited publications" comment="" dataTypes="java.lang.String java.lang.String java.lang.String"><query name="Gene_Publications" model="genomic" view="Gene.symbol Gene.publications.pubMedId Gene.publications.title" longDescription="" sortOrder="Gene.symbol asc"><constraint path="Gene.symbol" editable="true" description="Gene.symbol" op="=" value="TPMT"/></query></template>', 1000001);
 INSERT INTO tag (id, objectidentifier, type, tagname, userprofileid) VALUES (2000106, 'Gene_Publications', 'template', 'im:public', 1000001);
+
+-- Two of HumanMine's own stock templates (ids 1000082/1000084, both from before this session,
+-- not the 6 new ones above) defaulted their editable Protein.organism.name constraint to
+-- "Plasmodium falciparum 3D7" - a leftover from HumanMine's full stock template set, meaningless
+-- once "reducing a mine" (see LOAD-TRIAL.md) leaves only human data. Running either with no
+-- override returned zero results, which reads as broken rather than "wrong default organism"
+-- to anyone trying the demo. Repointed at this mine's own Organism.name string (verified live:
+-- `select distinct name from organism` returns exactly "Homo sapiens", not e.g. "H. sapiens").
+UPDATE savedtemplatequery SET templatequery = replace(templatequery, 'Plasmodium falciparum 3D7', 'Homo sapiens')
+    WHERE id IN (1000082, 1000084);
