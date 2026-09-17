@@ -1109,7 +1109,17 @@ predicates:
     im: Gene.symbol
     status: sure
     basis: term+java:UniProtConverter
-    note: gene symbol - joins to HGNC/NCBI Gene via Gene.key_symbol_org (symbol, organism); include Organism column in this table
+    const: {Organism.taxonId: "9606"}
+    const_via: {Organism.taxonId: Gene.organism}
+    note: >-
+      gene symbol - joins to HGNC/NCBI Gene via Gene.key_symbol_org (symbol, organism). The note
+      already said "include Organism column in this table" but nothing did: sources.yaml's
+      source-level consts attaches Organism.taxonId to the table's ROOT (Protein), not to this
+      Gene sub-object reached via core:encodedBy, so every uniprot Gene item had no organism
+      reference at all. Found only by an actual load: key_symbol_org (symbol, organismid) never
+      matched the existing NULL-organism row against ncbigene's real one, so every panel gene got
+      a second, bogus Gene row instead of merging - the same class of bug GWAS Catalog's own
+      snp_gene_ids/mapped_genes rows already needed this same const_via fix for (b1a45fc).
   - source: uniprot
     subject: Gene
     pred: skos:altLabel
