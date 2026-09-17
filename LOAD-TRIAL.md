@@ -445,3 +445,32 @@ resolves to "lactase activity" with its real parent term, TPMT resolves to a rea
 publication), and re-ran `Gene_MultiSource_Identifiers` with `Gene.symbol=TPMT` instead of its
 default `CYP2D6` to confirm it is a genuine parameterised template, not a query with the look of
 one.
+
+## Two follow-up corrections, caught by checking the live system directly, not the report
+
+**`summarise-objectstore`'s output is not a table called `objectstoresummary`** - `\dt` against
+either `humanmine-production` or `humanmine-items` will never find one; `SummariseObjectstoreProcess`
+stores it as a single row in the generic `intermine_metadata` table (`key='objectStoreSummary'`,
+a serialized properties blob - 25916 bytes in this build). Confirmed the postprocess genuinely ran
+and the QueryBuilder fix is real, not inferred from the other postprocess tasks succeeding: the
+`objectStoreSummary` row is present with real content, and a fresh `customQuery.do` fetch (not a
+cached one from earlier in the session) still shows `Gene`/`Protein` bold in the class list.
+
+**Updating `BLUEGENES_DEFAULT_MINE_NAME` in the compose override needs the container recreated,
+not just the file edited** - `docker restart` reuses the container's existing environment,
+baked in at creation time; only `docker compose up -d <service>` (or an explicit recreate)
+re-reads the compose files and applies a changed `environment:` value. The env var change had
+been made but the container was never brought up again with it, so BlueGenes kept serving the
+old name for the rest of the session. Fixed with `docker compose -f trial/docker-compose.yml -f
+trial/docker-compose.local.yml up -d bluegenes`, confirmed via the container's own `env` and via
+the mine name appearing in the page's embedded bootstrap config
+(`:bluegenes-default-mine-name "rdfc2im: 113 gene food/drug-metabolism panel"`) and JSON-LD
+metadata on a fresh fetch of `/`.
+
+That same `up -d` also recreated `rdfc2im-postgres` (compose decided its spec had changed too,
+likely from the `solr` service's `depends_on` addition affecting the stack's dependency graph) -
+worth knowing about, since "recreate" sounds alarming next to a stateful service: the named
+`pgdata` volume is untouched by container recreation (only `down -v`/`trial-destroy` drops it),
+and every count checked after the fact (193288 Genes, 2883 Pathways, 9 templates) matched exactly
+what was there before. No data was at risk, but an `up -d` that recreates more than the one
+service you asked for is worth a second look before assuming it did.
