@@ -185,12 +185,67 @@ inferred. Shipping it would have silently dropped 28487 of 193288 genes (14.7%) 
 fetched fully under the old method - a worse, harder-to-notice bug than the one it fixed. Reverted;
 not committed.
 
-**Still open**: fully extracting a table past the cap needs a comparison-free strategy - e.g.
-fetching the full (sub-200000) set of `main`'s gene ids first, then batching them through
-`VALUES ?id { ... }` for the wide tables, since RDF Portal does evaluate `VALUES`-equality
-correctly (confirmed: `FILTER(?id = "9997")` finds the right rows). Not implemented - it needs its
-own live-verification pass with the same care this finding took, not a same-session follow-on to
-an already-reverted fix. `ncbigene` is not yet loaded into the trial mine: three of its five raw
-tables are now honestly incomplete rather than silently wrong, and loading honestly-incomplete
-gene identifier/synonym/xref data as if it were the real load is a decision for a human, not a
-default to fall into.
+**Resolved in a follow-up pass** (`ef5e40b`): a cheap `COUNT(*)` pre-check catches a table that
+will cross the cap before paging starts, and switches to `fetch_values_batched` over the query's
+own required (non-OPTIONAL) key domain - `VALUES`-equality is the one comparison RDF Portal's
+Virtuoso evaluates reliably. Verified against the live endpoint: all three tables now match
+independently-confirmed server `COUNT(*)` exactly (`main_alternative` 265514, `main_dblink`
+247254, `main_gene_synonym` 239974), zero duplicates, full 193288-gene coverage. `ncbigene` is
+loaded into the trial mine.
+
+## hgnc: the first real merge test, and three more bugs a load - not a read - would find
+
+The next trial: loading `hgnc` alongside the already-loaded `ncbigene`, to exercise integration
+keys merging a `Gene` arriving from two different sources for the first time. All fetched cleanly
+(16 tables, none near the 200000 cap). `tsv`/`items`/`project`/`check` all passed with 0 hard
+problems. The load itself found three more real bugs, none of them visible from static review.
+
+1. **`have.large.file.xml.tgt`'s retrieve path cannot handle non-ASCII bytes.** A single Greek
+   letter ("alpha") in one HGNC `alt_label` synonym value failed the whole retrieve with
+   `PSQLException: invalid byte sequence for encoding UTF8: 0x00` - reproduced on a minimal 5-item
+   file, confirmed the character is the trigger (an ASCII substitute proceeds cleanly), confirmed
+   `have.file.xml.tgt` (a different Java code path, no COPY BINARY) does not have this bug on the
+   same data. Fixed (`8185114`) by transliterating attribute values to their closest ASCII on the
+   way into the items file - Greek letters spell out by name, "smart" punctuation maps to ASCII,
+   everything else goes through NFKD. This is a workaround for a confirmed bug in this InterMine
+   version's own loader, not an rdfc2im correctness fix.
+2. **`have.file.xml.tgt` needs far more Postgres connections than `have.large` at real volumes.**
+   Loading hgnc's 44413 Gene items exhausted the postgres:14 image's default `max_connections=100`
+   - reproducible on a fresh restart, not a leak from a prior attempt. This is why (1) transliterates
+   rather than switching the type-wide loader setting: `have.file.xml.tgt` was still needed as a
+   diagnostic to isolate bug (1) from bug (3) below, but is markedly slower and more
+   connection-hungry, not a viable default. Raised to 300 (`41ee6a8`) as a real, if partial,
+   mitigation for whichever route needs it.
+3. **`out/_mine/genomic_priorities.properties` must be re-synced into the mine checkout after
+   *every* new source, not just once.** The checkout still had the stock `ncbi-gene, hgnc` entries
+   from before either humanmine-* source existed; loading hgnc hit `Conflicting values for field
+   Gene.name ... needs configuring in genomic_priorities.properties` even though the freshly
+   generated file already had the right `humanmine-hgnc, humanmine-ncbigene` entry - it just was
+   not deployed. No rdfc2im code changed; this is a build-process step to remember, same class of
+   thing as `make fork-sync`.
+
+**A fourth, systemic finding - not fixed, needs a decision**: 255 distinct Ensembl gene ids in
+the already-loaded `ncbigene` data are each shared by two or more different NCBI Entrez ids (e.g.
+`ENSG00000196951` <- both `100129858` "SCOC-AS1" and `124900785` "LOC124900785" - a real,
+overlapping-locus/readthrough-annotation ambiguity in NCBI's own cross-reference data, not an
+rdfc2im mapping error). `Gene.key_secondaryidentifier_org` (secondaryIdentifier + organism) is
+one of Gene's stock integration keys, and is not actually unique against this real data. Loading
+hgnc past it requires `dataLoader.allowMultipleErrors=true`, which does let the load proceed but
+was, at real scale (44413 items, 255 known conflicts), still running with no visible progress
+after 15+ minutes - not confirmed to ever finish in reasonable time, as opposed to failing fast
+(15s) without it. This is not an rdfc2im bug - rdfc2im faithfully reproduced ncbigene's real data
+- and not something to resolve by editing already-verified-correct data. Whether
+`key_secondaryidentifier_org` should stay an active Gene merge key given real NCBI/Ensembl data,
+or what else should give, is a data-modelling decision for a human.
+
+**The actual thing this trial set out to verify - full-source-scale conflicts aside - is
+confirmed working.** A targeted 73-item subset (BRCA1 and TP53's Gene items plus their Organism/
+DataSet/DataSource/Synonym/CrossReference/Publication satellites, built by BFS from the two Gene
+items and *not* expanding `Publication.entities`-style back-collections, which fan out to
+unrelated genes and were the source of an earlier 46047-item over-inclusion) loaded cleanly with
+neither famous gene among the 255 ambiguous ids. Verified via the REST API: BRCA1 (primaryIdentifier
+672) and TP53 (7157) are each exactly one Gene row carrying `primaryIdentifier`/`secondaryIdentifier`/
+`chromosome` from ncbigene alongside `symbol`/`cytoLocation` from hgnc, with synonyms merged from
+both sources - including HGNC's own id ("HGNC:1100") loaded as a Synonym. No duplicate rows.
+`hgnc` is not loaded into the trial mine at full scale; the verification subset was not left
+loaded either (project.xml points back at the full `hgnc.xml`, currently absent from the database).
