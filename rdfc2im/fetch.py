@@ -7,6 +7,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from typing import Optional
 
 ACCEPTS = ["application/sparql-results+json", "text/tab-separated-values", "text/csv"]
 
@@ -220,38 +221,58 @@ def fetch_values_batched(query_path, out_path, key_var, key_terms, timeout=600, 
     return _fetch_batched_text(q, ep, out_path, key_var, key_terms, timeout, sleep, batch_size, log)
 
 
+SORTED_TOP_ERROR_RE = re.compile(r"Sorted TOP clause specifies more th\w+ \d+ rows[^.]*\.\s*Only (\d+) are allowed", re.I)
+
+
+def _try_batching(base_noorder, ep, out_path, timeout, sleep, log, cap_desc) -> Optional[str]:
+    """Switch a table over to fetch_values_batched, given the query's own required (non-OPTIONAL)
+    key domain - the shared fallback for both the upfront COUNT-based cap check and a cap hit
+    discovered live mid-paging. Returns None (rather than a status string) when no safe domain
+    query exists, so the caller can fall back to plain paging instead."""
+    var_m = re.search(r"^SELECT\s+(?:DISTINCT\s+)?\?(\w+)", base_noorder, re.M)
+    keyvar = var_m.group(1) if var_m else None
+    required = _required_only(base_noorder) if keyvar else None
+    domain_body = None
+    if required is not None and re.search(rf"\?{keyvar}\b", required.split("WHERE", 1)[1]):
+        domain_q = re.sub(r"^SELECT\s+(?:DISTINCT\s+)?.*$", f"SELECT DISTINCT ?{keyvar}",
+                          required, count=1, flags=re.M)
+        domain_body, domain_fmt, domain_err = _fetch_once(domain_q, ep, timeout)
+    if domain_body is None:
+        return None
+    keys = [ln.decode() for ln in _normalise(domain_body, domain_fmt).split(b"\n")[1:] if ln.strip()]
+    log(f"  {out_path}: {cap_desc}; batching over {len(keys)} distinct ?{keyvar} values instead")
+    return _fetch_batched_text(base_noorder, ep, out_path, keyvar, keys, timeout, sleep, DEFAULT_BATCH_SIZE, log)
+
+
 def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
     """LIMIT page OFFSET k*page until a short page; LIMIT (total) still caps the extract.
 
-    A table whose true row count exceeds SORTED_TOP_CAP cannot be paged this way to completion:
-    Virtuoso refuses any ORDER BY + LIMIT/OFFSET request once offset+limit exceeds 200000
-    ("SR353: Sorted TOP clause specifies more then N rows to sort. Only 200000 are allowed").
-    A cheap COUNT(*) pre-check catches this before paging starts (skipped when it fails or when
-    limit already keeps the extract under the cap) and switches to fetch_values_batched over the
-    query's own required (non-OPTIONAL) key domain instead - VALUES-equality is reliable on this
-    endpoint where the `<`/`>` a keyset rewrite would need is not (confirmed against the live
-    endpoint: FILTER(?id > "1") on ncbigene's own data excludes "2" through "9" while admitting
-    "10", "100", ...; see LOAD-TRIAL.md). If the count fails, or the ordering variable turns out
-    to live only inside an OPTIONAL (so no safe domain query exists), pagination proceeds as
-    before and simply reports "partial" if it does hit the cap, rather than guessing.
+    A table whose true row count exceeds a Sorted TOP cap cannot be paged this way to
+    completion: Virtuoso refuses any ORDER BY + LIMIT/OFFSET request once offset+limit exceeds
+    some server-specific ceiling ("SR353: Sorted TOP clause specifies more then N rows to sort.
+    Only <cap> are allowed"). This cap is NOT a fixed constant across endpoints - confirmed live
+    that RDF Portal's own Virtuoso allows 200000 (SORTED_TOP_CAP, used for a cheap upfront
+    estimate) while TogoVar's instance allows only 10000 - so besides the upfront COUNT(*)
+    pre-check against SORTED_TOP_CAP, every page fetch's own error is inspected for this same
+    Virtuoso message; hitting it mid-paging switches to batching reactively (discarding whatever
+    partial pages this run already wrote, since batching re-fetches the whole table from
+    scratch) rather than assuming the upfront estimate was the only ceiling that could bite.
+
+    Batching goes over the query's own required (non-OPTIONAL) key domain - VALUES-equality is
+    reliable on this endpoint where the `<`/`>` a keyset rewrite would need is not (confirmed
+    against the live endpoint: FILTER(?id > "1") on ncbigene's own data excludes "2" through "9"
+    while admitting "10", "100", ...; see LOAD-TRIAL.md). If the count fails, or the ordering
+    variable turns out to live only inside an OPTIONAL (so no safe domain query exists),
+    pagination proceeds as before and simply reports "partial" if it does hit a cap.
     """
     base_noorder = LIMIT_RE.sub("", q).rstrip("\n") + "\n"
     if not limit:
         count = _count_rows(base_noorder, ep, timeout)
         if count is not None and count > SORTED_TOP_CAP:
-            var_m = re.search(r"^SELECT\s+(?:DISTINCT\s+)?\?(\w+)", base_noorder, re.M)
-            keyvar = var_m.group(1) if var_m else None
-            required = _required_only(base_noorder) if keyvar else None
-            domain_body = None
-            if required is not None and re.search(rf"\?{keyvar}\b", required.split("WHERE", 1)[1]):
-                domain_q = re.sub(r"^SELECT\s+(?:DISTINCT\s+)?.*$", f"SELECT DISTINCT ?{keyvar}",
-                                  required, count=1, flags=re.M)
-                domain_body, domain_fmt, domain_err = _fetch_once(domain_q, ep, timeout)
-            if domain_body is not None:
-                keys = [ln.decode() for ln in _normalise(domain_body, domain_fmt).split(b"\n")[1:] if ln.strip()]
-                log(f"  {out_path}: {count} rows exceeds the {SORTED_TOP_CAP}-row Sorted TOP cap; "
-                    f"batching over {len(keys)} distinct ?{keyvar} values instead")
-                return _fetch_batched_text(base_noorder, ep, out_path, keyvar, keys, timeout, sleep, DEFAULT_BATCH_SIZE, log)
+            result = _try_batching(base_noorder, ep, out_path, timeout, sleep, log,
+                                   f"{count} rows exceeds the {SORTED_TOP_CAP}-row Sorted TOP cap")
+            if result is not None:
+                return result
             log(f"  {out_path}: {count} rows exceeds the {SORTED_TOP_CAP}-row Sorted TOP cap and "
                 f"no safe key to batch on was found; falling back to plain paging, which will "
                 f"stop at the cap")
@@ -272,6 +293,16 @@ def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
             pq = base + f"LIMIT {size} OFFSET {offset}\n"
             body, fmt, err = _fetch_once(pq, ep, timeout)
             if body is None:
+                cap_m = err and SORTED_TOP_ERROR_RE.search(err)
+                if cap_m:
+                    out.close()
+                    result = _try_batching(base_noorder, ep, out_path, timeout, sleep, log,
+                                           f"offset+limit {offset + size} exceeds this endpoint's "
+                                           f"own {cap_m.group(1)}-row Sorted TOP cap (discovered live, "
+                                           f"discarding the {total} row(s) already paged)")
+                    if result is not None:
+                        return result
+                    log(f"  {out_path}: {cap_m.group(0)} and no safe key to batch on was found")
                 log(f"  FAILED page {k + 1} of {out_path}: {err}")
                 return "failed" if k == 0 else "partial"
             body = _normalise(body, fmt)
@@ -307,7 +338,12 @@ def _fetch_once(q, ep, timeout):
                 fmt = accept
                 break
             except urllib.error.HTTPError as e:
-                err = f"HTTP {e.code} {e.reason} ({method}, Accept: {accept})"
+                # the body is read here (not just e.reason) because Virtuoso's Sorted TOP cap
+                # error - the caller's one interest in this detail - only shows up in the body,
+                # e.g. "SR353: Sorted TOP clause specifies more then 15000 rows to sort. Only
+                # 10000 are allowed"; e.reason alone would just say "Internal Server Error".
+                detail = e.read()[:500].decode("utf-8", "replace")
+                err = f"HTTP {e.code} {e.reason} ({method}, Accept: {accept}): {detail}"
                 if e.code not in (406, 415, 405, 400, 302, 303):
                     break
             except Exception as e:  # network errors: report and give up on this query

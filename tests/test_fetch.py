@@ -192,6 +192,65 @@ def test_fetch_paged_recovers_past_the_cap_by_batching_the_required_key_domain(t
     assert got["1"] == ["A1", "A2"] and got["9"] == ["I1", "I2", "I3"] and got["5"] == [""]
 
 
+def test_fetch_paged_reacts_to_a_smaller_cap_discovered_only_once_paging_starts(tmp_path):
+    """TogoVar's Virtuoso allows only 10000 rows (offset+limit) even though the upfront COUNT
+    pre-check only distrusts a table past SORTED_TOP_CAP (RDF Portal's own, much larger, cap) -
+    confirmed live. A cap hit discovered mid-paging, not just the upfront estimate, must also
+    trigger the batching fallback, discarding whatever partial pages this run already wrote."""
+    genes = [str(i) for i in range(1, 11)]
+    synonyms = {"1": ["A1", "A2"], "3": ["C1"], "5": [], "9": ["I1", "I2", "I3"]}
+    pages = {"n": 0}
+
+    def fake_fetch_once(q, ep, timeout):
+        if "COUNT(*)" in q:
+            return (b'?rdfc2im_c\n"14"^^<http://www.w3.org/2001/XMLSchema#integer>\n',
+                    "text/tab-separated-values", None)  # under SORTED_TOP_CAP - upfront check passes
+        if "SELECT DISTINCT ?id\n" in q:
+            body = b"?id\n" + b"\n".join(f'"{g}"'.encode() for g in genes) + b"\n"
+            return body, "text/tab-separated-values", None
+        if "VALUES ?id" in q:
+            m = re.search(r'VALUES \?id \{ (.*?) \}', q)
+            batch_ids = re.findall(r'"(\d+)"', m.group(1))
+            rows = []
+            for g in batch_ids:
+                syns = synonyms.get(g, [f"S{g}"])
+                if not syns:
+                    rows.append((g, ""))
+                for s in syns:
+                    rows.append((g, s))
+            lines = [f'"{g}"\t' + (f'"{s}"' if s else "") for g, s in rows]
+            body = ("?id\t?syn\n" + "\n".join(lines)).encode()
+            if rows:
+                body += b"\n"
+            return body, "text/tab-separated-values", None
+        pages["n"] += 1
+        if pages["n"] == 1:
+            body = b"?id\t?syn\n" + b"\n".join(f'"{g}"\t""'.encode() for g in genes[:3]) + b"\n"
+            return body, "text/tab-separated-values", None
+        return None, None, ("HTTP 500 Internal Server Error (POST, Accept: application/sparql-results+json): "
+                            "Virtuoso 22023 Error SR353: Sorted TOP clause specifies more then 6 rows "
+                            "to sort. Only 3 are allowed")
+
+    orig_once, orig_cap = fetch_mod._fetch_once, fetch_mod.SORTED_TOP_CAP
+    fetch_mod._fetch_once = fake_fetch_once
+    fetch_mod.SORTED_TOP_CAP = 200  # far above this fake endpoint's real (smaller) cap
+    try:
+        out = tmp_path / "out.tsv"
+        status = fetch_mod._fetch_paged(NCBIGENE_SHAPED.replace("?taxid ?syn", "?syn"), "http://fake/sparql",
+                                        str(out), 30, 0, None, 3, lambda *a, **k: None, 0)
+    finally:
+        fetch_mod._fetch_once = orig_once
+        fetch_mod.SORTED_TOP_CAP = orig_cap
+
+    assert status == "fetched"  # complete via batching, not stuck with only page 1's 3 rows
+    got = {}
+    for l in out.read_text().splitlines()[1:]:
+        gid, syn = l.split("\t")
+        got.setdefault(gid.strip('"'), []).append(syn.strip('"'))
+    assert set(got.keys()) == set(genes)
+    assert got["9"] == ["I1", "I2", "I3"]
+
+
 def _post_request(query):
     return urllib.request.Request(
         "http://example.org/sparql",
