@@ -108,6 +108,36 @@ def test_to_ascii_transliterates_what_the_intermine_loader_cannot_take():
     assert to_ascii("plain ascii") == "plain ascii"
     assert to_ascii("中") == "?"               # no ASCII form at all
 
+def test_data_source_gets_a_url_when_the_source_config_declares_one(tmp_path):
+    """Regression for a real gap: DataSource.url was always empty (nothing in sources.yaml or
+    the items-generation code ever set it), which BlueGenes' "Browse Sources" page cannot render
+    without erroring - found only by an actual load, not by reading. data_source_url in
+    sources.yaml is optional (existing sources with none still get a DataSource with just a
+    name, unchanged from before)."""
+    m = make_model(tmp_path)
+    out = tmp_path / "out"; (out / "tsv").mkdir(parents=True)
+    (out / "columns.tsv").write_text(textwrap.dedent("""\
+    table\tposition\tcolumn\tvariable\tim_class\tim_field\ttransform\tfilter\tvalue\tkind\tvia\tstatus\trequired
+    main\t0\tid\tid\tGene\tprimaryIdentifier\t\t\t\tliteral\t\tsure\tyes
+    main\t1\tc\t\tOrganism\ttaxonId\t\t\t9606\tconst\t\tsure\tno
+    """))
+    (out / "tsv" / "main.tsv").write_text("Gene.primaryIdentifier\tOrganism.taxonId\n1\t9606\n")
+    emit_items(m, str(out), "t", {"data_source_name": "NCBI", "data_set_title": "NCBI Gene",
+                                  "data_source_url": "https://rdfportal.org/dataset/ncbigene"},
+              log=lambda *a: None)
+    xml = (out / "items" / "t.xml").read_text()
+    assert 'name="url" value="https://rdfportal.org/dataset/ncbigene"' in xml
+
+    # unchanged behaviour when a source declares no data_source_url
+    out2 = tmp_path / "out2"; (out2 / "tsv").mkdir(parents=True)
+    (out2 / "columns.tsv").write_text((out / "columns.tsv").read_text())
+    (out2 / "tsv" / "main.tsv").write_text((out / "tsv" / "main.tsv").read_text())
+    emit_items(m, str(out2), "t", {"data_source_name": "NCBI", "data_set_title": "NCBI Gene"},
+              log=lambda *a: None)
+    xml2 = (out2 / "items" / "t.xml").read_text()
+    assert 'name="url"' not in xml2
+
+
 def test_items_links_and_merging(tmp_path):
     m = make_model(tmp_path)
     out = tmp_path / "out"; (out / "tsv").mkdir(parents=True)

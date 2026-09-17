@@ -25,6 +25,7 @@
 ncbigene:
   replaces: [ncbi-gene]
   data_source_name: NCBI
+  data_source_url: https://rdfportal.org/dataset/ncbigene
   data_set_title: NCBI Gene (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   gene_scope_field: primaryIdentifier
@@ -38,6 +39,7 @@ ncbigene:
 hgnc:
   replaces: [hgnc]
   data_source_name: HGNC
+  data_source_url: https://rdfportal.org/dataset/hgnc
   data_set_title: HGNC identifiers (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   gene_scope_field: primaryIdentifier
@@ -48,6 +50,10 @@ uniprot:
   replaces: []
   alongside: [uniprot]
   data_source_name: UniProt
+  # UniProt's own native SPARQL endpoint (sparql.uniprot.org), not RDF Portal - see the
+  # Endpoint: comment in out/uniprot/queries/*.sparql - so the provenance link is UniProt's own
+  # site, not an RDF Portal dataset page.
+  data_source_url: https://www.uniprot.org/
   # Not "Swiss-Prot": these queries do not filter on up:reviewed, so they return TrEMBL too
   # (20,431 reviewed vs 190,278 unreviewed human entries), which matches stock HumanMine - see
   # core:reviewed in knowledge.yaml.  Stock names two datasets, "Swiss-Prot data set" and
@@ -59,6 +65,10 @@ uniprot:
 go:
   replaces: [go]
   data_source_name: GO
+  # GO's own project site, not RDF Portal - confirmed live rdfportal.org has no /dataset/go
+  # landing page (its own graph is under /ontology/go, which 404s as a page, unlike the other
+  # RDF-Portal-hosted sources here).
+  data_source_url: https://geneontology.org/
   data_set_title: GO (RDF Portal)
   consts: {Ontology.name: GO}
   scope: good
@@ -88,12 +98,16 @@ reactome:
   replaces: []
   alongside: [reactome]
   data_source_name: Reactome
+  data_source_url: https://rdfportal.org/dataset/reactome
   data_set_title: Reactome pathways (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   scope: good
 gwascatalog:
   replaces: [huge-gwas]
   data_source_name: GWAS Catalog
+  # Fetched via TogoVar's own SPARQL endpoint, not RDF Portal - see the Endpoint: comment in
+  # out/gwascatalog/queries/*.sparql - so the provenance link is TogoVar's own site.
+  data_source_url: https://togovar.org/
   data_set_title: GWAS Catalog (TogoVar)
   # No source-level Organism constant: nothing on the root, GWASResult, can hold an organism, so it
   # loaded unlinked.  The organism is declared where it belongs - SNP.organism and Gene.organism -
@@ -117,6 +131,7 @@ gwascatalog:
 clinvar:
   replaces: [clinvar]
   data_source_name: ClinVar
+  data_source_url: https://rdfportal.org/dataset/clinvar
   data_set_title: ClinVar (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   gene_scope_field: primaryIdentifier
@@ -124,6 +139,7 @@ clinvar:
 pubmed:
   replaces: []
   data_source_name: PubMed
+  data_source_url: https://rdfportal.org/dataset/pubmed
   data_set_title: PubMed (RDF Portal)
   scope: good
   pmid_scope_field: identifier
@@ -147,6 +163,7 @@ expressionatlas:
 ensembl:
   replaces: []
   data_source_name: Ensembl
+  data_source_url: https://rdfportal.org/dataset/ensembl
   data_set_title: Ensembl genes (RDF Portal)
   consts: {Organism.taxonId: "9606"}
   gene_scope_field: secondaryIdentifier

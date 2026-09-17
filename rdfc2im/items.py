@@ -329,8 +329,12 @@ def emit_items(model: InterMineModel, out_dir: str, src: str, source_cfg: dict, 
     # DataSet / DataSource
     ds_title = source_cfg.get("data_set_title") or f"{src} (rdf-config)"
     ds_name = source_cfg.get("data_source_name") or src
+    ds_url = source_cfg.get("data_source_url")
     if store.items:
-        dsrc = store.get("DataSource", {"name": ds_name})
+        dsrc_values = {"name": ds_name}
+        if ds_url:
+            dsrc_values["url"] = ds_url
+        dsrc = store.get("DataSource", dsrc_values)
         dset = store.get("DataSet", {"name": ds_title})
         if dsrc and dset:
             store.link(dset, "dataSource", dsrc)
