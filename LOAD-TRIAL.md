@@ -338,3 +338,40 @@ after):
 
 Loaded clean after that: `BUILD SUCCESSFUL`, pathway count 2883 (matches the real number of human
 Reactome pathways almost exactly), verified via the REST API.
+
+## pubmed: PMID-scoped via a new fetch-time mechanism, not the existing gene-panel one
+
+PubMed has no Gene field of its own, so it cannot be scoped via `apply_gene_scope`/`--genes`;
+the plan from the start was to scope it instead to the PMIDs already referenced by the panel's
+genes/variants/associations, gathered from the other sources' own already-generated items.xml
+files (`extract_publication_pmids`, scanning for `Publication.pubMedId` attributes - 3881 unique
+PMIDs across hgnc/uniprot/gwascatalog; clinvar contributed none).
+
+The first attempt reused the existing gene-panel scoping mechanism as-is
+(`apply_publication_scope`, a thin wrapper over `restrict_field` - same FILTER-embedding
+`apply_gene_scope` uses) and it did not work at this scale: a ~3881-condition
+`FILTER(STR(?identifier) = "..." || ...)` got RDF Portal's endpoint to redirect to
+`errordocument.dbcls.jp`, a generic error page, rather than returning a normal SPARQL error -
+confirmed this is a real size/complexity ceiling, not a network-policy or transport issue, since
+the exact same mechanism works fine at the gene panel's own scale (~113 terms).
+
+Fixed by adding a second, separate scoping mechanism for this case: `pipeline.fetch_source_by_keys`
+restricts every one of a source's tables via `fetch_values_batched` (the same VALUES-batching
+`_fetch_paged` already uses to page a table past Virtuoso's Sorted TOP cap) instead of embedding
+the restriction into the committed query at translate time. `apply_publication_scope` was removed
+again since it had no remaining caller - PubMed's cited-publication list will always be too large
+for FILTER-embedding, so there was no smaller-scale use case left to justify keeping it. `--pmids`
+now applies at fetch time only, gated by a `pmid_scope_field` entry in sources.yaml (pubmed's is
+`identifier`, its own SELECT variable name in all three of its tables).
+
+Loaded clean on the first real attempt after that: `BUILD SUCCESSFUL`, 37917 items (3879
+Publication + MeshTerm + Author), 0 hard problems, and MeshTerm - which shares the exact same
+"no curated key, DRAFT only" situation as Reactome's Pathway (see the reactome section above) -
+merged correctly on the first try because the `key_attributes()` fix already covered it: 3606
+MeshTerm items, all with distinct identifiers, zero duplicates. Verified via the REST API: PMID
+23696881 (already loaded with just a bare `pubMedId` by GWAS Catalog) now also carries its real
+title from PubMed, MeshTerm links resolve (e.g. PMID 10022751 -> 5 MeSH descriptors), and CYP2D6
+(a demo panel gene) shows a real cited publication with its title through `Gene.publications`.
+
+This completes the demo panel build: ncbigene (full) + hgnc/ensembl/uniprot/clinvar/gwascatalog
+(gene-panel-scoped) + reactome (full) + pubmed (PMID-scoped) all loaded and cross-verified.
