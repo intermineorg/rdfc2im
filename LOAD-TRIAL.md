@@ -489,3 +489,68 @@ assuming it, then repointed both stored templates at it with a plain `UPDATE ...
 real data - `All_Proteins_In_Organism_To_Publications` includes a real cited publication (PMID
 26871637), `Organism_Protein` returns real Protein accessions. The UPDATE is appended to
 `curation/demo_public_templates.sql` so it reapplies alongside the 6 INSERTs after a fresh build.
+
+## DataSource.url: durable code fix done; retrofitting the live mine is NOT safe as a quick patch
+
+`DataSource.url` was empty on every one of the 137 rows - rdfc2im never set it, entirely
+dependent on stock HumanMine's `update-data-sources` postprocess task, which needs a Micklem-lab
+config path this sandbox doesn't have (see the earlier postprocessing section). This is what
+breaks BlueGenes' "Browse Sources" page. Fixed durably: `sources.yaml` gained an optional
+`data_source_url` for the 9 sources this build actually loads, wired into `items.py`'s DataSource
+creation, with the URL for each chosen from what it actually queried (an RDF Portal dataset page,
+confirmed live to return a real "Dataset Details" page, for the RDF-Portal-hosted sources; the
+source's own site - UniProt, TogoVar - for the two that go straight to their own native
+endpoints; GO falls back to its own project site since RDF Portal has no `/dataset/go` landing
+page). Regenerated all 9 items.xml files with the fix and confirmed it in the generated XML.
+
+**Retrofitting the already-loaded live mine turned out to be genuinely unsafe, not just
+inconvenient**, and was abandoned rather than forced:
+
+1. A direct `UPDATE datasource SET url = ...` on the 9 rows looked like it worked (confirmed via
+   plain SQL) but the live webapp kept returning `null` for `url` no matter how many times the
+   container was restarted or even fully recreated. Root cause, found by enabling Postgres
+   statement logging and watching the actual query: InterMine materializes query *results* from a
+   separate `InterMineObject.OBJECT` column (a serialized full-object snapshot, part of Postgres
+   table inheritance), not from the typed `datasource.url` column directly - a raw SQL UPDATE
+   changes the typed column but leaves that serialized snapshot stale, so nothing reading through
+   normal query materialization ever sees the change. (A red herring along the way: an earlier
+   `WEB-INF/objectstoresummary.properties` mentioning `DataSource.emptyAttributes=...url` looked
+   like the cause and pointed at a real, separate gap - `summarise-objectstore`'s DB-side output
+   was never being baked into the war - but fixing that alone did not fix this.)
+2. The only correct way to update that serialized snapshot is through InterMine's own loader
+   (`dbmodel:integrate`), so items.xml was regenerated and re-staged for all 9 sources for a
+   proper re-integrate. `go`'s re-integrate hit a genuine, pre-existing, unrelated bug on the
+   first attempt: `Duplicate objects found for pk OntologyTerm.key_name_ontology` (two distinct
+   GO terms, e.g. two "obsolete elastin" entries, sharing the same name+ontology) - real upstream
+   ambiguity in GO's own data, never surfaced before because `go` had never been re-integrated
+   since its original load at the very start of this trial. Left unfixed, same category as
+   STATUS.md's other documented upstream ambiguities.
+3. Re-integrating a source that has *already* been loaded once needs its `tracker` rows (the
+   per-object-per-field-per-source provenance log - see the reactome section above) cleared
+   first, same as before. This time the tracker rows for all 9 sources were cleared in one
+   blanket `DELETE`, which was too broad: `ncbigene` is the root every other Gene-touching source
+   merges onto, and wiping *its* tracking for a shared field (`Gene.typeOfGene`) broke every
+   other source's ability to re-integrate too, each failing with `Object o1 is not in the data
+   tracking system` the moment it touched a Gene ncbigene had already set that field on.
+   `dataLoader.allowMultipleErrors=true` (this session's established workaround for a *handful*
+   of genuine conflicts) does not help here: every touched object throws this error, not a
+   bounded number of real conflicts, so it immediately hits "Too many data loading exceptions"
+   regardless of source size - tried and reverted for both `ncbigene` (57s, real work attempted)
+   and `reactome` (4s) before concluding this path doesn't apply.
+4. Recovered by reverting the 9 `datasource.url` values back to `''` (undoing the raw SQL update
+   that never actually took visible effect anyway) and confirming no data was corrupted by any of
+   the failed load attempts - InterMine's per-source load is transactional and rolled back
+   cleanly every time: Gene (193288), Pathway (2883), Publication (4025), GWASResult (23201) and
+   DataSource (137) row counts are exactly what they were before this was attempted, and search/
+   templates/QueryBuilder all still work. The live mine is stable, just without this particular
+   fix - the same "Browse Sources is broken" state as before, not worse.
+
+**Conclusion**: the code fix is real, tested, and will apply automatically to any *fresh* build
+(`dbmodel:builddb` + a normal first-time integrate of all 9 sources, the situation every other
+fix here has usually landed in). Getting it into *this specific, already-loaded* mine would need
+a properly incremental, source-by-source tracker reconciliation at a scale this session did not
+have the budget to do safely (ncbigene alone tracks ~4.6M rows) - or a full rebuild from scratch.
+Neither was attempted further; forcing it risked the stability of a mine several other fixes
+already depend on, for a page (Browse Sources) that was already broken before this session
+started. Flagging this as an explicit, deliberate decision point for the user rather than a
+"still working on it."
