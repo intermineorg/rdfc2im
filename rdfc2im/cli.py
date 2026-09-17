@@ -30,7 +30,7 @@ from .allow import write_allow
 from .model import load_model
 from .mapping import Knowledge
 from .pipeline import run_source, fetch_source, tsv_source
-from .scope import DEFAULT_TAXA, resolve_ncbigene_symbols
+from .scope import DEFAULT_TAXA, resolve_ncbigene_symbols, resolve_ensembl_symbols
 from .project import gen_project, check_project
 from .items import emit_items
 from .linkml import gen_linkml
@@ -134,13 +134,21 @@ def _resolve_taxa(a, ws) -> list:
 
 
 def _resolve_genes(a) -> list:
-    """CLI --genes: a comma list, or @path/to/file (one gene symbol per line, '#'-comments ok)."""
+    """CLI --genes: a comma list, or @path/to/file (whitespace-separated symbols, one or more
+    per line, '#'-comments ok - a curated panel is easier to read grouped a dozen to a line
+    under a category comment than strictly one per line, so a line is split on any whitespace
+    rather than treated as a single token)."""
     g = getattr(a, "genes", None)
     if not g:
         return []
     if g.startswith("@"):
+        genes = []
         with open(g[1:]) as fh:
-            return [l.strip() for l in fh if l.strip() and not l.startswith("#")]
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    genes.extend(line.split())
+        return genes
     return [s.strip() for s in g.split(",") if s.strip()]
 
 
@@ -183,14 +191,27 @@ def run(a, ws) -> int:
             scfg = sources_cfg.get(s, {})
             gene_ids, gene_field = [], scfg.get("gene_scope_field", "")
             if genes and gene_field:
-                # ncbigene is the only resolver wired up today (see scope.py); a source with a
-                # gene_scope_field but no matching resolver here still gets no gene_ids, so
-                # run_source's apply_gene_scope will not find its field mapped by identifiers
-                # that mean anything - safer to widen this dict as more resolvers are added than
-                # to guess a resolver by source name.
-                resolver = {"ncbigene": resolve_ncbigene_symbols}.get(s)
-                if resolver:
-                    gene_ids = resolver(genes, taxon=taxa[0])
+                # Each source keys genes in its own scheme: ncbigene/hgnc/clinvar share NCBI's
+                # numeric Entrez id (hgnc's own primaryIdentifier IS the entrez id, via its
+                # see_also_NCBIGene cross-reference - see knowledge.yaml), ensembl/gwascatalog
+                # share the Ensembl gene id (gwascatalog's snp_gene_ids column carries Ensembl
+                # ids too - see sources.yaml), and uniprot's own field is literally the symbol,
+                # so it needs no resolution at all. A source with a gene_scope_field but no
+                # entry here still gets no gene_ids, so run_source's apply_gene_scope will not
+                # find its field mapped by identifiers that mean anything - safer to widen this
+                # dict as more resolvers are added than to guess a resolver by source name.
+                if gene_field == "symbol":
+                    gene_ids = list(genes)
+                else:
+                    resolver = {
+                        "ncbigene": resolve_ncbigene_symbols,
+                        "hgnc": resolve_ncbigene_symbols,
+                        "clinvar": resolve_ncbigene_symbols,
+                        "ensembl": resolve_ensembl_symbols,
+                        "gwascatalog": resolve_ensembl_symbols,
+                    }.get(s)
+                    if resolver:
+                        gene_ids = resolver(genes, taxon=taxa[0])
             results[s] = run_source(m, os.path.join(ws["config_root"], s), os.path.join(out, s), kn,
                                     scfg, include_guess=ws["include_guess"], limit=ws["limit"],
                                     types=ws["types"], use_from=ws["use_from"], taxa=taxa,

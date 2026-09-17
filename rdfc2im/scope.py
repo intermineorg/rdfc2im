@@ -32,9 +32,19 @@ def _curie_prefix(value: str) -> Optional[str]:
 
 
 def restrict_field(rows: List[dict], im_class: str, im_field: str, terms: List[str],
-                    prefer_prefix: Optional[str] = None) -> Tuple[List[dict], bool]:
+                    prefer_prefix: Optional[str] = None, promote_optional: bool = False) -> Tuple[List[dict], bool]:
     """Restrict every query-level (non-const, required) row mapping onto <im_class>.<im_field>
     to exactly `terms`, in every table it appears in - never mutates the input list.
+
+    promote_optional=True additionally matches a query-level row that is currently OPTIONAL
+    (required != "yes") and promotes it to required in the returned copy only - the committed
+    mapping's own required flag is untouched, so a default (unscoped) run still sees exactly the
+    row curation wrote. Used by apply_gene_scope: several sources (ClinVar, GWAS Catalog,
+    UniProt) map their sole Gene-linked field as OPTIONAL because most real records legitimately
+    have no gene link (an intergenic variant, a non-gene protein) - correct for a full load, but
+    a request to restrict to a specific gene list means "records for this gene", which requires
+    the link to exist. Not used for taxon scoping, where the field being OPTIONAL usually means
+    something else entirely (no organism-specific data at all - see apply_taxon_scope).
 
     Returns (new_rows, restrictable).  restrictable=False means no such query-level row exists
     for this field on this source (either it only ever appears as a `consts` constant - a fixed
@@ -43,11 +53,14 @@ def restrict_field(rows: List[dict], im_class: str, im_field: str, terms: List[s
     restrictable" means for it.
     """
     out = [dict(r) for r in rows]
+    ok_required = (lambda r: True) if promote_optional else (lambda r: r.get("required") == "yes")
     hard = [r for r in out if r.get("im_class") == im_class and r.get("im_field") == im_field
-            and r.get("kind") != "const" and r.get("required") == "yes"]
+            and r.get("kind") != "const" and ok_required(r)]
     if not hard:
         return out, False
     for r in hard:
+        if promote_optional:
+            r["required"] = "yes"
         prefix = _curie_prefix(r.get("value", "")) or prefer_prefix
         if prefix:
             r["value"] = " ".join(f"{prefix}:{t}" for t in terms)
@@ -118,7 +131,7 @@ def apply_gene_scope(rows: List[dict], im_field: str, identifiers: List[str]) ->
     """
     if not identifiers:
         return rows, None
-    new_rows, restrictable = restrict_field(rows, "Gene", im_field, identifiers)
+    new_rows, restrictable = restrict_field(rows, "Gene", im_field, identifiers, promote_optional=True)
     if restrictable:
         return new_rows, None
     return rows, (f"has no query-level Gene.{im_field} row to restrict a gene list against")
@@ -164,6 +177,54 @@ def resolve_ncbigene_symbols(symbols: List[str], taxon: str = "9606", timeout: i
     body, fmt, err = _fetch_once(q, NCBIGENE_ENDPOINT, timeout)
     if body is None:
         raise RuntimeError(f"resolve_ncbigene_symbols: {err}")
+    lines = _normalise(body, fmt).decode("utf-8").splitlines()
+    ids = []
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+        cell = line.split("\t", 1)[0]
+        ids.append(cell.strip().strip('"'))
+    return ids
+
+
+ENSEMBL_ENDPOINT = "https://rdfportal.org/ebi/sparql"
+ENSEMBL_GRAPH = "http://rdfportal.org/dataset/ensembl"
+
+
+def resolve_ensembl_symbols(symbols: List[str], taxon: str = "9606", timeout: int = 60) -> List[str]:
+    """Resolve gene SYMBOLS to Ensembl gene ids (ensembl's own Gene.secondaryIdentifier scheme,
+    also what GWAS Catalog's snp_gene_ids column carries - see sources.yaml) via a live query
+    against ensembl's own endpoint. Same shape and same silently-drop-unresolved-symbols
+    behaviour as resolve_ncbigene_symbols; see that function's docstring for why.
+
+    Deliberately no FROM <ENSEMBL_GRAPH> here, unlike the fetch queries this source generates:
+    confirmed live that adding it to a query combining a VALUES clause with the
+    obo:RO_0002162 taxonomy filter makes the endpoint return zero rows for terms that do exist
+    (e.g. BRCA1/TP53/CYP2D6 all resolve with no FROM, none with it) - some graph-scoping
+    interaction specific to this endpoint, not a correctness issue with the pattern itself.
+    terms:EnsemblGene is specific enough that this is not a false-positive risk across
+    RDF Portal's other datasets."""
+    if not symbols:
+        return []
+    values = " ".join(f'"{s}"' for s in symbols)
+    q = (
+        "PREFIX dcterms: <http://purl.org/dc/terms/>\n"
+        "PREFIX obo: <http://purl.obolibrary.org/obo/>\n"
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        "PREFIX taxonomy: <http://identifiers.org/taxonomy/>\n"
+        "PREFIX terms: <http://rdf.ebi.ac.uk/terms/ensembl/>\n\n"
+        "SELECT DISTINCT ?ensg_id ?label\n"
+        "WHERE {\n"
+        "  ?EnsemblGene a terms:EnsemblGene .\n"
+        "  ?EnsemblGene dcterms:identifier ?ensg_id .\n"
+        f"  ?EnsemblGene obo:RO_0002162 taxonomy:{taxon} .\n"
+        "  ?EnsemblGene rdfs:label ?label .\n"
+        f"  VALUES ?label {{ {values} }}\n"
+        "}\n"
+    )
+    body, fmt, err = _fetch_once(q, ENSEMBL_ENDPOINT, timeout)
+    if body is None:
+        raise RuntimeError(f"resolve_ensembl_symbols: {err}")
     lines = _normalise(body, fmt).decode("utf-8").splitlines()
     ids = []
     for line in lines[1:]:

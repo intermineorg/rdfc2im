@@ -34,6 +34,7 @@ hgnc:
   data_source_name: HGNC
   data_set_title: HGNC identifiers (RDF Portal)
   consts: {Organism.taxonId: "9606"}
+  gene_scope_field: primaryIdentifier
   scope: good
 uniprot:
   # Alongside, not a replacement: stock uniprot loads features, comments, isoforms, components and
@@ -47,6 +48,7 @@ uniprot:
   # "TrEMBL data set", by input file; one query cannot, so the title says what it holds.
   data_set_title: UniProtKB, Swiss-Prot and TrEMBL (RDF Portal)
   consts: {Organism.taxonId: "9606"}
+  gene_scope_field: symbol
   scope: good
 go:
   replaces: [go]
@@ -104,12 +106,14 @@ gwascatalog:
     Source:
       basis: java:HugeGwasConverter
       reason: declared in huge-gwas_additions.xml, never created by the converter
+  gene_scope_field: secondaryIdentifier
   scope: good
 clinvar:
   replaces: [clinvar]
   data_source_name: ClinVar
   data_set_title: ClinVar (RDF Portal)
   consts: {Organism.taxonId: "9606"}
+  gene_scope_field: primaryIdentifier
   scope: good
 pubmed:
   replaces: []
@@ -138,6 +142,7 @@ ensembl:
   data_source_name: Ensembl
   data_set_title: Ensembl genes (RDF Portal)
   consts: {Organism.taxonId: "9606"}
+  gene_scope_field: secondaryIdentifier
   scope: good
   note: not a HumanMine source today; supplies Ensembl ids/biotypes/locations that ncbi-gene lacks
 mesh:

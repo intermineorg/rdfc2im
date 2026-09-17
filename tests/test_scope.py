@@ -69,6 +69,18 @@ def test_gene_scope_empty_list_is_noop():
     assert out == rows and skip is None
 
 
+def test_gene_scope_promotes_an_optional_gene_link_without_touching_the_input():
+    """ClinVar/GWAS Catalog/UniProt map their sole Gene-linked field as OPTIONAL - correct for a
+    full load (most records have no gene link), wrong for "restrict to this gene list", which
+    implies the link must exist. apply_gene_scope must promote it in the copy it returns, and
+    must not mutate the row taxon scoping (or a default run) would otherwise see."""
+    rows = [_row("main", "Gene", "primaryIdentifier", "", required="no")]
+    out, skip = apply_gene_scope(rows, "primaryIdentifier", ["1565"])
+    assert skip is None
+    assert out[0]["required"] == "yes" and out[0]["value"] == '"1565"'
+    assert rows[0]["required"] == "no"  # input untouched
+
+
 def test_gene_scope_field_not_mapped_is_skipped():
     rows = [_row("main", "Gene", "primaryIdentifier", "")]
     out, skip = apply_gene_scope(rows, "secondaryIdentifier", ["ENSG1"])
