@@ -104,6 +104,17 @@ def _normalise(body: bytes, fmt: str) -> bytes:
 
 SORTED_TOP_CAP = 200_000  # Virtuoso's hard ceiling on any ORDER BY + LIMIT/OFFSET query
 
+# Benchmarked against the live ncbigene endpoint (main_gene_synonym's query shape, one real
+# request per size, no repeats): per-gene cost RISES with batch size here (Virtuoso's
+# VALUES/IN evaluation is worse-than-linear) - 500->0.54ms/gene, 1000->0.68ms, 2000->1.35ms,
+# 3000->1.55ms, 4000->1.73ms, 5000->HTTP 400 (Virtuoso SP030 "Too many arguments for
+# standard built-in function in operator()", a hard query-compiler ceiling, not a load
+# issue). Projected across ncbigene's real 193289-gene domain with the Makefile's 1s
+# per-batch politeness sleep: 500 -> ~8.2 min, 1000 -> ~5.4 min (the sweet spot, ~34%
+# faster - fewer batches wins here despite the higher per-batch cost), 2000+ already loses
+# to 500 despite fewer requests.
+DEFAULT_BATCH_SIZE = 1000
+
 
 def _select_vars(q: str):
     m = re.search(r"^SELECT\s+(?:DISTINCT\s+)?(.*)$", q, re.M)
@@ -190,7 +201,7 @@ def _fetch_batched_text(q, ep, out_path, key_var, key_terms, timeout, sleep, bat
 
 
 def fetch_values_batched(query_path, out_path, key_var, key_terms, timeout=600, sleep=0.0,
-                          batch_size=500, log=print) -> str:
+                          batch_size=DEFAULT_BATCH_SIZE, log=print) -> str:
     """Fetch a table by restricting `key_var` to `key_terms` (already exact SPARQL term syntax,
     e.g. from another already-fetched table's own output) in fixed-size VALUES batches, instead
     of paging the whole thing. Every batch is a self-contained, LIMIT-free request, so no single
@@ -240,7 +251,7 @@ def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
                 keys = [ln.decode() for ln in _normalise(domain_body, domain_fmt).split(b"\n")[1:] if ln.strip()]
                 log(f"  {out_path}: {count} rows exceeds the {SORTED_TOP_CAP}-row Sorted TOP cap; "
                     f"batching over {len(keys)} distinct ?{keyvar} values instead")
-                return _fetch_batched_text(base_noorder, ep, out_path, keyvar, keys, timeout, sleep, 500, log)
+                return _fetch_batched_text(base_noorder, ep, out_path, keyvar, keys, timeout, sleep, DEFAULT_BATCH_SIZE, log)
             log(f"  {out_path}: {count} rows exceeds the {SORTED_TOP_CAP}-row Sorted TOP cap and "
                 f"no safe key to batch on was found; falling back to plain paging, which will "
                 f"stop at the cap")

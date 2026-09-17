@@ -82,6 +82,13 @@ NCBIGENE_SHAPED = (
     "}\n"
 )
 
+def test_default_batch_size_is_the_benchmarked_sweet_spot():
+    """Pins the value, not the live benchmark: 1000 measured ~34% faster end-to-end than 500
+    against the real ncbigene endpoint (0.68 vs 0.54 ms/gene, but half as many batches), and
+    per-gene cost rises further above that - 5000 hits a hard Virtuoso argument-count ceiling
+    (HTTP 400, SP030). See the comment above DEFAULT_BATCH_SIZE for the full measurement."""
+    assert fetch_mod.DEFAULT_BATCH_SIZE == 1000
+
 def test_required_only_strips_optionals_but_keeps_the_required_key():
     stripped = fetch_mod._required_only(NCBIGENE_SHAPED)
     assert "OPTIONAL" not in stripped
