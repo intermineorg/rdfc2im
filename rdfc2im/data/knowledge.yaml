@@ -1913,6 +1913,22 @@ predicates:
     note: Ensembl ids are Gene.secondaryIdentifier in HumanMine (ncbi-gene/hgnc); Gene.key_secondaryidentifier_org merges on it
   - source: ensembl
     subject: EnsemblGene
+    pred: "-self-"
+    im: ""
+    status: drop
+    basis: knowledge
+    note: >-
+      The generic self-row fallback guesses a class's key attribute from the subject IRI's own
+      local name when no predicate carries it - reasonable when the IRI itself is the source's
+      declared key, wrong here: EnsemblGene's IRI local name is the same Ensembl id the row
+      above already correctly maps to Gene.secondaryIdentifier, and the fallback guessed it a
+      second time onto Gene.primaryIdentifier, which is always NCBI's Entrez id in HumanMine,
+      never Ensembl's. Found only by an actual load, not by reading: two Gene rows for the same
+      real gene - one with a real NCBI primaryIdentifier, one self-keyed on its own Ensembl id -
+      both carry the same symbol+organism, so InterMine's loader refuses with "Duplicate objects
+      found for pk Gene.key_symbol_org" the moment ensembl is integrated for the first time.
+  - source: ensembl
+    subject: EnsemblGene
     pred: obo:RO_0002162
     im: Organism.taxonId
     status: sure
