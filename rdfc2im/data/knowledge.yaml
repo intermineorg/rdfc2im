@@ -1695,6 +1695,15 @@ predicates:
     im: Gene.primaryIdentifier
     status: sure
     basis: java:ClinvarConverter
+    const: {Organism.taxonId: "9606"}
+    const_via: {Organism.taxonId: Gene.organism}
+    note: >-
+      sources.yaml's source-level consts attaches Organism.taxonId to clinvar's table root
+      (Allele) only - the Gene sub-object reached via med2rdf:gene would otherwise get no
+      organism reference at all, and Gene.key_symbol_org/key_secondaryidentifier_org would never
+      match an existing NULL-organism row against ncbigene's real one. Same class of bug found
+      loading uniprot (a67ce39) and GWAS Catalog before it (b1a45fc); fixed here proactively,
+      before ever loading clinvar, rather than after finding it the same way a third time.
   - source: clinvar
     pred: cvo:symbol
     class: Gene
