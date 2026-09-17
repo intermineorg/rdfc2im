@@ -415,6 +415,15 @@ for the *webapp*, which runs inside `rdfc2im-mine` and needs the compose network
 hostname instead - same class of problem as the DB host, fixed the same way: `trial-stage.sh` now
 rewrites the jar entry after exploding the war, same idempotent, re-run-after-every-build pattern.
 
+`create-search-index` also stalled once, mid-run, with zero progress for 15+ minutes and a
+growing pile of `Connection attempt timed out` errors against `humanmine-items`/
+`humanmine-production` alongside a climbing idle-connection count on postgres (`pg_stat_activity`)
+- not a data or config problem (the identical command had already succeeded once earlier at the
+same data volume, and succeeded again cleanly in 72s on the very next attempt after `kill -9`ing
+the stuck gradle daemon/JVM and clearing the accumulated idle connections). Recorded here as an
+environment quirk to recognise rather than re-diagnose if it recurs: kill and retry rather than
+waiting indefinitely once the doc count truly stops moving for several minutes.
+
 **Only 3 of HumanMine's stock templates survive** "reducing a mine" (see that section above) -
 expected, they're the only ones that don't reference a class/field this build doesn't load. Added
 6 new public templates for the demo panel (GO term structure, cross-source gene identifiers,
