@@ -1,0 +1,33 @@
+# Demo gene panel: food & drug metabolism, 113 HGNC symbols.
+#
+# Chosen for a fast, coherent demo build (~113 genes vs. the full ~193,000-gene
+# genome) rather than a full-scale load. Every symbol below was verified present
+# in out/ncbigene/raw/main.tsv before use. None of these 113 genes are among the
+# 255 NCBI/Ensembl id pairs flagged in STATUS.md's D14 - this panel is unaffected
+# by that ambiguity regardless of how/whether it gets resolved.
+#
+# Used via rdfc2im's --genes flag (rdfc2im/scope.py) wherever a source's gene
+# identifier scheme has a resolver wired up; sources without one yet may need
+# their own filtering approach for this phase - see the load-trial checkpoint
+# notes for which sources this applies to at any given time.
+
+# Phase I drug metabolism (CYPs, alcohol/aldehyde) - 17
+CYP1A1 CYP1A2 CYP1B1 CYP2A6 CYP2B6 CYP2C8 CYP2C9 CYP2C19 CYP2D6 CYP2E1 CYP2J2 CYP3A4 CYP3A5 CYP4F2 ADH1B ADH1C ALDH2
+
+# Phase II conjugation enzymes - 21
+UGT1A1 UGT1A4 UGT1A6 UGT1A9 UGT2B7 UGT2B15 NAT1 NAT2 TPMT DPYD GSTM1 GSTT1 GSTP1 GSTA1 SULT1A1 SULT2A1 COMT NQO1 EPHX1 FMO3 HNMT
+
+# Drug transporters - 7
+ABCB1 ABCG2 ABCC2 SLCO1B1 SLC22A1 SLC22A2 SLC15A1
+
+# Drug targets / receptors / binding - 18
+VKORC1 HMGCR PCSK9 CETP NPC1L1 ADRB1 ADRB2 OPRM1 RYR1 CACNA1S BCHE TTR ALB AHR CES1 CES2 PPARG PPARA
+
+# Food/vitamin metabolism disorders and pathways - 22
+LCT MCM6 ALDOB G6PD FUT2 PAH GALT HGD HFE SLC40A1 TF TFR2 MTHFR MTRR TCN2 SLC19A1 VDR GC CYP27B1 CYP2R1 CYP24A1 BCO1
+
+# Lipid/diet-gene interaction & metabolic - 17
+APOE APOB APOA5 APOC3 LPL FADS1 FADS2 SREBF1 SREBF2 INSIG1 ABCG5 ABCG8 SCARB1 CYP7A1 NR1H4 TCF7L2 PNPLA3
+
+# Taste / appetite / food intake - 11
+TAS2R38 TAS1R2 TAS1R3 LEP LEPR MC4R INSR INS SLC2A1 SLC2A2 SLC30A8
