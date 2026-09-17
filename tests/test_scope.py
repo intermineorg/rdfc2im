@@ -1,6 +1,6 @@
 """scope.py: taxon and gene-list build restrictions."""
 from rdfc2im.scope import (DEFAULT_TAXA, apply_taxon_scope, apply_gene_scope, restrict_field,
-                           apply_publication_scope, extract_publication_pmids)
+                           extract_publication_pmids)
 from rdfc2im.sparql import _constraint
 
 
@@ -104,25 +104,6 @@ def test_constraint_iri_localname_marker_renders_as_strends():
     q = _constraint("snp_gene_ids", '~"ENSG00000165841" ~"ENSG00000100197"')
     assert q == ('FILTER(STRENDS(STR(?snp_gene_ids), "ENSG00000165841") || '
                  'STRENDS(STR(?snp_gene_ids), "ENSG00000100197"))')
-
-
-def test_publication_scope_restricts_required_pubmedid_row():
-    rows = [_row("main", "Publication", "pubMedId", "")]
-    out, skip = apply_publication_scope(rows, ["23696881", "32042192"])
-    assert skip is None
-    assert out[0]["value"] == '"23696881" "32042192"'
-
-
-def test_publication_scope_empty_list_is_noop():
-    rows = [_row("main", "Publication", "pubMedId", "")]
-    out, skip = apply_publication_scope(rows, [])
-    assert out == rows and skip is None
-
-
-def test_publication_scope_field_not_mapped_is_skipped():
-    rows = [_row("main", "Gene", "primaryIdentifier", "")]
-    out, skip = apply_publication_scope(rows, ["23696881"])
-    assert skip is not None
 
 
 def test_extract_publication_pmids_scans_items_xml_and_dedups(tmp_path):

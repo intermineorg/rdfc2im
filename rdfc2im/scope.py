@@ -146,28 +146,14 @@ def apply_gene_scope(rows: List[dict], im_field: str, identifiers: List[str]) ->
     return rows, (f"has no query-level Gene.{im_field} row to restrict a gene list against")
 
 
-def apply_publication_scope(rows: List[dict], pmids: List[str]) -> Tuple[List[dict], Optional[str]]:
-    """Restrict a source to a specific PubMed id list, via Publication.pubMedId - PubMed has no
-    Gene field of its own to key a gene-panel build against (see apply_gene_scope), so a demo
-    build limits it instead to the PMIDs already referenced by the genes loaded from every other
-    source (see extract_publication_pmids), same idea as apply_gene_scope one level removed.
-    Thin wrapper over restrict_field: same mechanism, same return shape, no promote_optional
-    since every one of PubMed's own tables maps dct:identifier -> Publication.pubMedId required."""
-    if not pmids:
-        return rows, None
-    new_rows, restrictable = restrict_field(rows, "Publication", "pubMedId", pmids)
-    if restrictable:
-        return new_rows, None
-    return rows, "has no query-level Publication.pubMedId row to restrict a PMID list against"
-
-
 def extract_publication_pmids(paths: List[str]) -> List[str]:
     """Scan already-generated items.xml files for Publication.pubMedId attributes - the set of
     papers actually cited by the genes/variants/associations loaded from every other source in
-    a gene-panel demo build. Deliberately reads the generated items, not the live database: it
-    needs to run as part of translate(), before pubmed's own fetch, and before any of the other
-    sources are staged into a mine. A path that does not exist yet (a source not yet built) is
-    skipped rather than erroring, so this can run against however many sources are done so far."""
+    a gene-panel demo build, fed to pipeline.fetch_source_by_keys to scope PubMed's own fetch.
+    Deliberately reads the generated items, not the live database: it needs to run before
+    PubMed's own fetch and before any of the other sources are staged into a mine. A path that
+    does not exist yet (a source not yet built) is skipped rather than erroring, so this can run
+    against however many sources are done so far."""
     pmids: Set[str] = set()
     for p in paths:
         if not os.path.exists(p):

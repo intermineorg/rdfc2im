@@ -29,7 +29,7 @@ from . import __version__
 from .allow import write_allow
 from .model import load_model
 from .mapping import Knowledge
-from .pipeline import run_source, fetch_source, tsv_source
+from .pipeline import run_source, fetch_source, fetch_source_by_keys, tsv_source
 from .scope import DEFAULT_TAXA, resolve_ncbigene_symbols, resolve_ensembl_symbols
 from .project import gen_project, check_project
 from .items import emit_items
@@ -95,9 +95,11 @@ def main(argv=None):
                        "`gene_scope_field` (see rdfc2im/data/sources.yaml) - others are skipped with "
                        "a message, same as an unsupported --taxon.")
         p.add_argument("--pmids", help="comma-separated PubMed ids, or @path/to/file (one per line), "
-                       "to restrict the build to. Applies only to sources that declare `pmid_scope: "
-                       "true` (see rdfc2im/data/sources.yaml) - PubMed has no Gene field of its own, "
-                       "so this is separate from --genes.")
+                       "to restrict fetch to. Applies only to sources that declare a "
+                       "`pmid_scope_field` (see rdfc2im/data/sources.yaml) - PubMed has no Gene "
+                       "field of its own, so this is separate from --genes, and (unlike --genes) "
+                       "restricts at fetch time via VALUES-batching, not a query-embedded FILTER, "
+                       "since a panel's cited-publication list is far too large for that.")
     a = ap.parse_args(argv)
     if not os.path.exists(a.workspace):
         sys.exit(f"rdfc2im: no {a.workspace} in {os.getcwd()} - run from the workspace directory "
@@ -164,8 +166,8 @@ def _resolve_pmids(a) -> list:
     """CLI --pmids: see _parse_list_arg. Independent of --genes: PubMed has no Gene field of its
     own to restrict a gene-panel build against, so a demo build instead scopes it to the PMIDs
     already referenced by the genes/variants/associations loaded from every other source - see
-    scope.py's extract_publication_pmids for gathering that list, and apply_publication_scope
-    for how it restricts PubMed's own queries."""
+    scope.py's extract_publication_pmids for gathering that list, and do_fetch's use of
+    pipeline.fetch_source_by_keys for how it restricts PubMed's own fetch."""
     return _parse_list_arg(getattr(a, "pmids", None))
 
 
@@ -203,7 +205,6 @@ def run(a, ws) -> int:
         kn = Knowledge(ws.get("knowledge"))
         taxa = _resolve_taxa(a, ws)
         genes = _resolve_genes(a)
-        pmids = _resolve_pmids(a)
         results = {}
         for s in sources:
             scfg = sources_cfg.get(s, {})
@@ -233,13 +234,20 @@ def run(a, ws) -> int:
             results[s] = run_source(m, os.path.join(ws["config_root"], s), os.path.join(out, s), kn,
                                     scfg, include_guess=ws["include_guess"], limit=ws["limit"],
                                     types=ws["types"], use_from=ws["use_from"], taxa=taxa,
-                                    gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier",
-                                    pmids=pmids if scfg.get("pmid_scope") else None)
+                                    gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier")
         return results
 
     def do_fetch():
+        pmids = _resolve_pmids(a)
         for s in sources:
             print(f"fetch {s}")
+            scfg = sources_cfg.get(s, {})
+            pmid_field = scfg.get("pmid_scope_field")
+            if pmids and pmid_field:
+                fetch_source_by_keys(os.path.join(out, s), pmid_field, [f'"{p}"' for p in pmids],
+                                     timeout=a.timeout,
+                                     sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep)
+                continue
             fetch_source(os.path.join(out, s), dry_run=a.dry_run or os.environ.get("DRY_RUN") == "1",
                          force=a.force or os.environ.get("FORCE") == "1",
                          sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep, timeout=a.timeout,

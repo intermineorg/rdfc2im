@@ -11,8 +11,8 @@ from .mapping import translate, Knowledge, read_tsv, write_tsv, LOADABLE
 from .sparql import (QueryBuilder, table_names, query_rows, const_rows, write_sparql_yaml,
                      yaml_block, block_name)
 from .tsv import clean_table
-from .fetch import fetch_query
-from .scope import apply_taxon_scope, apply_gene_scope, apply_publication_scope, DEFAULT_TAXA
+from .fetch import fetch_query, fetch_values_batched
+from .scope import apply_taxon_scope, apply_gene_scope, DEFAULT_TAXA
 
 COL_COLUMNS = ["table", "position", "column", "variable", "im_class", "im_field", "transform",
                "filter", "value", "kind", "via", "status", "required", "root"]
@@ -21,15 +21,19 @@ COL_COLUMNS = ["table", "position", "column", "variable", "im_class", "im_field"
 def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, source_cfg: dict,
                include_guess: bool = True, limit: int = 0, types: str = "root",
                use_from: bool = True, log=print, taxa: Optional[List[str]] = None,
-               gene_ids: Optional[List[str]] = None, gene_field: str = "primaryIdentifier",
-               pmids: Optional[List[str]] = None) -> dict:
-    """`taxa`/`gene_ids`/`pmids` restrict THIS run's generated queries only -
-    mapping_predicates.sssom.tsv is written by translate() above before any of them is applied,
-    so the committed mapping always reflects the default (human, no restriction) regardless of
-    what a given run asks for. See scope.py. `taxa=None`/`["9606"]` and `gene_ids`/`pmids=None`/
-    `[]` are both the identity case: every existing caller that does not pass these gets exactly
-    today's behaviour. `pmids` is for PubMed specifically - see apply_publication_scope - and is
-    independent of gene_ids/gene_field since PubMed has no Gene field of its own to restrict."""
+               gene_ids: Optional[List[str]] = None, gene_field: str = "primaryIdentifier") -> dict:
+    """`taxa`/`gene_ids` restrict THIS run's generated queries only - mapping_predicates.sssom.tsv
+    is written by translate() above before either is applied, so the committed mapping always
+    reflects the default (human, no gene restriction) regardless of what a given run asks for.
+    See scope.py. `taxa=None`/`["9606"]` and `gene_ids=None`/`[]` are both the identity case:
+    every existing caller that does not pass these gets exactly today's behaviour.
+
+    A PubMed-style PMID restriction is NOT handled here: a gene panel's cited-publication list
+    runs to thousands of ids, too many for the FILTER embedding apply_gene_scope's mechanism
+    uses (confirmed live: RDF Portal rejects a ~3881-condition FILTER query outright). See
+    fetch_source_by_keys instead - restriction happens at fetch time, over the query's own
+    required key domain, the same VALUES-batching mechanism _fetch_paged uses for a table whose
+    row count alone exceeds Virtuoso's Sorted TOP cap."""
     res = translate(model, config_dir, out_dir, knowledge, source_cfg)
     cfg, rows, node_by_key = res["cfg"], res["rows"], res["node_by_key"]
     skip_reason = None
@@ -37,8 +41,6 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
         rows, skip_reason = apply_taxon_scope(rows, list(taxa))
     if not skip_reason and gene_ids:
         rows, skip_reason = apply_gene_scope(rows, gene_field, list(gene_ids))
-    if not skip_reason and pmids:
-        rows, skip_reason = apply_publication_scope(rows, list(pmids))
     if skip_reason:
         log(f"{cfg.name}: skipped this run - {skip_reason}")
         for old in glob.glob(os.path.join(out_dir, "queries", "*.sparql")):
@@ -180,6 +182,31 @@ def fetch_source(out_dir: str, dry_run=False, force=False, sleep=1.0, timeout=60
         t = os.path.splitext(os.path.basename(q))[0]
         res[t] = fetch_query(q, os.path.join(out_dir, "raw", f"{t}.tsv"), timeout=timeout,
                              dry_run=dry_run, force=force, sleep=sleep, limit=limit, page=page, log=log)
+    return res
+
+
+def fetch_source_by_keys(out_dir: str, key_var: str, key_terms: List[str], timeout=600,
+                         sleep=1.0, log=print) -> Dict[str, str]:
+    """Same shape as fetch_source, but restricts every one of this source's tables to `key_terms`
+    (already exact SPARQL term syntax) via fetch_values_batched instead of fetching them plain -
+    for a source with no Gene field of its own to scope a gene-panel build against (PubMed: scope
+    it instead to the PMIDs already referenced by the genes/variants/associations loaded from
+    every other source). `key_var` must be the SELECT variable every one of the source's own
+    tables uses for this field (PubMed: `identifier` in all three of main/main_slot/
+    main_mesh_subject_term - it is the source's REQUIRED join key, so every table has it).
+
+    Deliberately does not go through apply_gene_scope/apply_publication_scope's FILTER-embedding
+    (baking `terms` into the committed query as one big OR chain): that only scales to the
+    hundred-odd terms a gene panel itself has. A panel's cited-publication list runs to
+    thousands, and RDF Portal rejects a query that large outright (confirmed live: a
+    ~3881-condition FILTER got redirected to an error page, not a normal SPARQL error).
+    VALUES-batching restricts at fetch time instead, in fixed-size batches, so no single request
+    is ever that large."""
+    res = {}
+    for q in sorted(glob.glob(os.path.join(out_dir, "queries", "*.sparql"))):
+        t = os.path.splitext(os.path.basename(q))[0]
+        res[t] = fetch_values_batched(q, os.path.join(out_dir, "raw", f"{t}.tsv"), key_var,
+                                      key_terms, timeout=timeout, sleep=sleep, log=log)
     return res
 
 
