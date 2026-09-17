@@ -14,12 +14,20 @@
 #   types:     which nodes get an `a <type>` triple in the generated SPARQL: root | union | all
 #   distinct:  add DISTINCT to the SELECT (default true)
 #   scope:     good | structural | blocked  (spec section 8 achievability class)
+#   gene_scope_field: the Gene.<field> `--genes` restricts this source by (scope.py
+#              apply_gene_scope) - must be a field this source maps with required=yes, so the
+#              restriction reaches every table, not just the one that happens to carry a label.
+#              Only meaningful together with a resolver that turns a gene symbol into this
+#              source's own scheme (see scope.py's resolve_ncbigene_symbols for the reference
+#              one); a source with no resolver wired up is skipped, same as an unsupported
+#              --taxon, rather than silently ignoring the restriction.
 
 ncbigene:
   replaces: [ncbi-gene]
   data_source_name: NCBI
   data_set_title: NCBI Gene (RDF Portal)
   consts: {Organism.taxonId: "9606"}
+  gene_scope_field: primaryIdentifier
   scope: good
 hgnc:
   replaces: [hgnc]

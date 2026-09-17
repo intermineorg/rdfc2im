@@ -30,6 +30,7 @@ from .allow import write_allow
 from .model import load_model
 from .mapping import Knowledge
 from .pipeline import run_source, fetch_source, tsv_source
+from .scope import DEFAULT_TAXA, resolve_ncbigene_symbols
 from .project import gen_project, check_project
 from .items import emit_items
 from .linkml import gen_linkml
@@ -56,6 +57,7 @@ DEFAULTS = dict(
     extensions="curation/extensions_additions.xml",
     knowledge=None,               # None = the package's data/knowledge.yaml
     sources_yaml=None,            # None = the package's data/sources.yaml
+    scope=None,                    # {taxon: ["9606"]} - default and only if unset; see scope.py
 )
 
 
@@ -85,6 +87,13 @@ def main(argv=None):
         p.add_argument("--iterate", type=int, default=None, help="page size: LIMIT n OFFSET k until a short page (default 5000; 0 = one request per query)")
         p.add_argument("--timeout", type=int, default=600)
         p.add_argument("--fetch", action="store_true", help="(all) include the fetch step")
+        p.add_argument("--taxon", help="comma-separated NCBI taxon id(s) to build for (default: 9606, human). "
+                       "A source with no other species in its own data (HGNC, ClinVar, GWAS Catalog) is "
+                       "skipped rather than mislabelled when this is not the default.")
+        p.add_argument("--genes", help="comma-separated gene symbols, or @path/to/file (one per line), "
+                       "to restrict the build to. Applies only to sources that declare a "
+                       "`gene_scope_field` (see rdfc2im/data/sources.yaml) - others are skipped with "
+                       "a message, same as an unsupported --taxon.")
     a = ap.parse_args(argv)
     if not os.path.exists(a.workspace):
         sys.exit(f"rdfc2im: no {a.workspace} in {os.getcwd()} - run from the workspace directory "
@@ -114,6 +123,25 @@ def check_inputs(ws, need_model=True, need_config=True):
     if missing:
         sys.exit("rdfc2im: input paths in rdfc2im.yaml do not exist (working directory: %s)\n  " % os.getcwd()
                  + "\n  ".join(missing) + "\nSee README.md, 'in/ layout'.")
+
+
+def _resolve_taxa(a, ws) -> list:
+    """CLI --taxon wins; else rdfc2im.yaml's scope.taxon; else the default (human only)."""
+    if getattr(a, "taxon", None):
+        return [t.strip() for t in a.taxon.split(",") if t.strip()]
+    y = ws.get("scope") or {}
+    return list(y.get("taxon") or DEFAULT_TAXA)
+
+
+def _resolve_genes(a) -> list:
+    """CLI --genes: a comma list, or @path/to/file (one gene symbol per line, '#'-comments ok)."""
+    g = getattr(a, "genes", None)
+    if not g:
+        return []
+    if g.startswith("@"):
+        with open(g[1:]) as fh:
+            return [l.strip() for l in fh if l.strip() and not l.startswith("#")]
+    return [s.strip() for s in g.split(",") if s.strip()]
 
 
 def run(a, ws) -> int:
@@ -148,11 +176,25 @@ def run(a, ws) -> int:
 
     def do_translate(m):
         kn = Knowledge(ws.get("knowledge"))
+        taxa = _resolve_taxa(a, ws)
+        genes = _resolve_genes(a)
         results = {}
         for s in sources:
+            scfg = sources_cfg.get(s, {})
+            gene_ids, gene_field = [], scfg.get("gene_scope_field", "")
+            if genes and gene_field:
+                # ncbigene is the only resolver wired up today (see scope.py); a source with a
+                # gene_scope_field but no matching resolver here still gets no gene_ids, so
+                # run_source's apply_gene_scope will not find its field mapped by identifiers
+                # that mean anything - safer to widen this dict as more resolvers are added than
+                # to guess a resolver by source name.
+                resolver = {"ncbigene": resolve_ncbigene_symbols}.get(s)
+                if resolver:
+                    gene_ids = resolver(genes, taxon=taxa[0])
             results[s] = run_source(m, os.path.join(ws["config_root"], s), os.path.join(out, s), kn,
-                                    sources_cfg.get(s, {}), include_guess=ws["include_guess"], limit=ws["limit"],
-                                    types=ws["types"], use_from=ws["use_from"])
+                                    scfg, include_guess=ws["include_guess"], limit=ws["limit"],
+                                    types=ws["types"], use_from=ws["use_from"], taxa=taxa,
+                                    gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier")
         return results
 
     def do_fetch():

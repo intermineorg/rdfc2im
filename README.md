@@ -58,6 +58,10 @@ make fork-sync                              # copy generated keys/additions into
 `rdfc2im.yaml` holds the paths and defaults (limit, include_guess, src_data_dir, ...).
 Every Makefile target is a one-line `python3 -m rdfc2im <cmd> ...` you can run directly.
 
+Default scope is human (NCBI taxon 9606) with no gene restriction - `translate --taxon 10090` or
+`--genes CYP2D6,TP53` narrows a build to another organism or a gene list without touching the
+committed mappings; see USAGE.md's "Build scope" section.
+
 ## How the translation decides
 
 For each rdf-config subject: source-specific knowledge > class `term=` URI matching a subject type

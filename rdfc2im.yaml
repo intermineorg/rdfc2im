@@ -16,3 +16,10 @@ limit: 20                                # 0 = no LIMIT (full extracts)
 types: root                              # root | union | all - where to emit `a <type>` triples
 extra_allow: curation/extra_allow.txt
 extensions: curation/extensions_additions.xml
+# scope:                                  # build-scope restriction; unset = human only, no gene list
+#   taxon: ["9606"]                       # NCBI taxon id(s); a source with no other species in its
+                                           # own data (HGNC, ClinVar, GWAS Catalog) is skipped, not
+                                           # mislabelled, when this is not ["9606"]. --taxon overrides.
+# Gene-list restriction has no workspace-file key (it is rarely fixed across every run the way
+# taxon is) - use `--genes SYM1,SYM2` or `--genes @path/to/list.txt` instead. Only sources
+# declaring `gene_scope_field` in sources.yaml support it; see scope.py.

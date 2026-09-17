@@ -184,9 +184,17 @@ class QueryBuilder:
 
 def _constraint(var: str, value: str) -> str:
     """A quoted literal is compared by string value (typed literals would not match a plain
-    VALUES); IRIs/CURIEs/numbers use VALUES."""
+    VALUES); IRIs/CURIEs/numbers use VALUES.
+
+    A value can hold more than one space-joined quoted literal (build-scope restriction to
+    several taxa on a source whose filter is FILTER-style rather than VALUES-style, e.g.
+    reactome's taxonomy_id) - those OR together. A single quoted value keeps the original
+    FILTER(STR(?x) = "...") form unchanged."""
     v = value.strip()
     if v.startswith('"'):
+        terms = re.findall(r'"(?:[^"\\]|\\.)*"', v)
+        if len(terms) > 1:
+            return "FILTER(" + " || ".join(f"STR(?{var}) = {t}" for t in terms) + ")"
         return f'FILTER(STR(?{var}) = {v})'
     return f"VALUES ?{var} {{ {v} }}"
 
