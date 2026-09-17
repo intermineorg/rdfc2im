@@ -607,3 +607,58 @@ PPIG and its real pseudogene PPIGP1, not CYP4F2. Unrelated searches (TPMT, VKORC
 significance", "rs123") still return real, sensible results. Response time is unaffected
 (~20ms). Templates and the QueryBuilder class list, both fixed earlier this session, are
 unaffected by any of this.
+
+## List widget investigation: mostly working, one real widget-statistics bug found
+
+Created two test lists to exercise the widgets that need one (`demo_panel_genes`, 113 genes;
+`demo_panel_snps`, 2505 SNPs - every SNP in the mine, since gwascatalog was fetched scoped to
+the panel genes in the first place) - left both in the mine as a reusable demo artifact rather
+than deleting them. REST list creation needs an authenticated session token (`/service/session`
+after `/service/user/authenticate`, then `?token=...` on every list call) and the identifiers
+must go as the raw POST body (`Content-Type: text/plain`), not a form field - the first few
+attempts 401'd or 500'd (a bare `NullPointerException` in `ListUploadService`) until landing on
+that shape.
+
+**Widgets with real underlying data:**
+
+- `publication_enrichment` (Gene) - works. 152 results with `correction=None` including real
+  overlaps (e.g. PMID 11099417, matched by both ABCG5 and ABCG8 - confirmed by hand first).
+  First attempt returned an empty result set with `wasSuccessful: true` and no error - traced to
+  passing `correction=Holm-Bonferroni`, not a name this widget recognises; it silently computes
+  zero matches instead of rejecting the parameter, worth knowing next time this needs checking by
+  hand.
+- `chromosome_distribution_for_gene` (chart) - works. Real actual-vs-expected counts per
+  chromosome for all 113 panel genes.
+- `snp_publication_enrichment` (SNP) - works. 1178 results, e.g. PMID 17293876 ("A genome-wide
+  association study identifies novel risk loci for type 2 diabetes"), matches=2.
+- `snp_gwas_study_enrichment` (SNP) - **genuinely broken**, but not a mine-infrastructure bug.
+  The response carries `wasSuccessful: true` and an empty result set, but also a `message`:
+  `number of successes (3,716) must be less than or equal to population size (2,311)` - the
+  underlying hypergeometric test rejects its own inputs. Root cause: GWASResult has no
+  integration key (already documented earlier this session - "its items are stored without
+  merging"), and a single real GWAS association can list more than one gene; each
+  (association, gene) pair becomes its own separate GWASResult item instead of one item with a
+  multi-valued gene collection, so the same real (SNP, study) pair is recorded as several
+  distinct GWASResult rows. Confirmed directly: 2828 of 23201 GWASResult rows are exact
+  duplicates of another row (same snpid, studyid, phenotype, p-value, risk allele), differing
+  only in which gene they point at (e.g. `snpid=25000004, studyid=25000003` appears twice,
+  identical in every other column). That inflates the "successes" count this one widget's
+  statistics see past what its "population" (distinct SNP count) supports. A proper fix needs a
+  real key-design decision for GWASResult (a key across SNP+study+phenotype+riskAllele, excluding
+  gene, so genes accumulate into a collection instead of splitting the object) followed by
+  re-integrating gwascatalog - given how much operational risk a re-integration carried earlier
+  in this same session (see the DataSource.url section above), this was not attempted; flagging
+  it as a decision point rather than forcing it.
+- `chromosome_distribution_for_snp` (chart) - **correctly empty, not broken**: confirmed
+  `snp.chromosomeid` is null on all 2505 rows - rdfc2im's gwascatalog mapping never populates
+  `SNP.chromosome` (same "no genomic Location/coordinate data loaded" gap the postprocessing
+  section above already found for the genomic-location-specific postprocess tasks).
+
+**Widgets already known to lack data - verified correctly empty, not silently broken:**
+`go_enrichment_for_gene`, `prot_dom_enrichment_for_gene`, `pathway_enrichment` (even with
+`filter=All`) and `interactions` (a `table`-type widget, not `enrichment` - needs
+`/service/list/table`, not `/service/list/enrichment`) all return `wasSuccessful: true`, zero
+results, and no `message`/`error` field - a clean, honest "no data" rather than a masked
+failure. `pathway_enrichment` being empty matches what `sources.yaml` already documents:
+rdfc2im's reactome source only ever creates `Pathway`/`Organism` items, never the
+`Gene.pathways` link stock reactome provides.
