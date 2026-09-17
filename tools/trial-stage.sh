@@ -40,6 +40,18 @@ if grep -rq "localhost:15432" "$ART/humanmine/WEB-INF/classes/intermine.properti
     echo "trial-stage: WARNING host DB address still present in intermine.properties" >&2
 fi
 
+# The war also bakes in a generic project.title at build time. This trial's own display
+# name is specific to whatever this run happens to be demoing (currently the 113-gene
+# food/drug-metabolism panel) - not something to bake into the war build itself, since
+# that source is shared with other contributors demoing other builds from the same repo.
+for f in WEB-INF/classes/intermine.properties WEB-INF/web.properties; do
+    if [ -f "$ART/humanmine/$f" ]; then
+        sed -i 's|^project.title=.*|project.title=rdfc2im: 113 gene food/drug-metabolism panel|' \
+            "$ART/humanmine/$f"
+        echo "  patched $f project.title"
+    fi
+done
+
 # ---- bluegenes ---------------------------------------------------------------
 echo "staging BlueGenes jars"
 rm -rf "$ART/bluegenes-lib"
