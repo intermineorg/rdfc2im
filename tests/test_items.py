@@ -107,3 +107,51 @@ def test_a_constant_attaches_through_its_declared_link(tmp_path):
     xref = xref[:xref.index("</item>")]
     assert '<reference name="source"' in xref, "the DataSource must hang off the CrossReference"
     assert not any("no link" in n for n in notes), notes
+
+
+def test_key_ambiguity_keeps_only_the_disambiguated_holder(tmp_path):
+    """STATUS.md D14: NCBI's own cross-reference data gives two distinct genes the same Ensembl
+    id - a real overlapping-transcript/antisense annotation (e.g. FOXL3 and FOXL3-OT1), not an
+    rdfc2im mapping error.  secondaryIdentifier is not ncbigene's own merge key (primaryIdentifier
+    is - see ItemStore.key_for), so both genes load as distinct items; but InterMine's own
+    key_secondaryidentifier_org assumes the field is unique across a source's output, and an
+    ambiguous value reaching it either fails the load or merges the wrong two Genes.
+    """
+    m = make_model(tmp_path)
+    out = tmp_path / "out"; (out / "tsv").mkdir(parents=True)
+    (out / "columns.tsv").write_text(textwrap.dedent("""\
+    table\tposition\tcolumn\tvariable\tim_class\tim_field\ttransform\tfilter\tvalue\tkind\tvia\tstatus\trequired
+    main\t0\tid\tid\tGene\tprimaryIdentifier\t\t\t\tliteral\t\tsure\tyes
+    main\t1\ttype\ttype\tGene\ttypeOfGene\t\t\t\tliteral\t\tsure\tno
+    main\t2\tc\t\tOrganism\ttaxonId\t\t\t9606\tconst\t\tsure\tno
+    main_dblink\t0\tid\tid\tGene\tprimaryIdentifier\t\t\t\tliteral\t\tsure\tyes
+    main_dblink\t1\tens\tens\tGene\tsecondaryIdentifier\t\t\t\tliteral\t\tsure\tno
+    main_dblink\t2\tc\t\tOrganism\ttaxonId\t\t\t9606\tconst\t\tsure\tno
+    """))
+    (out / "tsv" / "main.tsv").write_text(
+        "Gene.primaryIdentifier\tGene.typeOfGene\tOrganism.taxonId\n"
+        "1\tprotein-coding\t9606\n"    # FOXL3
+        "2\tncRNA\t9606\n"             # FOXL3-OT1 - shares FOXL3's Ensembl id
+        "3\tncRNA\t9606\n"             # a second ambiguous pair, neither side protein-coding
+        "4\tncRNA\t9606\n")
+    (out / "tsv" / "main_dblink.tsv").write_text(
+        "Gene.primaryIdentifier\tGene.secondaryIdentifier\tOrganism.taxonId\n"
+        "1\tENSG_A\t9606\n"
+        "2\tENSG_A\t9606\n"
+        "3\tENSG_B\t9606\n"
+        "4\tENSG_B\t9606\n")
+    cfg = {"key_ambiguity": {"Gene": {"field": "secondaryIdentifier",
+                                       "prefer_field": "typeOfGene", "prefer_value": "protein-coding"}}}
+    notes = []
+    emit_items(m, str(out), "t", cfg, log=notes.append)
+    xml = (out / "items" / "t.xml").read_text()
+
+    def gene(pid):
+        chunk = xml[xml.index(f'primaryIdentifier" value="{pid}"'):]
+        return chunk[:chunk.index("</item>")]
+
+    assert 'secondaryIdentifier" value="ENSG_A"' in gene("1"), "the protein-coding member keeps it"
+    assert "secondaryIdentifier" not in gene("2"), "its ncRNA partner does not"
+    assert "secondaryIdentifier" not in gene("3") and "secondaryIdentifier" not in gene("4"), \
+        "no principled winner between two ncRNAs - drop from both, not a coin flip"
+    assert any("blanked on 3 items" in n for n in notes), notes
