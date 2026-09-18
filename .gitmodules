@@ -1,0 +1,4 @@
+[submodule "report"]
+	path = report
+	url = https://github.com/ryneches/rdfc2im-report
+	update = none

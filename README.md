@@ -96,3 +96,14 @@ The predicate mapping is an SSSOM file (`mapping_predicates.sssom.tsv`): standar
 - **Why Items XML and not the delimited loader** (v0.1): see STATUS.md finding 1.
 
 See `out/_docs/STATUS.md` for the state of every source and the loader findings that shaped this.
+
+## Project report (optional submodule)
+
+The write-up of this project lives in its own repository,
+[ryneches/rdfc2im-report](https://github.com/ryneches/rdfc2im-report) (a BioHackrXiv template),
+mounted at `report/`. It is marked `update = none` in `.gitmodules`, so a plain clone or
+`git submodule update --init` leaves it empty. To fetch it:
+
+```sh
+git submodule update --init --checkout report
+```
