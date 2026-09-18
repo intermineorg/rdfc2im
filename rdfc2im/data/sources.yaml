@@ -50,10 +50,11 @@ uniprot:
   replaces: []
   alongside: [uniprot]
   data_source_name: UniProt
-  # UniProt's own native SPARQL endpoint (sparql.uniprot.org), not RDF Portal - see the
-  # Endpoint: comment in out/uniprot/queries/*.sparql - so the provenance link is UniProt's own
-  # site, not an RDF Portal dataset page.
-  data_source_url: https://www.uniprot.org/
+  # Fetched via RDF Portal's SIB mirror (out/uniprot/queries/*.sparql's Endpoint: comment says
+  # rdfportal.org/sib/sparql), not UniProt's own sparql.uniprot.org - the sparql.uniprot.org
+  # names in the queries are FROM-clause named graphs inside that RDF Portal dataset, not the
+  # endpoint the requests are actually sent to. Provenance link is RDF Portal's dataset page.
+  data_source_url: https://rdfportal.org/dataset/uniprot/
   # Not "Swiss-Prot": these queries do not filter on up:reviewed, so they return TrEMBL too
   # (20,431 reviewed vs 190,278 unreviewed human entries), which matches stock HumanMine - see
   # core:reviewed in knowledge.yaml.  Stock names two datasets, "Swiss-Prot data set" and
