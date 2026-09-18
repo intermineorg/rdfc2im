@@ -238,6 +238,26 @@ after 15+ minutes - not confirmed to ever finish in reasonable time, as opposed 
 `key_secondaryidentifier_org` should stay an active Gene merge key given real NCBI/Ensembl data,
 or what else should give, is a data-modelling decision for a human.
 
+**Resolved (D14, 2026-09-17)**, in a separate worktree so it could be investigated without
+touching the running mine mid-load. Checked every one of the 255 groups (531 NCBI records), not
+just the sample above, against `Gene.typeOfGene`: all are real overlapping-transcript/antisense
+pairs, but "prefer the protein-coding claimant" - the obvious rule from the sample - only resolves
+49 of the 255 (19%); the other 206 are ncRNA-vs-ncRNA/pseudogene pairs or have 2+ protein-coding
+claimants, with no principled winner. `rdfc2im/items.py` gained `resolve_key_ambiguity()`, driven
+by a `key_ambiguity` entry in `sources.yaml`'s `ncbigene` config: after a source's items are built,
+group a field's values by (value, organism); where a value is shared, keep it only where the
+configured disambiguator picks out exactly one holder, otherwise drop it from every holder in the
+group - matching `clean_table`'s existing "can't resolve cleanly -> drop, don't corrupt" rule, not
+a new one. Verified against the full 193,289-gene extract: `Gene.secondaryIdentifier` unique
+across every item (zero duplicates), 49 of 531 affected records keep their Ensembl cross-reference
+and 482 lose it, no unambiguous gene changed, `check` stays at 0 hard problems. Regression test:
+`test_key_ambiguity_keeps_only_the_disambiguated_holder`.
+
+**Not done**: the fix was verified against the regenerated items file, but never re-integrated
+into the running demo mine (still loaded from before the fix) - re-loading `ncbigene` to confirm
+this live, without disturbing the other 8 already-loaded sources, is on the Next Steps list in
+`STATUS.md`.
+
 **The actual thing this trial set out to verify - full-source-scale conflicts aside - is
 confirmed working.** A targeted 73-item subset (BRCA1 and TP53's Gene items plus their Organism/
 DataSet/DataSource/Synonym/CrossReference/Publication satellites, built by BFS from the two Gene
@@ -662,3 +682,22 @@ results, and no `message`/`error` field - a clean, honest "no data" rather than 
 failure. `pathway_enrichment` being empty matches what `sources.yaml` already documents:
 rdfc2im's reactome source only ever creates `Pathway`/`Organism` items, never the
 `Gene.pathways` link stock reactome provides.
+
+## MeSH's own endpoint has a row limit too, found refreshing STATUS.md's counts
+
+Not from a load - found re-fetching `hpo`/`mp`/`uberon`/`mesh` to refresh `STATUS.md`'s
+`fetched`/`items` columns after they'd gone stale (the demo mine's actual loaded MeshTerm count,
+3606, includes stubs PubMed's citations create too, so this was not otherwise visible).
+`mesh/main`'s plain `SELECT DISTINCT` (no `ORDER BY`, so none of the Sorted-TOP-cap machinery
+built for RDF Portal/TogoVar applies) against `https://id.nlm.nih.gov/mesh/sparql` returns exactly
+1000 rows and stops - `rdfc2im fetch`'s own pagination loop correctly read that as "fewer than a
+full page, must be done" and moved on, which is the right call for a paged endpoint but wrong
+here. Confirmed live: a plain `COUNT(*)` over `meshv:TopicalDescriptor` 502s (an unbounded
+aggregate crashing the upstream is not what a ~1000-row dataset does), and `LIMIT 1500` on the
+same query that returns cleanly at `LIMIT 1000` times out completely rather than truncating - a
+different failure shape from Virtuoso's clean 200,000-row cutoff or TogoVar's, and not yet
+root-caused (a real MeSH descriptor count is tens of thousands, so the fetched `out/mesh/` data is
+almost certainly incomplete, not just capped-and-honest). Not fixed: this needs its own live
+investigation (a working `OFFSET`/keyset strategy against this specific endpoint) before `mesh` is
+trustworthy at more than curation-sample scale. Recorded rather than chased further, since finding
+it was incidental to a documentation refresh, not a load.
