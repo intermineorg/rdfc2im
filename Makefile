@@ -27,6 +27,7 @@ trial-destroy: ; $(COMPOSE) down -v
 all:        ; $(PY) -m rdfc2im all --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG) $(GUESS) $(if $(FETCH),--fetch,)
 allow:      ; $(PY) -m rdfc2im allow
 translate:  ; $(PY) -m rdfc2im translate --limit $(LIMIT) $(SRCFLAG) $(GUESS)
+	$(PY) tools/gen_intermine_model_yaml.py $(SRCFLAG)
 fetch:      ; $(PY) -m rdfc2im fetch --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG)
 fetch-dry:  ; $(PY) -m rdfc2im fetch --dry-run --limit $(LIMIT) --iterate $(ITERATE) $(SRCFLAG)
 tsv:        ; $(PY) -m rdfc2im tsv $(SRCFLAG)

@@ -152,10 +152,23 @@ def generate_for_source(source):
 
 
 def main():
-    sources = sorted(
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--source", "-s", action="append",
+                     help="restrict to these rdf-config sources (default: every translated source)")
+    args = ap.parse_args()
+
+    all_sources = sorted(
         d for d in os.listdir(os.path.join(ROOT, "out"))
         if os.path.isdir(os.path.join(ROOT, "out", d)) and d != "_mine"
     )
+    if args.source:
+        unknown = set(args.source) - set(all_sources)
+        if unknown:
+            sys.exit(f"gen_intermine_model_yaml: unknown source(s): {', '.join(sorted(unknown))}")
+        sources = [s for s in all_sources if s in set(args.source)]
+    else:
+        sources = all_sources
     os.makedirs(OUT_DIR, exist_ok=True)
     ok, skipped = [], []
     for source in sources:
