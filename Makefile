@@ -35,7 +35,14 @@ items:      ; $(PY) -m rdfc2im items $(SRCFLAG)
 linkml:     ; $(PY) -m rdfc2im linkml
 project:    ; $(PY) -m rdfc2im project
 check:      ; $(PY) -m rdfc2im check
+
+# Plain `cp` has silently zeroed large files on this workspace's virtiofs mount (confirmed - not
+# just the cross-filesystem case first found copying into ~/intermine-build); `cat >` is the
+# proven-safe alternative. STATUS.md/CURATION_GUIDE.md at the repo root are committed snapshots
+# of out/_docs/ (itself gitignored) - this target is the only thing that refreshes them.
 docs:       ; $(PY) -m rdfc2im docs
+	cat out/_docs/STATUS.md > STATUS.md
+	cat out/_docs/CURATION_GUIDE.md > CURATION_GUIDE.md
 test:       ; $(PY) -m pytest -q tests 2>/dev/null || $(PY) tests/run.py
 # humanmine-items/build.gradle declares `resources { srcDirs = ['resources'] }` (the layout every
 # Java-less bio-source uses), so the keys/additions must land in resources/, not src/main/resources/.
