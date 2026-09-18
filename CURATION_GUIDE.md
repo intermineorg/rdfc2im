@@ -68,12 +68,11 @@ Set `im_class` to a concrete model class (or `role` to `skip`). A subject with n
 
 Each `todo` row's `comment` says why it is open. Set `object_id` to `intermine:Class.field` and `ext_status` to `human`, or set `ext_status` to `drop`.
 
-**clinvar** - 22 active rows (rows under a pruned branch are not listed):
+**clinvar** - 21 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Clinvar | `cvo:variation_id` | `id` | 209597 | ClinVar VariationID, the number inside the VCV accession; redundant with it unless keying changes - see cvo:accession |
-| Clinvar/classified_record/SIO_000628 | `cvo:allele_id` | `allele_id` | 205807 | the AlleleID stock clinvar keys Allele on (line[0]); map it here if Allele should keep stock identifiers - see cvo:accession |
 | Clinvar/classified_record/SIO_000628 | `cvo:canonical_spdi` | `spdi` | NC_000013.11:32314942:A:G | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
 | Clinvar/classified_record/SIO_000628 | `cvo:cytogenetic_location` | `variant_location` | 13q13.1 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
 | Clinvar/classified_record/SIO_000628/location | `faldo:position` | `position` | 32889080 | spec D13 - the stock converter loads no coordinates, so dropping matches HumanMine today; open only if we extend beyond stock |
@@ -195,15 +194,14 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification | `cvo:review_status` | `rcv_review_status` | `Allele.reviewStatus` | spec-section-8 |
 | Clinvar/classified_record/rcv_list/rcv_accession/rcv_classifications/germline_classification/description | `cvo:submission_count` | `rcv_submission_count` | `Allele.submissionCount` | spec-section-8 |
 
-**ensembl** - 5 guesses:
+**ensembl** - 4 guesses:
 
 | subject | predicate | column | -> | why I think so |
 |---|---|---|---|---|
 | EnsemblGene | `terms:has_biotype` | `ensg_biotype` | `Gene.typeOfGene` | ENSGLOSSARY ids; a lookup to the biotype label would be nicer |
-| EnsemblGene | `so:part_of` | `ensg_chromosome` | `Chromosome.primaryIdentifier` | chromosome IRI .../GRCh38/X -> X; HumanMine chromosomes are keyed primaryIdentifier+organism |
+| EnsemblGene | `so:part_of` | `ensg_chromosome` | `Chromosome.primaryIdentifier` | so:part_of is multi-valued and not chromosome-specific: a gene is part_of both its actual chromosome (.../110/homo_sapiens/GRCh38/1) and the assembly it belongs |
 | EnsemblGene | `skos:altLabel` | `ensg_altlabel` | `Synonym.value` | knowledge |
 | EnsemblGene | `rdfs:seeAlso` | `ensg_xref` | `CrossReference.identifier` | knowledge |
-| EnsemblGene | `-self-` | `EnsemblGene` | `Gene.primaryIdentifier` | no predicate carries the Gene key; using the local name of the subject IRI |
 
 **expressionatlas** - 1 guesses:
 

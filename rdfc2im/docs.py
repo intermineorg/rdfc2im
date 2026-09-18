@@ -98,7 +98,9 @@ def _write_status(ddir, per, ws, sources_cfg, out):
          "| `check` | runs (mapping vs model, `via` ranges, items ref_ids, keys); passes with 0 hard problems |",
          "| `humanmine-items` source | done: stock intermine-items-**large**-xml-file under its own type name + generated keys/additions; no Java |",
          "| `linkml` (HumanMine LinkML schema with corrected field terms) | done - `curation/linkml/humanmine.yaml`; not yet used by `check` |",
-         "| InterMine build + load | **done for `go`** - full extract loaded into a real mine; see LOAD-TRIAL.md |", "",
+         "| InterMine build + load | **done** - a working demonstration mine, 9 sources (`go`/`ncbigene`/`reactome` in full, "
+         "`hgnc`/`ensembl`/`uniprot`/`clinvar`/`gwascatalog` limited to a 113-gene panel, `pubmed` to their cited publications), "
+         "served with BlueGenes; see LOAD-TRIAL.md, and `report/paper/paper.md` for the write-up (BH26JP BioHackrXiv report) |", "",
          "## Per-source status", "",
          "Row statuses: **sure** = evidence in the uploads (term URI / Java converter / .properties / exact name); "
          "**guess** = my proposal from general knowledge; **todo** = you decide; **human** = your edit; "
@@ -130,13 +132,51 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "", "## Open decisions still with you", "",
           "D1 side-stepped (`typeOfGene` in `curation/extensions_additions.xml`); D2 `inSubset` rows are `todo`; "
           "D4 uniprot `classifiedWith`/GO is `sure` but flagged; D5 disease ids are `todo` in clinvar/hgnc; "
-          "D7 homologene `todo`; D12 GWAS year is a `guess` with a `regex` transform; D13 ClinVar coordinates are `link` rows (blank nodes) not mapped.",
+          "D7 homologene `todo`; D12 GWAS year is a `guess` with a `regex` transform; D13 ClinVar coordinates are `link` rows (blank nodes) not mapped; "
+          "D14 resolved (2026-09-17) - `Gene.key_secondaryidentifier_org` ambiguity fixed, see LOAD-TRIAL.md.",
           "", FINDINGS, "",
-          "## Next steps", "",
-          "1. Work through `CURATION_GUIDE.md` (unbound subjects first, then `todo` rows, then confirm `guess` rows).",
-          "2. `rdfc2im translate` after every editing pass; edits survive.",
-          "3. `rdfc2im fetch --limit 20` on a machine with network; `rdfc2im tsv`; `rdfc2im check`.",
-          "4. `rdfc2im items`, `make fork-sync`, install `humanmine-items/`, load the Phase 1 set with `out/_mine/project.xml`.",
+          "## Where this stands (2026-09-18)",
+          "",
+          "A demonstration HumanMine was built end to end - 9 sources, a 113-gene food/drug-metabolism panel, served live "
+          "with BlueGenes in containers - and written up as a BH26JP BioHackrXiv report (`report/` submodule; the finished "
+          "text is `report/paper/paper.md`, its Future Work section is the authoritative forward-looking list). Read the "
+          "paper first for the why and the overall shape; LOAD-TRIAL.md is the detailed, chronological technical record "
+          "(one section per source's first real load, in the order they were done) that the paper's Results and Table 3 "
+          "are drawn from.",
+          "",
+          "**The live demo mine does not persist across sandbox sessions.** Docker containers, the Postgres volumes, the "
+          "Solr index and the userprofile-only templates all live inside whatever sandbox built them; a fresh session "
+          "starts with none of it and must rebuild from LOAD-TRIAL.md's recipe (the `## Reproducing it` section covers "
+          "the original `go`-only trial; the fuller 9-source build's steps - postprocessing, the Solr service, template "
+          "SQL, `trial-stage.sh`'s jar patches - are recorded in the later per-source and `## Postprocessing and public "
+          "templates` sections of the same file, not yet consolidated into one script).",
+          "",
+          "## Next steps",
+          "",
+          "In priority order, matching the paper's Future Work:",
+          "",
+          "1. **Script the whole build**, from RDF to a running, fully-configured mine (postprocessing, Solr, templates, "
+          "the trimmed web configuration) - the paper calls this the most important next step, and LOAD-TRIAL.md has "
+          "every step it would need to encode, just not yet as one script.",
+          "2. **Re-load `ncbigene` with the D14 fix applied** and confirm live that the 255-gene ambiguity is actually "
+          "resolved in a running mine, not just in the regenerated items file - the fix was verified offline but never "
+          "re-integrated into the demo mine, to avoid disturbing an already-stable build.",
+          "3. **Give `GWASResult` a real integration key** (it has none today, so re-loading GWAS Catalog duplicates "
+          "rows - see LOAD-TRIAL.md's widget investigation) and review the DRAFT keys on `Pathway` and `MeshTerm`.",
+          "4. **Retrofit `DataSource.url` onto a live mine safely**, or always get it from a fresh build - the code fix "
+          "(`sources.yaml` + `items.py`) is durable and works for any new build, but patching it onto data already "
+          "loaded needs re-integration, which broke other sources' data-tracking when tried once (see LOAD-TRIAL.md).",
+          "5. Extend the demonstration: full-scale loads of the panel-limited sources, more of HumanMine's ~40 "
+          "datasets, and the open mapping decisions above (D1-D13).",
+          "6. Wire up a `gene_scope_field` resolver (`rdfc2im/scope.py`) for any source added after "
+          "hgnc/ensembl/uniprot/clinvar/gwascatalog/ncbigene - only those six have one today.",
+          "7. Work through `CURATION_GUIDE.md` for sources not yet touched by a real load (unbound subjects first, "
+          "then `todo` rows, then confirm `guess` rows) - the usual pre-load curation cycle for anything beyond the "
+          "demonstration panel.",
+          "8. **`mesh`'s own fetch is very likely incomplete** - `id.nlm.nih.gov/mesh/sparql` returns exactly 1000 "
+          "rows for `mesh/main` and stops, a different failure shape from the Virtuoso/TogoVar caps rdfc2im already "
+          "handles (a plain `COUNT(*)` 502s, `LIMIT 1500` times out rather than truncating) - see LOAD-TRIAL.md. "
+          "Needs its own investigation before `mesh` is trusted beyond curation-sample scale.",
           ""]
     with open(os.path.join(ddir, "STATUS.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(L))
