@@ -107,3 +107,7 @@ mounted at `report/`. It is marked `update = none` in `.gitmodules`, so a plain 
 ```sh
 git submodule update --init --checkout report
 ```
+
+## 2026 DBCLS BioHackathon Preprint
+
+Our preprint can be found here : [DOI:10.37044/osf.io/dqm3j_v1](https://doi.org/10.37044/osf.io/dqm3j_v1)
