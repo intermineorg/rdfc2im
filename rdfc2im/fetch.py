@@ -95,6 +95,13 @@ def fetch_query(query_path: str, out_path: str, timeout: int = 600, dry_run: boo
 
 
 def _normalise(body: bytes, fmt: str) -> bytes:
+    if not body.strip():
+        # A genuinely empty body is a valid "zero rows" response regardless of the nominal
+        # format - confirmed live against id.nlm.nih.gov/mesh/sparql, which sends one past its
+        # last real page (HTTP 200, Content-Length: 0) rather than an empty JSON results object.
+        # json.loads("") raised before this was handled, turning a legitimate end-of-data signal
+        # into a crash.
+        return b""
     fmt = _sniff(body, fmt)
     if fmt == "text/csv":
         return _csv_to_tsv(body)
@@ -244,6 +251,21 @@ def _try_batching(base_noorder, ep, out_path, timeout, sleep, log, cap_desc) -> 
     return _fetch_batched_text(base_noorder, ep, out_path, keyvar, keys, timeout, sleep, DEFAULT_BATCH_SIZE, log)
 
 
+def _more_after(base: str, ep: str, offset: int, timeout: int) -> bool:
+    """Is there a row past `offset`? A cheap `LIMIT 1 OFFSET offset` probe, used only when a page
+    came back shorter than requested - the normal signal that the table is exhausted, but not the
+    only endpoint behaviour that produces it. Confirmed live against id.nlm.nih.gov/mesh/sparql:
+    a request for more than 1000 rows is silently truncated to exactly 1000, with a plain HTTP 200
+    and no error to detect (unlike Virtuoso's Sorted TOP cap, which at least fails loudly) - so a
+    short page there means "this endpoint's own per-request ceiling", not "end of table". Returns
+    False (assume genuinely done) on any fetch error, to avoid looping forever on a flaky probe."""
+    body, fmt, err = _fetch_once(base + f"LIMIT 1 OFFSET {offset}\n", ep, timeout)
+    if body is None:
+        return False
+    lines = _normalise(body, fmt).split(b"\n")
+    return len(lines) > 1 and bool(lines[1].strip())
+
+
 def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
     """LIMIT page OFFSET k*page until a short page; LIMIT (total) still caps the extract.
 
@@ -316,6 +338,13 @@ def _fetch_paged(q, ep, out_path, timeout, sleep, limit, page, log, t0):
             log(f"    page {k + 1}: {len(rows)} rows (total {total})")
             k += 1
             if len(rows) < size:
+                if rows and _more_after(base, ep, offset + len(rows), timeout):
+                    log(f"    {out_path}: page {k} returned {len(rows)} < the {size} requested, "
+                        f"but a probe past it found more rows - this endpoint silently truncates "
+                        f"a request past {len(rows)} rather than erroring like Virtuoso's Sorted "
+                        f"TOP cap; continuing with page size {len(rows)} instead of stopping")
+                    page = len(rows)
+                    continue
                 break
             if limit and total >= int(limit):
                 log(f"    (LIMIT {limit} reached; more rows exist)")

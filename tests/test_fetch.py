@@ -31,6 +31,46 @@ def test_order_by_and_sniff():
     assert _sniff(b'{"head":{}}', "text/tab-separated-values") == "application/sparql-results+json"
     assert _sniff(b'"a"\t"b"\n', "text/csv") == "text/tab-separated-values"
 
+def test_paged_fetch_recovers_all_rows_past_a_silent_per_request_truncation(tmp_path):
+    """Regression for id.nlm.nih.gov/mesh/sparql: unlike Virtuoso's Sorted TOP cap, this endpoint
+    never errors - a request for more rows than its own ceiling just silently returns fewer, with
+    an ordinary HTTP 200. The old code read "got fewer than requested" as "reached the end of the
+    table" unconditionally, so a genuinely larger table (here 20 rows, silently capped at 6 per
+    request, first page asked for 10) was silently truncated to one short page and reported as
+    fully fetched. Paging must instead probe past a short page before believing it, discover the
+    true per-request ceiling, and keep going at that smaller page size until the table is really
+    exhausted - recovering every row, not just the first truncated page."""
+    rows = [(str(i), f"v{i}") for i in range(1, 21)]  # 20 real rows
+    TRUNCATE_AT = 6  # this fake endpoint never returns more than this, no matter what's asked
+
+    def fake_fetch_once(q, ep, timeout):
+        if "COUNT(*)" in q:
+            return None, None, "count unavailable in this fake endpoint"  # forces the OFFSET fallback
+        off_m = re.search(r"OFFSET (\d+)", q)
+        lim_m = re.search(r"LIMIT (\d+)", q)
+        offset, lim = int(off_m.group(1)), int(lim_m.group(1))
+        page_rows = rows[offset: offset + min(lim, TRUNCATE_AT)]  # silent truncation, no error
+        body = b"?id\t?val\n" + b"\n".join(f'"{i}"\t"{v}"'.encode() for i, v in page_rows)
+        if page_rows:
+            body += b"\n"
+        return body, "text/tab-separated-values", None
+
+    orig_once = fetch_mod._fetch_once
+    fetch_mod._fetch_once = fake_fetch_once
+    try:
+        q = "SELECT DISTINCT ?id ?val\nWHERE {\n  ?s ?p ?id .\n  ?s ?q ?val .\n}\n"
+        out = tmp_path / "out.tsv"
+        # page=10, bigger than TRUNCATE_AT=6, so the very first request already gets truncated
+        status = fetch_mod._fetch_paged(q, "http://fake/sparql", str(out), 30, 0, None, 10, lambda *a, **k: None, 0)
+    finally:
+        fetch_mod._fetch_once = orig_once
+
+    assert status == "fetched"
+    lines = out.read_text().splitlines()
+    assert lines[0] == "?id\t?val"
+    # every real row recovered, in order, nothing missing and nothing fabricated
+    assert [tuple(l.split("\t")) for l in lines[1:]] == [(f'"{i}"', f'"v{i}"') for i in range(1, 21)]
+
 def test_paged_fetch_stops_loudly_at_the_sorted_top_cap_instead_of_truncating_silently(tmp_path):
     """Regression for the Virtuoso "Sorted TOP" cap: a table whose true size exceeds the cap
     used to have its last page's request simply fail and get swallowed as an ordinary "partial"
