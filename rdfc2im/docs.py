@@ -173,10 +173,6 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "7. Work through `CURATION_GUIDE.md` for sources not yet touched by a real load (unbound subjects first, "
           "then `todo` rows, then confirm `guess` rows) - the usual pre-load curation cycle for anything beyond the "
           "demonstration panel.",
-          "8. **`mesh`'s own fetch is very likely incomplete** - `id.nlm.nih.gov/mesh/sparql` returns exactly 1000 "
-          "rows for `mesh/main` and stops, a different failure shape from the Virtuoso/TogoVar caps rdfc2im already "
-          "handles (a plain `COUNT(*)` 502s, `LIMIT 1500` times out rather than truncating) - see LOAD-TRIAL.md. "
-          "Needs its own investigation before `mesh` is trusted beyond curation-sample scale.",
           ""]
     with open(os.path.join(ddir, "STATUS.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(L))

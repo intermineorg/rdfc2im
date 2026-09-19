@@ -695,9 +695,25 @@ full page, must be done" and moved on, which is the right call for a paged endpo
 here. Confirmed live: a plain `COUNT(*)` over `meshv:TopicalDescriptor` 502s (an unbounded
 aggregate crashing the upstream is not what a ~1000-row dataset does), and `LIMIT 1500` on the
 same query that returns cleanly at `LIMIT 1000` times out completely rather than truncating - a
-different failure shape from Virtuoso's clean 200,000-row cutoff or TogoVar's, and not yet
-root-caused (a real MeSH descriptor count is tens of thousands, so the fetched `out/mesh/` data is
-almost certainly incomplete, not just capped-and-honest). Not fixed: this needs its own live
-investigation (a working `OFFSET`/keyset strategy against this specific endpoint) before `mesh` is
-trustworthy at more than curation-sample scale. Recorded rather than chased further, since finding
-it was incidental to a documentation refresh, not a load.
+different failure shape from Virtuoso's clean 200,000-row cutoff or TogoVar's: no error at all, a
+plain HTTP 200 silently short of what was asked for.
+
+**Resolved.** `LIMIT`/`OFFSET` paging in chunks at or below the true per-request ceiling works
+correctly here - confirmed live with `LIMIT 1000 OFFSET 1000` and `OFFSET 2000`, each returning
+real, distinct, correctly-ordered rows (`ORDER BY ?descriptor_id`, the variable `_order_by`
+already adds). The fix is a general one, not specific to this endpoint: `_fetch_paged` now treats
+a short page as ambiguous rather than conclusive - when a page returns fewer rows than requested,
+a cheap `LIMIT 1 OFFSET <past this page>` probe checks whether more data exists before believing
+"done". If it does, the returned row count becomes the new page size for every request from then
+on, and paging continues; if not, this is a real end and the existing behaviour is unchanged. Also
+found and fixed while making this work end to end: this endpoint sends a **genuinely empty body**
+(`Content-Length: 0`, still HTTP 200) as its real end-of-data signal one page past the last real
+one, which `_normalise`/`_json_to_tsv` crashed on (`json.loads("")`) rather than reading as zero
+rows - a latent bug that this endpoint's page-1 truncation is what first made reachable, since
+without the retry-at-a-smaller-page-size fix `_fetch_paged` never paged far enough to hit it.
+
+Verified end to end: `mesh/main` now fetches 10,000 rows across 11 pages (was silently capped at
+1,000) and terminates on a real empty final page, not another truncation; `mesh` builds 9,809
+`MeshTerm` items (was 968); `check` stays at 0 hard problems; a new regression test
+(`test_paged_fetch_recovers_all_rows_past_a_silent_per_request_truncation`) pins the general
+behaviour down independent of this one endpoint.
