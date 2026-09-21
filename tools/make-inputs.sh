@@ -35,15 +35,36 @@ clone https://github.com/intermine/intermine.git             intermine --filter=
 clone https://github.com/intermine/humanmine.git             humanmine
 clone https://github.com/intermine/humanmine-bio-sources.git humanmine-bio-sources
 
+# copy_tree SRC DST: copy SRC's contents into DST, leaving out .git, and check the result.
+# in/ never needs a .git (the clones stay in $CACHE), and copying one is what broke this script:
+# a plain `cp -r` of a clone failed on its read-only pack file on the virtiofs workspace mount
+# ("failed to extend ... pack: Permission denied", a 0-byte pack left behind) - for a directory
+# the script then deleted anyway. tar streams through read/write rather than cp's fast path, and
+# the checksum comparison is because plain `cp` has also been seen to write the right number of
+# NULs on that mount without failing.
+copy_tree() {
+    mkdir -p "$2"
+    (cd "$1" && tar --exclude=.git -cf - .) | (cd "$2" && tar -xf -)
+    want=$(cd "$1" && find . -name .git -prune -o -type f -exec md5sum {} + | sort -k2)
+    got=$(cd "$2" && find . -type f -exec md5sum {} + | sort -k2)
+    if [ "$want" != "$got" ]; then
+        echo "ERROR: copying $1 to $2 did not produce identical files" >&2
+        exit 1
+    fi
+}
+
+copy_file() {                   # copy_file SRC DST - a small file, checked
+    cp "$1" "$2"
+    cmp -s "$1" "$2" || { echo "ERROR: copying $1 to $2 did not produce an identical file" >&2; exit 1; }
+}
+
 echo "assembling in/"
 rm -rf in/config in/intermine in/humanmine-bio-sources
-cp -r "$CACHE/rdf-config/config"                in/config
-mkdir -p in/intermine
-cp -r "$CACHE/intermine/bio"                    in/intermine/bio
-cp -r "$CACHE/humanmine-bio-sources"            in/humanmine-bio-sources
-rm -rf in/humanmine-bio-sources/.git
-cp    "$CACHE/humanmine/project.xml"            in/humanmine_project.xml
-cp    "$CACHE/humanmine/dbmodel/resources/genomic_priorities.properties" in/humanmine_priorities.properties
+copy_tree "$CACHE/rdf-config/config"       in/config
+copy_tree "$CACHE/intermine/bio"           in/intermine/bio
+copy_tree "$CACHE/humanmine-bio-sources"   in/humanmine-bio-sources
+copy_file "$CACHE/humanmine/project.xml"   in/humanmine_project.xml
+copy_file "$CACHE/humanmine/dbmodel/resources/genomic_priorities.properties" in/humanmine_priorities.properties
 
 # The live model is the merged, deployed model - it has no upstream file.
 for fmt in xml json; do

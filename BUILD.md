@@ -148,6 +148,8 @@ Useful options:
 | `--genes FILE` | Gene panel for the panel-scoped sources (default `curation/demo_gene_panel.txt`) |
 | `--taxon LIST` | NCBI taxon ids (default `9606`) |
 | `--skip-templates` | Do not apply `curation/demo_public_templates.sql` |
+| `--use-cached-data` | Restore the fetched raw data from `cached_raw_data/` instead of fetching it again (see below) |
+| `--cache-dir DIR` | Use `DIR` instead of `cached_raw_data/` |
 
 `--from` and `--only` always run `check_prereqs` first regardless, because that phase is what
 sets the `JAVA_HOME` override the Gradle calls need.
@@ -156,6 +158,37 @@ Key environment variables (see the script header for the rest): `TRIAL_HOME` (sc
 the upstream checkouts and Gradle output, default `~/intermine-build/trial_home`),
 `UPSTREAM_CACHE` (default `in/.upstream`), `JAVA8_HOME`, `GRADLE49`, `COMPOSE`, `PG_PORT`,
 `BG_PORT`, `SOLR_PORT`, `MINE_TITLE`.
+
+### Caching the fetched data
+
+The slow, remote part of a build is the SPARQL extraction (phase 3) plus one download (phase 6).
+Every normal run saves what it fetched to `cached_raw_data/` (gitignored, in the repository root -
+so on a sandbox it is on the host side of the workspace mount and outlives the sandbox), and
+
+```sh
+tools/full-build.sh --use-cached-data
+```
+
+restores it instead of touching the network for that data. (Phase 2, the upstream git clones and
+the live HumanMine model, is not covered by the cache.)
+
+Layout: one directory per source (`go/`, `ncbigene/`, ...) plus `reactome-uniprot-map/`, each
+holding `data/` (the files), `MD5SUMS` (`cd cached_raw_data/go && md5sum -c MD5SUMS` works) and
+`META.json`. `python3 -m rdfc2im cache list|verify|save|restore` manages it directly.
+
+Two guards, both because of failures this project has had:
+
+- **Copies are verified.** Plain `cp` has silently turned a file into the same number of NUL bytes
+  on the virtiofs workspace mount. Every copy into or out of the cache hashes what it read,
+  re-reads what it wrote and compares before renaming into place; a bad copy is retried, then
+  fails the build - it never leaves a wrong file under the real name. Restore also checks the
+  cached files against `MD5SUMS` first.
+- **A cache records what it was fetched for** - scope mode, taxon, and the md5 of the gene panel
+  (for `pubmed`, of the cited-PMID list) - and a restore whose build needs something different is
+  refused, rather than quietly building a different mine from the wrong data.
+
+If the cache is missing, incomplete or corrupt, `--use-cached-data` stops with the reason; drop
+the option to fetch afresh and re-save.
 
 ### The phases
 
