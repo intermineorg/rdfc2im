@@ -876,7 +876,19 @@ phase_postprocess() {
 }
 
 phase_build_webapp() {
-  run_in "$TRIAL_HOME/humanmine" "${GRADLE_ENV[@]}" ./gradlew :webapp:war
+  local mine="$TRIAL_HOME/humanmine"
+  # Run copyWebappContent once on its own FIRST, so it has a history when the war build runs it.
+  # unwarBioWebApp expands the bio-webapp war into build/explodedWebApp; copyWebappContent then
+  # copies src/main/webapp into the same directory - its declared output. Gradle treats a task
+  # with no history as owning nothing that already exists in its output directory and removes it,
+  # so on the very first :webapp:war of a fresh checkout the copy deleted what the unwar had just
+  # produced (2739 files down to 5, web.xml among the losses) and warWebApp died with "File
+  # .../explodedWebApp/WEB-INF/web.xml specified for property 'webXml' does not exist". Any later
+  # run has a history and passes, which is exactly why hand-run sessions never saw it: they had
+  # always run the task at least once already. With the history in place :webapp:war's own unwar ->
+  # copy sequence then leaves both sets of files - the war's, overlaid by src/main/webapp's.
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :webapp:copyWebappContent
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :webapp:war
 }
 
 phase_resolve_bluegenes_deps() {

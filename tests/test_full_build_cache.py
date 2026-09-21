@@ -173,3 +173,21 @@ def test_build_dbmodel_discards_the_previous_generated_model_before_regenerating
     rm = next(i for i, c in enumerate(cmds) if c.startswith("rm -rf ") and c.endswith("/humanmine/dbmodel/build"))
     builddb = next(i for i, c in enumerate(cmds) if ":dbmodel:builddb" in c)
     assert rm < builddb
+
+
+def test_build_webapp_gives_copywebappcontent_a_history_before_building_the_war(tmp_path):
+    """Phase 13 failed on a from-scratch checkout and passed when simply run again:
+        File '.../webapp/build/explodedWebApp/WEB-INF/web.xml' specified for property 'webXml' does
+        not exist.
+    unwarBioWebApp expands the bio-webapp war into explodedWebApp, and copyWebappContent - whose
+    declared output is that same directory - runs after it. A task with no history has its existing
+    outputs treated as stale and removed, so on the very first run Gradle deleted what the unwar had
+    just produced (web.xml, struts-config, ... - 2739 files down to 5). On any later run the copy has
+    a history and nothing is removed. Running copyWebappContent once first gives it one."""
+    plan = _plan(tmp_path, "--only", "build_webapp")
+    if plan is None:
+        return
+    gradle = [c for c in _cmds(plan) if "./gradlew" in c]
+    prime = next(i for i, c in enumerate(gradle) if ":webapp:copyWebappContent" in c)
+    war = next(i for i, c in enumerate(gradle) if ":webapp:war" in c)
+    assert prime < war, gradle
