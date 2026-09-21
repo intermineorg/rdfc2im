@@ -330,6 +330,77 @@ GRADLE"
   run_in "$bio" "${GRADLE_ENV[@]}" ./gradlew :bio-source-humanmine-items:install
 }
 
+# Builds and installs org.intermine:bio-source-reactome:5.0.8 into the local Maven repo, in one
+# of two modes - the same project, built twice, because of a genuine chicken-and-egg:
+#
+#   converter-only  ReactomeConverter alone. Needed BEFORE :dbmodel:builddb, because
+#                   addSourceDependencies resolves bio-source-<type> for every source in
+#                   project.xml, and before integrate_sources, which actually runs the converter.
+#                   ReactomeConverter itself only uses the generic Item API, so it compiles with
+#                   no mine-specific classes - which is why this mode works this early.
+#   with-postprocess  Adds ReactomePostProcess, which imports org.intermine.model.bio.Pathway.
+#                   Confirmed live: Pathway is NOT in the stock bio-model jar (Gene and Protein
+#                   are) - it is contributed by reactome_additions.xml, so it exists only in the
+#                   mine's OWN generated dbmodel.jar, which does not exist until builddb has run.
+#                   Hence the second build, from phase_postprocess.
+#
+# group/version match exactly what IntegratePlugin.groovy resolves for a project.xml
+# <source type="reactome"> entry with no explicit version="..." attribute: "bio-source-" + type,
+# at bioVersion (5.0.8, confirmed live - the same version already resolved and cached for
+# bio-model/intermine-integrate elsewhere in this build).
+_install_reactome_jar() {
+  local mode=$1
+  local build="$TRIAL_HOME/reactome-source"
+  local dbmodel_jar="$TRIAL_HOME/humanmine/dbmodel/build/libs/dbmodel.jar"
+  local src_java="java { srcDirs = ['src/main/java']; exclude '**/postprocess/**' }"
+  local extra_dep=""
+  if [ "$mode" = "with-postprocess" ]; then
+    src_java="java { srcDirs = ['src/main/java'] }"
+    extra_dep="    compile files('$dbmodel_jar')"
+  fi
+  write_file "$build/build.gradle" "$(cat <<GRADLE
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'org.intermine'
+version = '5.0.8'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        $src_java
+        resources { srcDirs = ['src/main/resources'] }
+    }
+}
+
+processResources {
+    from('.') { include('*.properties') }
+}
+
+dependencies {
+    // bio-core provides org.intermine.bio.util.*/BioFileConverter - not in reactome's own
+    // build.gradle dependencies block (confirmed live: compileJava failed without it, "package
+    // org.intermine.bio.util does not exist") because intermine/bio's real root build.gradle
+    // applies it to every bio/sources/* subproject via its own subprojects{} block; this
+    // standalone build has no such parent, so it's declared explicitly here instead.
+    compile group: 'org.intermine', name: 'bio-core', version: '5.0.8', transitive: false
+    compile group: 'org.intermine', name: 'bio-model', version: '5.0.8', transitive: false
+    compile group: 'org.intermine', name: 'intermine-integrate', version: '5.0.+'
+    runtime fileTree(dir: 'libs', include: '*.jar')
+$extra_dep
+}
+GRADLE
+)"
+  write_file "$build/settings.gradle" "rootProject.name = 'bio-source-reactome'"
+  run_in "$build" "${GRADLE_ENV[@]}" "$GRADLE49" install
+}
+
 phase_build_reactome_source() {
   # Stock reactome (type="reactome", org.intermine:bio-source-reactome) - our own
   # humanmine-reactome only maps Pathway.description, no participants (unmapped/pruned
@@ -349,52 +420,7 @@ phase_build_reactome_source() {
   # <source type="reactome"> entry with no explicit version="..." attribute: "bio-source-" +
   # type, at bioVersion (5.0.8, confirmed live - the same version already resolved and cached
   # for bio-model/intermine-integrate elsewhere in this build).
-  write_file "$build/build.gradle" "$(cat <<'GRADLE'
-apply plugin: 'java'
-apply plugin: 'maven'
-
-group = 'org.intermine'
-version = '5.0.8'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-sourceSets {
-    main {
-        // ReactomePostProcess.java needs org.intermine.model.bio.Pathway - a class InterMine
-        // generates fresh per mine from its own merged model (dbmodel:generateModel), not
-        // something a standalone build of this one source can produce or depend on. Harmless to
-        // drop: phase_postprocess never runs source-specific postprocessors (no `do-sources`
-        // task), so this class would never be loaded anyway - only the converter
-        // (ReactomeConverter, needs no generated model classes) actually gets used.
-        java { srcDirs = ['src/main/java']; exclude '**/postprocess/**' }
-        resources { srcDirs = ['src/main/resources'] }
-    }
-}
-
-processResources {
-    from('.') { include('*.properties') }
-}
-
-dependencies {
-    // bio-core provides org.intermine.bio.util.*/BioFileConverter - not in reactome's own
-    // build.gradle dependencies block (confirmed live: compileJava failed without it, "package
-    // org.intermine.bio.util does not exist") because intermine/bio's real root build.gradle
-    // applies it to every bio/sources/* subproject via its own subprojects{} block; this
-    // standalone build has no such parent, so it's declared explicitly here instead.
-    compile group: 'org.intermine', name: 'bio-core', version: '5.0.8', transitive: false
-    compile group: 'org.intermine', name: 'bio-model', version: '5.0.8', transitive: false
-    compile group: 'org.intermine', name: 'intermine-integrate', version: '5.0.+'
-    runtime fileTree(dir: 'libs', include: '*.jar')
-}
-GRADLE
-)"
-  write_file "$build/settings.gradle" "rootProject.name = 'bio-source-reactome'"
-  run_in "$build" "${GRADLE_ENV[@]}" "$GRADLE49" install
+  _install_reactome_jar converter-only
 
   # Data: reactome's own project.xml entry expects a plain UniProt-to-pathway mapping file
   # under src.data.dir (a directory, not a single named file - have.file.custom.tgt processes
@@ -702,6 +728,26 @@ phase_postprocess() {
   for task in create-references create-attribute-indexes; do
     run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess="$task"
   done
+  # Gene.pathways is populated ONLY by reactome's own source postprocessor - stock
+  # reactome_additions.xml says so in as many words ("<!-- populated by postprocess -->" above
+  # its Gene class), and ReactomePostProcess's javadoc is literally "Copy over Protein.pathways
+  # to Gene.pathways": it derives the gene-level links by walking Gene<->Protein over the
+  # protein-level ones the converter loaded. Without it, genespathways stays empty (confirmed
+  # live: 0 rows) even though pathwayproteins is fully populated.
+  #
+  # Two things are needed, in this order. First rebuild the jar WITH the postprocessor class,
+  # now that builddb has produced the mine's own dbmodel.jar to compile it against (see
+  # _install_reactome_jar's header for the chicken-and-egg this resolves).
+  _install_reactome_jar with-postprocess
+  # Then run it. `do-sources` is the ONLY task that dispatches source-specific postprocessors
+  # (PostProcessPlugin.groovy: every other process name goes down the "core postprocess" branch
+  # instead). It is NOT being run blind/umbrella-wide here - that same plugin reads an optional
+  # `-Psource=` and restricts itself to exactly those sources (line 75-82: an empty value is
+  # what makes it iterate every source in project.xml). Scoping it to reactome alone keeps the
+  # existing "do-sources is too broad to run blind" caution intact while still getting this one
+  # source's postprocessor run - confirmed live: logs "Performing source postprocess on
+  # reactome" and nothing else.
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess=do-sources -Psource=reactome
   # solr-search-schema-fix.sh must run AFTER a first create-search-index pass, not before:
   # confirmed live, calling it against a freshly created empty core 400s with "The field type
   # 'analyzed_string' is not present in this schema, and so cannot be replaced" - Solr's
