@@ -563,3 +563,76 @@ def test_project_covers_only_the_requested_sources_not_every_stale_directory(tmp
     assert "AnatomyTerm" not in classes, "a class only the unrequested source needs leaked into the mine"
     names, classes = run(None)                 # no restriction: everything translated, as before
     assert names == ["humanmine-hgnc", "humanmine-uberon"] and "AnatomyTerm" in classes
+
+
+# ---- link fields must be carried too
+
+def _link_setup(tmp_path, cols):
+    """A working model where Protein.keywords exists only in a stock source's additions - the way
+    HumanMine's uniprot_additions.xml declares it - and in the live model."""
+    from rdfc2im.model import InterMineModel as IM
+    (tmp_path / "core.xml").write_text(LIVE_MODEL)
+    (tmp_path / "uniprot_additions.xml").write_text(
+        '<classes><class name="Protein" is-interface="true">'
+        '<collection name="keywords" referenced-type="OntologyTerm"/></class></classes>')
+    (tmp_path / "live.xml").write_text(LIVE_MODEL.replace(
+        '<attribute name="primaryAccession" type="java.lang.String"/>',
+        '<attribute name="primaryAccession" type="java.lang.String"/>'
+        '<collection name="keywords" referenced-type="OntologyTerm"/>'))
+    (tmp_path / "k_keys.properties").write_text(
+        "OntologyTerm.key_identifier=identifier\nProtein.key_primaryaccession=primaryAccession\n")
+    m = IM()
+    m.load_xml(str(tmp_path / "core.xml")); m.load_xml(str(tmp_path / "uniprot_additions.xml"))
+    m.load_keys(str(tmp_path / "k_keys.properties")); m.finalize()
+    m.live = IM(); m.live.load_xml(str(tmp_path / "live.xml")); m.live.finalize()
+    out_root = tmp_path / "out"; (out_root / "uniprot").mkdir(parents=True)
+    write_tsv(str(out_root / "uniprot" / "columns.tsv"), cols, COL_COLUMNS)
+    return m, str(out_root), str(tmp_path / "_mine")
+
+
+def _carried(tmp_path, cols):
+    from rdfc2im.project import gen_project
+    m, out_root, mine = _link_setup(tmp_path, cols)
+    gen_project(out_root, mine, m, "humanmine-items", "/data", None, {}, None,
+                source_version="4.3.0", log=lambda *a: None)
+    add = etree.parse(os.path.join(mine, "humanmine-items_additions.xml")).getroot()
+    return {(c.get("name"), f.get("name")) for c in add.iter("class") for f in c if isinstance(f.tag, str)}
+
+
+def test_an_explicit_link_field_only_a_dropped_stock_source_declares_is_carried(tmp_path):
+    """The third fresh full-build.sh run died loading humanmine-uniprot:
+        Collection not found in class: Protein.keywords while translating Item with identifier 0_3
+    Protein.keywords comes from stock uniprot's additions, which the reduced mine drops. It is
+    reached through a column's `via`, not written as a column of its own, and the carry step only
+    looked at columns' own Class.field - so nothing declared it. (Protein.ecNumbers, Allele.diseases
+    and Pathway.dataSets had each been patched by hand for this same reason after a failed load;
+    the earlier scripted run never hit keywords only because its uniprot data had none.)"""
+    got = _carried(tmp_path, [
+        _col(0, "Protein", "primaryAccession", required="yes"),
+        _col(1, "OntologyTerm", "identifier", via="Protein.keywords"),
+    ])
+    assert ("Protein", "keywords") in got, got
+
+
+def test_an_inferred_link_field_is_carried_too(tmp_path):
+    """No `via` on the column: items.py links it through the first compatible field of the root."""
+    got = _carried(tmp_path, [
+        _col(0, "Protein", "primaryAccession", required="yes"),
+        _col(1, "OntologyTerm", "identifier"),
+    ])
+    assert ("Protein", "keywords") in got, got
+
+
+def test_a_link_field_the_core_model_always_has_is_not_redeclared(tmp_path):
+    from rdfc2im.project import gen_project
+    m, out_root, mine = _link_setup(tmp_path, [
+        _col(0, "Protein", "primaryAccession", required="yes"),
+        _col(1, "OntologyTerm", "identifier", via="Protein.keywords"),
+    ])
+    # make keywords core, as if genomic core declared it
+    m.classes["Protein"].fields["keywords"].source_file = str(tmp_path / "core.xml")
+    gen_project(out_root, mine, m, "humanmine-items", "/data", None, {}, None,
+                source_version="4.3.0", log=lambda *a: None)
+    add = etree.parse(os.path.join(mine, "humanmine-items_additions.xml")).getroot()
+    assert ("Protein", "keywords") not in {(c.get("name"), f.get("name")) for c in add.iter("class") for f in c
+                                          if isinstance(f.tag, str)}
