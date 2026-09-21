@@ -11,8 +11,11 @@ script's own header comment (`sed -n '1,65p' tools/full-build.sh`, or `tools/ful
 covers what you have to provide, what to expect, and what to do when it goes wrong.
 
 It was written from the record of many hand-run sessions (`LOAD-TRIAL.md`) and first run for
-real on 2026-09-21, which surfaced and fixed about thirty genuine bugs. Everything below is
-from that run, not from reading the script.
+real on 2026-09-21, which surfaced and fixed about thirty genuine bugs. It was then run again
+from scratch in a different sandbox the same day - new checkout state, new Docker volumes, a
+new `TRIAL_HOME`, a workspace still holding derived files from earlier sessions - which found
+ten more (see "A second, from-scratch run" below). Everything here is from those runs, not
+from reading the script.
 
 ## What you get
 
@@ -273,6 +276,48 @@ clinvar      4m39s        reactome     1m13s        ncbigene       20s
 gwascatalog  1m15s        go           1m03s        ensembl         8s
 uniprot        56s        hgnc           50s        pubmed       (varies with the cited-PMID set)
 ```
+
+### A second, from-scratch run
+
+Run on 2026-09-21 in a sandbox whose only carry-over was the repository and the package caches.
+It reached `verify` after **ten** fixes, each with a test that failed beforehand
+(`make test`: 108 passed / 6 failed at the start; 152 passed / 17 skipped at the end), and the
+result passed all 17 checks of `make test-live`: 113 genes, 2,883 pathways, 50,283
+pathway-protein rows, 450 gene-pathway rows. Phase timings from the runs that completed them:
+
+```
+530s  rdfc2im_pipeline    (network: 9 sources, 10 min)      75s  postprocess
+233s  integrate_sources                                       29s  resolve_bluegenes_deps
+ 15s  build_dbmodel        11s  build_webapp                   8s  verify / 8s fetch_inputs
+```
+
+What it found - most of it invisible to every earlier run, because those had been run once and
+then resumed, or on a workspace already in the right state:
+
+- **Copying on the workspace mount.** `make-inputs.sh` died in phase 2 twice: `cp -r` of a clone
+  failed on its read-only `.git` pack, and its replacement `tar | tar` failed with "Directory
+  renamed before its status could be extracted". It now copies through `tools/copy_tree.py`,
+  which re-reads what it wrote.
+- **`rdfc2im fetch` exited 0 when queries failed**, so a missing or truncated table went on to
+  the mine (and would have been cached). It now exits 1.
+- **`--sources` did not reach `rdfc2im project`**, so stale derived output from sources nobody
+  asked for (six, in this workspace) landed in `project.xml` and the mine's model.
+- **`Gene.pathways` without its `Pathway.genes` end** made phase 5's isolated `mergeModels` fail;
+  `rdfc2im check` now flags any reverse-reference whose other end is missing.
+- **Link fields were never carried**, so `Protein.keywords` (declared by the stock uniprot
+  source that a reduced mine drops) did not exist when uniprot loaded. The general fix replaces
+  three earlier hand-patches (`Protein.ecNumbers`, `Allele.diseases`, `Pathway.dataSets`).
+- **A stale generated model looked like success.** Gradle called `:dbmodel:builddb` up to date
+  after the loader jar's *content* changed, so a resume kept the old model. Phase 10 now deletes
+  `dbmodel/build` first.
+- **The first `:webapp:war` of a fresh checkout deleted its own `web.xml`** (Gradle's stale-output
+  cleanup on a task with no history), and passed on the second try. Phase 13 now runs
+  `copyWebappContent` once first.
+- **Test tooling:** `make test` ran the live tests against any mine that happened to be
+  listening, and `make` re-ran failed tests under a runner that cannot skip.
+
+Reusing the fetched data: the same phase 3 with `--use-cached-data` took **73 s instead of 530 s**,
+made no network requests, and produced items files byte-identical to the fresh fetch's (all nine).
 
 ### Disk
 

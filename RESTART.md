@@ -90,8 +90,9 @@ below; STATUS.md is regenerated from `rdfc2im/docs.py`, which is where that text
    phases from RDF Portal to a running, fully-configured mine, with `--dry-run`, `--from`,
    `--only` and a live dashboard (`tools/watch-build.sh`). First real execution fixed ~30
    genuine bugs; `make test-live` now checks the result against the running system. See
-   `BUILD.md`. What remains here is breadth, not the script: it has only been run on one
-   machine, and only for the 9-source demo panel.
+   `BUILD.md`. A second run from scratch in a fresh sandbox (same day) found ten more, then passed
+   17/17 live checks - BUILD.md, "A second, from-scratch run". What remains here is breadth, not
+   the script: it has been run in two sandboxes, and only for the 9-source demo panel.
 2. Re-integrate `ncbigene` (with the D14 key-ambiguity fix) into a live mine and confirm the fix
    holds under a real load, not just in the regenerated items file.
 3. Give `GWASResult` a real integration key; review the DRAFT keys on `Pathway` and `MeshTerm`.

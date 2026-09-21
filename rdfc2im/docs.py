@@ -161,7 +161,10 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "configuration; `--dry-run`/`--from`/`--only` make it resumable, `tools/watch-build.sh` shows live progress, "
           "and `make test-live` asserts the result. See `BUILD.md`. Running it for real for the first time found and "
           "fixed ~30 bugs that no offline test could have caught, several of them in rdfc2im itself rather than the "
-          "script. What remains is breadth (item 5), not the script.",
+          "script. A second, from-scratch run in a fresh sandbox found and fixed ten more (BUILD.md, \"A second, "
+          "from-scratch run\") and then passed all 17 `make test-live` checks; `--use-cached-data` reuses the "
+          "fetched RDF Portal data from `cached_raw_data/` (73 s instead of 530 s, byte-identical items). What "
+          "remains is breadth (item 5), not the script.",
           "2. **Re-load `ncbigene` with the D14 fix applied** and confirm live that the 255-gene ambiguity is actually "
           "resolved in a running mine, not just in the regenerated items file - the fix was verified offline but never "
           "re-integrated into the demo mine, to avoid disturbing an already-stable build.",
