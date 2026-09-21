@@ -18,6 +18,12 @@
 #   --genes FILE        Gene-panel file for --genes-scoped sources (default: demo panel).
 #   --taxon LIST        Comma-separated NCBI taxon ids, passed to rdfc2im --taxon (default: 9606).
 #   --skip-templates    Don't apply curation/demo_public_templates.sql.
+#   --use-cached-data   Restore the fetched raw data (SPARQL results, the Reactome download) from
+#                       cached_raw_data/ instead of fetching it again. Every file is checked
+#                       against its md5 first, and a cache fetched for a different gene panel,
+#                       taxon or source scope is refused. Without this option the data is fetched
+#                       and then saved there, so the next build can reuse it.
+#   --cache-dir DIR     Where that cache lives (default: cached_raw_data/ in this repo).
 #   -h, --help          This text.
 #
 # Every side-effecting external command (gradle, docker, psql, curl) is emitted through `run`,
@@ -86,6 +92,8 @@ SOURCES=${SOURCES:-"go ncbigene reactome hgnc ensembl uniprot clinvar gwascatalo
 GENE_PANEL=${GENE_PANEL:-"$HERE/curation/demo_gene_panel.txt"}
 TAXON=${TAXON:-9606}
 SKIP_TEMPLATES=0
+USE_CACHED_DATA=0
+RAW_CACHE_DIR=${RAW_CACHE_DIR:-"$HERE/cached_raw_data"}
 DRY_RUN=0
 FROM_PHASE=""
 ONLY_PHASE=""
@@ -160,7 +168,7 @@ phase_end() {
 }
 
 # ============================================================== arg parsing
-usage() { sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,46p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -172,6 +180,8 @@ while [ $# -gt 0 ]; do
     --genes) GENE_PANEL=$2; shift ;;
     --taxon) TAXON=$2; shift ;;
     --skip-templates) SKIP_TEMPLATES=1 ;;
+    --use-cached-data) USE_CACHED_DATA=1 ;;
+    --cache-dir) RAW_CACHE_DIR=$2; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage; exit 2 ;;
   esac
@@ -183,6 +193,7 @@ mkdir -p "$LOG_DIR"
 log "full-build.sh starting - run id $RUN_ID, log $LOGFILE, dry_run=$DRY_RUN"
 log "sources: $SOURCES"
 log "trial home: $TRIAL_HOME"
+log "raw-data cache: $RAW_CACHE_DIR (use_cached_data=$USE_CACHED_DATA)"
 
 GRADLE_ENV=()   # populated by phase_check_prereqs; every ./gradlew call below is prefixed with it
 
@@ -263,6 +274,21 @@ scope_flags_for() {
   esac
 }
 
+# What a cached fetch must have been fetched FOR, as `--meta k=v` words for `rdfc2im cache`. On
+# restore every one must match what was recorded at save time, so data fetched for another gene
+# panel, taxon or scope is refused rather than silently building the wrong mine. No values here
+# contain whitespace, so the caller can word-split the result.
+cache_meta_for() {
+  local src=$1
+  printf -- '--meta scope=%s --meta taxon=%s --meta limit=0' "${SCOPE_MODE[$src]:-none}" "$TAXON"
+  case "${SCOPE_MODE[$src]:-none}" in
+    panel) printf -- ' --meta genes_md5=%s' "$(md5sum "$GENE_PANEL" | cut -d' ' -f1)" ;;
+    pmid)  [ -f "$TRIAL_HOME/cited_pmids.txt" ] &&
+             printf -- ' --meta pmids_md5=%s' "$(md5sum "$TRIAL_HOME/cited_pmids.txt" | cut -d' ' -f1)" ;;
+  esac
+  return 0
+}
+
 phase_rdfc2im_pipeline() {
   local venv_activate="$HERE/.venv/bin/activate"
   [ -f "$venv_activate" ] || die "no .venv at $venv_activate - create one with pyyaml+lxml first"
@@ -272,11 +298,14 @@ phase_rdfc2im_pipeline() {
     local flags; flags=$(scope_flags_for "$src")
     log "-- $src (scope=${SCOPE_MODE[$src]:-none}) --"
     run python3 -m rdfc2im translate --source "$src" $flags
+    local pmid_file="$TRIAL_HOME/cited_pmids.txt"
     if [ "$src" = "pubmed" ]; then
       # PMID-scoped to the union of PMIDs the panel's own already-loaded data cites (hgnc's
       # main_reference, uniprot's main_citation, gwascatalog, reactome) - see LOAD-TRIAL.md's
-      # pubmed section. Requires those sources' items to already exist on disk.
-      local pmid_file="$TRIAL_HOME/cited_pmids.txt"
+      # pubmed section. Requires those sources' items to already exist on disk. Derived from the
+      # other sources' items, so it is regenerated - not cached - and its checksum is what ties
+      # the cached pubmed data to the PMID set it was fetched for.
+      #
       # -a forces text mode: without it, grep inside this `bash -c` context (unlike an interactive
       # shell) mis-detects these UTF-8 items XML files as binary and reports "binary file matches"
       # with zero actual matches - confirmed live, silently produced an empty cited_pmids.txt, which
@@ -284,9 +313,19 @@ phase_rdfc2im_pipeline() {
       # LIMIT-0 fetch of all of PubMed instead of the intended PMID-scoped one.
       run bash -c "grep -ahoE '\"[0-9]{4,9}\"' out/{hgnc,uniprot,gwascatalog,reactome}/items/*.xml 2>/dev/null \
                     | tr -d '\"' | sort -u > '$pmid_file'"
-      run python3 -m rdfc2im fetch --source pubmed --limit 0 --force --pmids "@$pmid_file"
+    fi
+    local meta; meta=$(cache_meta_for "$src")
+    if [ "$USE_CACHED_DATA" -eq 1 ]; then
+      # shellcheck disable=SC2086  # $meta is deliberately word-split into --meta k=v arguments
+      run python3 -m rdfc2im cache restore "$src" "out/$src/raw" --cache-dir "$RAW_CACHE_DIR" $meta
     else
-      run python3 -m rdfc2im fetch --source "$src" --limit 0 --force $flags
+      if [ "$src" = "pubmed" ]; then
+        run python3 -m rdfc2im fetch --source pubmed --limit 0 --force --pmids "@$pmid_file"
+      else
+        run python3 -m rdfc2im fetch --source "$src" --limit 0 --force $flags
+      fi
+      # shellcheck disable=SC2086
+      run python3 -m rdfc2im cache save "$src" "out/$src/raw" --cache-dir "$RAW_CACHE_DIR" $meta
     fi
     run python3 -m rdfc2im tsv --source "$src"
     run python3 -m rdfc2im items --source "$src"
@@ -431,8 +470,15 @@ phase_build_reactome_source() {
   # to download, not worth repeating.
   local dest_dir="/micklem/data/reactome/current"
   run mkdir -p "$dest_dir"
-  if [ "$DRY_RUN" -eq 1 ] || [ ! -s "$dest_dir/UniProt2Reactome.txt" ]; then
-    run curl -fsSL -o "$dest_dir/UniProt2Reactome.txt" https://reactome.org/download/current/UniProt2Reactome.txt
+  source "$HERE/.venv/bin/activate"   # `rdfc2im cache` below needs pyyaml/lxml (imported by the CLI)
+  if [ "$USE_CACHED_DATA" -eq 1 ]; then
+    run python3 -m rdfc2im cache restore reactome-uniprot-map "$dest_dir" --cache-dir "$RAW_CACHE_DIR"
+  else
+    if [ "$DRY_RUN" -eq 1 ] || [ ! -s "$dest_dir/UniProt2Reactome.txt" ]; then
+      run curl -fsSL -o "$dest_dir/UniProt2Reactome.txt" https://reactome.org/download/current/UniProt2Reactome.txt
+    fi
+    run python3 -m rdfc2im cache save reactome-uniprot-map "$dest_dir" --cache-dir "$RAW_CACHE_DIR" \
+      --meta url=https://reactome.org/download/current/UniProt2Reactome.txt
   fi
 }
 

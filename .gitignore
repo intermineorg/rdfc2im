@@ -38,3 +38,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .build-logs/
+
+# Checksummed cache of everything a build fetched (see rdfc2im/rawcache.py, BUILD.md).
+cached_raw_data/

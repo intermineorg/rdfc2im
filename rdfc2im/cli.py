@@ -11,6 +11,7 @@
   rdfc2im linkml       curation/linkml/humanmine.yaml from humanmine_model.json + humanmine_model.xml
   rdfc2im docs         out/_docs/{STATUS.md, CURATION_GUIDE.md}
   rdfc2im all          allow + translate + tsv + items + project + check + docs  (fetch only with --fetch)
+  rdfc2im cache        save|restore|verify|list checksummed copies of fetched data in cached_raw_data/
 
 All paths come from rdfc2im.yaml in the working directory (or --workspace); flags override.
 """
@@ -35,6 +36,7 @@ from .project import gen_project, check_project
 from .items import emit_items
 from .linkml import gen_linkml
 from .docs import write_docs
+from . import rawcache
 
 HERE = os.path.dirname(__file__)
 DEFAULTS = dict(
@@ -76,6 +78,7 @@ def main(argv=None):
     ap.add_argument("--workspace", "-w", default="rdfc2im.yaml")
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)
+    _add_cache_parser(sub)
     for name in ("allow", "translate", "fetch", "tsv", "items", "project", "check", "linkml", "docs", "all"):
         p = sub.add_parser(name)
         p.add_argument("--source", "-s", action="append", help="restrict to these rdf-config sources")
@@ -103,6 +106,8 @@ def main(argv=None):
                        "restricts at fetch time via VALUES-batching, not a query-embedded FILTER, "
                        "since a panel's cited-publication list is far too large for that.")
     a = ap.parse_args(argv)
+    if a.cmd == "cache":          # needs no workspace: it copies files between two directories
+        return run_cache(a)
     if not os.path.exists(a.workspace):
         sys.exit(f"rdfc2im: no {a.workspace} in {os.getcwd()} - run from the workspace directory "
                  f"(the one containing rdfc2im.yaml and the Makefile), or pass --workspace")
@@ -116,6 +121,57 @@ def main(argv=None):
     if a.no_from:
         ws["use_from"] = False
     return run(a, ws)
+
+
+def _add_cache_parser(sub):
+    p = sub.add_parser("cache", help="checksummed cache of fetched raw data (see rdfc2im/rawcache.py)")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--cache-dir", default=rawcache.DEFAULT_CACHE_DIR,
+                        help=f"cache location (default {rawcache.DEFAULT_CACHE_DIR}/)")
+    cs = p.add_subparsers(dest="cache_cmd", required=True)
+    for name, arg, hlp in (("save", "src_dir", "directory to copy into the cache"),
+                           ("restore", "dest_dir", "directory to make identical to the cached copy")):
+        c = cs.add_parser(name, parents=[common])
+        c.add_argument("group", help="cache entry name, e.g. a source name")
+        c.add_argument(arg, help=hlp)
+        c.add_argument("--meta", action="append", default=[], metavar="KEY=VALUE",
+                       help="what the data was fetched for; on restore every KEY must match what "
+                            "save recorded, or the restore is refused")
+    c = cs.add_parser("verify", parents=[common], help="re-hash cached files against their MD5SUMS")
+    c.add_argument("group", nargs="*", help="default: every entry")
+    cs.add_parser("list", parents=[common])
+
+
+def run_cache(a) -> int:
+    try:
+        meta = {}
+        for kv in getattr(a, "meta", []):
+            k, sep, v = kv.partition("=")
+            if not sep or not k:
+                raise rawcache.CacheError(f"--meta wants KEY=VALUE, got {kv!r}")
+            meta[k] = v
+        if a.cache_cmd == "save":
+            i = rawcache.save(a.group, a.src_dir, a.cache_dir, meta)
+            print(f"cache save {a.group}: {i['files']} files, {i['bytes']} bytes, verified -> {a.cache_dir}/{a.group}")
+        elif a.cache_cmd == "restore":
+            i = rawcache.restore(a.group, a.dest_dir, a.cache_dir, meta)
+            print(f"cache restore {a.group}: {i['files']} files, {i['bytes']} bytes, verified "
+                  f"(cached {i['saved_at']}) -> {a.dest_dir}")
+        elif a.cache_cmd == "verify":
+            names = a.group or rawcache.groups(a.cache_dir)
+            if not names:
+                raise rawcache.CacheError(f"nothing cached in {a.cache_dir}/")
+            for g in names:
+                i = rawcache.verify(g, a.cache_dir)
+                print(f"ok  {g}: {i['files']} files, {i['bytes']} bytes, cached {i['saved_at']}")
+        else:
+            for g in rawcache.groups(a.cache_dir):
+                i = rawcache.verify(g, a.cache_dir)
+                print(f"{g}\t{i['files']} files\t{i['bytes']} bytes\t{i['saved_at']}\t{i['meta']}")
+    except rawcache.CacheError as e:
+        print(f"rdfc2im cache: {e}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def check_inputs(ws, need_model=True, need_config=True):
@@ -239,22 +295,35 @@ def run(a, ws) -> int:
                                     gene_ids=gene_ids, gene_field=gene_field or "primaryIdentifier")
         return results
 
-    def do_fetch():
+    def do_fetch() -> int:
+        """Fetch every source; returns 1 if any table failed or came back incomplete.
+
+        Every table is still attempted (one bad endpoint should not hide the others' state), but
+        the exit code must say so: `tsv` skips a table with no raw file without complaint and a
+        "partial" file is just a shorter one, so a caller that only checks the exit code - as
+        tools/full-build.sh under `set -e` does - would otherwise build on missing data.
+        """
         pmids = _resolve_pmids(a)
+        bad = []
         for s in sources:
             print(f"fetch {s}")
             scfg = sources_cfg.get(s, {})
             pmid_field = scfg.get("pmid_scope_field")
             if pmids and pmid_field:
-                fetch_source_by_keys(os.path.join(out, s), pmid_field, [f'"{p}"' for p in pmids],
-                                     timeout=a.timeout,
-                                     sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep)
-                continue
-            fetch_source(os.path.join(out, s), dry_run=a.dry_run or os.environ.get("DRY_RUN") == "1",
-                         force=a.force or os.environ.get("FORCE") == "1",
-                         sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep, timeout=a.timeout,
-                         limit=a.limit,   # None = the LIMIT written by translate; 0 = none
-                         page=int(os.environ.get("ITERATE", 5000)) if a.iterate is None else a.iterate)
+                res = fetch_source_by_keys(os.path.join(out, s), pmid_field, [f'"{p}"' for p in pmids],
+                                           timeout=a.timeout,
+                                           sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep)
+            else:
+                res = fetch_source(os.path.join(out, s), dry_run=a.dry_run or os.environ.get("DRY_RUN") == "1",
+                                   force=a.force or os.environ.get("FORCE") == "1",
+                                   sleep=float(os.environ.get("SLEEP", 1.0)) if a.sleep is None else a.sleep,
+                                   timeout=a.timeout,
+                                   limit=a.limit,   # None = the LIMIT written by translate; 0 = none
+                                   page=int(os.environ.get("ITERATE", 5000)) if a.iterate is None else a.iterate)
+            bad += [(s, t, st) for t, st in (res or {}).items() if st in ("failed", "partial")]
+        for s, t, st in bad:
+            print(f"rdfc2im fetch: {s}/{t} {st} - its raw data is missing or incomplete", file=sys.stderr)
+        return 1 if bad else 0
 
     def do_tsv():
         for s in sources:
@@ -284,7 +353,7 @@ def run(a, ws) -> int:
     if cmd == "allow":
         do_allow(); return 0
     if cmd == "fetch":
-        do_fetch(); return 0
+        return do_fetch()
     if cmd == "tsv":
         do_tsv(); return 0
     if cmd == "linkml":
@@ -304,8 +373,8 @@ def run(a, ws) -> int:
         do_docs(m); return 0
     if cmd == "all":
         do_translate(m)
-        if a.fetch:
-            do_fetch()
+        if a.fetch and do_fetch():
+            return 1
         do_tsv()
         do_items(m)
         do_project(m)
