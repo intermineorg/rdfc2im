@@ -373,6 +373,19 @@ re-run `--only build_dbmodel`.
 `phase_prepare_mine_checkout` patches `webapp/build.gradle` to fix this; if you are working from
 a hand-made checkout, that patch is the thing to reproduce.
 
+**Phase 2 (`fetch_inputs`) dies copying a clone: `cp: failed to extend ... .git/objects/pack/...:
+Permission denied`, or `tar: .: Directory renamed before its status could be extracted`.** You are on
+a virtiofs-backed workspace mount, where `cp` and `tar` are not trustworthy for trees. `make-inputs.sh`
+no longer uses either - it copies through `tools/copy_tree.py`, which re-reads and compares every file
+- so this means an older copy of the script. If you write your own copy step on such a mount, do the
+same; see `RESTART.md`.
+
+**`--use-cached-data` stops with `cached data ... refusing to restore it`, `... is corrupt in the
+cache`, or `no cached data for ...`.** Working as intended: the cache was fetched for a different gene
+panel, taxon or scope than this build needs, a cached file no longer matches its `MD5SUMS`, or nothing
+was cached yet. `python3 -m rdfc2im cache list` and `cache verify` show what is there. Run once without
+the option to fetch afresh (which re-saves).
+
 **Something reported success but the data is not there.** Assume this is happening rather than
 assume it is not - it was the single most common failure of the first real build. Run
 `make test-live`, and check the claim directly with a query or a row count before believing it.

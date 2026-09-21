@@ -39,7 +39,7 @@ in/humanmine_model.json                  model_json (only for `rdfc2im linkml`)
 | `make all` | one process running allow → translate → tsv → items → project → check → docs; add `FETCH=1` to include fetch | | |
 | `make linkml` | HumanMine LinkML schema with corrected field terms | `model_json`, `live_model` | `curation/linkml/humanmine.yaml` |
 | `make fork-sync` | copy generated keys/additions into `humanmine-items/` | `_mine/` | `humanmine-items/resources/` |
-| `make test` | unit tests (pytest if present, else `tests/run.py`) | | |
+| `make test` | unit tests (pytest if present, else `tests/run.py`); the live checks in `tests/test_live_mine.py` are skipped unless you ran `make test-live` | | |
 
 Variables: `SRC=ncbigene` (repeatable) restricts to sources; `LIMIT=0` removes the SPARQL LIMIT (default 20) - it applies to `translate` (written into `queries/`) and to `fetch` (overrides at send time, so `make fetch LIMIT=0 FORCE=1` does a full extract);
 `GUESS=--no-guess` excludes `guess` rows. Every target is `python3 -m rdfc2im <cmd> [flags]`; `python3 -m rdfc2im <cmd> -h` lists flags
@@ -120,7 +120,8 @@ existing mine by hand rather than building one from scratch.
 
 | command | does |
 |---|---|
-| `tools/full-build.sh` | RDF to a running, fully-configured mine in 18 phases. `--dry-run`, `--list-phases`, `--from PHASE`/`--only PHASE` to resume, `--sources`/`--genes`/`--taxon` to rescope. See `BUILD.md` for prerequisites and troubleshooting. |
+| `tools/full-build.sh` | RDF to a running, fully-configured mine in 18 phases. `--dry-run`, `--list-phases`, `--from PHASE`/`--only PHASE` to resume, `--sources`/`--genes`/`--taxon` to rescope, `--use-cached-data`/`--cache-dir` to reuse the previous build's fetched data. See `BUILD.md` for prerequisites and troubleshooting. |
+| `python3 -m rdfc2im cache save\|restore\|verify\|list` | the checksummed `cached_raw_data/` that `full-build.sh` fills and `--use-cached-data` reads: `cache save GROUP SRC_DIR [--meta K=V]...`, `cache restore GROUP DEST_DIR [--meta K=V]...` (refuses on any `--meta` that differs from what was saved, or on a corrupt entry), `cache verify [GROUP...]`, `cache list`; all take `--cache-dir`. `rdfc2im fetch` exits 1 if any query failed or came back partial. |
 | `tools/watch-build.sh` | live per-phase dashboard for a build in progress (read-only; `LOG_DIR=<dir>` if the logs are elsewhere) |
 | `make test` | offline unit tests on synthetic fixtures |
 | `make test-live` | integration checks against a *running* mine - real REST queries and Solr assertions. Opt-in (`make test-live` sets `RDFC2IM_LIVE=1`) and skips when no mine is reachable, so plain `make test` stays green on a fresh checkout and ignores any stale mine left running. |

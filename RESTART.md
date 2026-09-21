@@ -60,10 +60,24 @@ early rather than rediscovering the hard way:
   `fatal: could not read Username for 'https://github.com'`, ask the user to run (on their host,
   using the real sandbox name from `$SANDBOX_NAME`): `sbx secret set github --sandbox
   <sandbox-name> -t "$(gh auth token)"`.
-- **Plain `cp` has silently zeroed large files** on at least one virtiofs-backed workspace mount
-  used for this project - not only crossing to a different filesystem, but also between two
-  paths on the same mount. Use `cat src > dst` instead for anything of meaningful size; `make
-  docs` already does this for its own STATUS.md/CURATION_GUIDE.md promotion step.
+- **On the virtiofs-backed workspace mount, `cp`, `cp -r` and `tar` are all unreliable.** Plain `cp`
+  has silently zeroed large files (not only crossing filesystems - also between two paths on the
+  same mount), `cp -r` of a git clone failed outright on its read-only pack file, and `tar -x`
+  died with "Directory renamed before its status could be extracted" (the mount's inode numbers
+  are not stable). Use `cat src > dst` for a single file, and for anything that matters a copier
+  that re-reads what it wrote: `rdfc2im/rawcache.py` (`copy_tree`, used by `tools/copy_tree.py`
+  and `tools/make-inputs.sh`; `save`/`restore` for the data cache) hashes every copy and fails
+  loudly on a mismatch. `make docs` already uses `cat` for its own promotion step.
+- **Launch the sandbox in the repository root, not a subdirectory.** An earlier session ran
+  `sbx run claude build_with_script/`, so the work happened in a second full clone nested inside
+  the checkout. Everything tracked reached `origin/main` (push from the clone, pull in the root);
+  what does not travel through git is the gitignored data (`out/*/raw`, `in/`, `.build-logs/`),
+  so check for that before deleting such a clone.
+- **`cached_raw_data/` holds what the last build fetched** (gitignored, in the repo root, so it is
+  on the host side of the workspace mount and outlives the sandbox). `tools/full-build.sh
+  --use-cached-data` restores it instead of re-querying RDF Portal (about a quarter of an hour);
+  every file is md5-checked, and a cache fetched for a different gene panel, taxon or scope is
+  refused. `python3 -m rdfc2im cache list` / `verify` show and check it. See `BUILD.md`.
 
 ## Concrete open items, in priority order
 

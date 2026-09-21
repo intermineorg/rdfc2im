@@ -9,6 +9,7 @@ Requires Python 3.9+ with `pyyaml` and `lxml` (`pip install -r requirements.txt`
 
 ```
 in/                  the upstream inputs; `make inputs` builds it - see "in/ layout" below
+cached_raw_data/     checksummed copy of what a build fetched (gitignored); `tools/full-build.sh --use-cached-data` reuses it
 curation/            what you maintain by hand (extra allow tokens, approved schema extensions)
 rdfc2im/             the package  (python3 -m rdfc2im <cmd>;  no dependencies beyond lxml + pyyaml)
 rdfc2im/data/        knowledge.yaml (my mappings, reviewable) + sources.yaml (per-source settings)
@@ -18,7 +19,7 @@ out/_mine/           project.xml, keys, additions, priorities, links_report (rdf
 out/_docs/           STATUS.md, CURATION_GUIDE.md                           (rdfc2im docs)
 curation/linkml/     humanmine.yaml - LinkML schema of HumanMine            (rdfc2im linkml)
 humanmine-items/     the loader source: stock intermine-items-large-xml-file + generated keys/additions (no Java)
-tests/               unit tests on synthetic fixtures (make test; runs without pytest too)
+tests/               unit tests on synthetic fixtures (make test; runs without pytest too); live checks are opt-in (make test-live)
 ```
 
 See `USAGE.md` for the command reference and workflow.
@@ -49,6 +50,7 @@ source alongside, webapp and BlueGenes serving) - you do not need the per-step w
 
 ```
 tools/full-build.sh              # RDF -> running mine, 18 phases; --dry-run first if you like
+tools/full-build.sh --use-cached-data   # same, but reuse the data the last build fetched (md5-checked)
 tools/watch-build.sh             # live per-phase progress, in another terminal
 make test-live                   # assert the result: real queries against the running mine
 ```
