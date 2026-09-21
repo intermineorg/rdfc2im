@@ -8,9 +8,10 @@ new sandbox, a new LLM conversation, or both) - it's written to be read cold, no
 rdfc2im maps rdf-config models (DBCLS's machine-readable descriptions of RDF Portal datasets)
 onto the InterMine data model, keeps that mapping as reviewable data with evidence per row, and
 loads the result with InterMine's stock Items XML loader - no per-source Java code. It was built
-at the DBCLS BioHackathon 2026 and demonstrated with a working HumanMine (9 sources, a 113-gene
-food/drug-metabolism panel) served live in containers. The work is written up as a BioHackrXiv
-report.
+at the DBCLS BioHackathon 2026 and demonstrated with a working HumanMine (9 rdfc2im sources, a
+113-gene food/drug-metabolism panel, plus the stock `reactome` source loaded alongside so that
+`Pathway` connects to `Protein` and `Gene`) served live in containers. The work is written up as
+a BioHackrXiv report. The whole build is now one script, `tools/full-build.sh` - see `BUILD.md`.
 
 ## Read these, in this order
 
@@ -24,7 +25,9 @@ report.
    first real load, in the order they happened). This is where the paper's Table 3 and most of
    its Discussion came from. Search it rather than read it linearly; section headers name the
    finding.
-4. `CURATION_GUIDE.md` - only needed if you're about to curate a new source's mapping.
+4. `BUILD.md` - how to run `tools/full-build.sh`, the one script that now takes this from RDF to
+   a running mine. Needed before you try to rebuild the demonstration mine, not before you read.
+5. `CURATION_GUIDE.md` - only needed if you're about to curate a new source's mapping.
 
 Do NOT trust any of the above blindly without checking `git log` first - if you're resuming
 significant time after this file was written, someone (human or another session) may have moved
@@ -35,12 +38,12 @@ things forward since. Check `STATUS.md`'s date line and `git log -5` before assu
 These won't be true of every sandbox this project is worked on in, but are worth checking for
 early rather than rediscovering the hard way:
 
-- **The live demo mine does not persist across sandbox sessions.** Docker containers, Postgres
-  volumes, the Solr search index, and the userprofile-only templates all live inside whatever
-  sandbox built them. A fresh session starts with none of it. Rebuilding it means working through
-  LOAD-TRIAL.md's recipe (scattered across several sections - postprocessing, the Solr service,
-  `trial-stage.sh`'s jar patches - not yet consolidated into one script; doing that consolidation
-  is itself the paper's #1 Future Work item).
+- **The live demo mine does not persist across sandbox sessions.** Docker containers, the
+  Postgres and Solr volumes (`rdfc2im-pgdata`, `rdfc2im-solrdata`), and the userprofile-only
+  templates all live inside whatever sandbox built them. A fresh session starts with none of it.
+  Rebuilding it is now one command - `tools/full-build.sh`, documented in `BUILD.md` - not a walk
+  through LOAD-TRIAL.md's scattered recipe. `pg_dump` of `humanmine-production` and
+  `humanmine-userprofile` is the way to keep a loaded mine independently of the containers.
 - **`report/` is a git submodule** pointing at a *different* GitHub repo
   (`ryneches/rdfc2im-report`), under active, separate human editing (Gos and Russell both push to
   it directly, sometimes from their own machines while a sandbox session is also working in it).
@@ -65,9 +68,16 @@ early rather than rediscovering the hard way:
 ## Concrete open items, in priority order
 
 (Kept brief here on purpose - `STATUS.md`'s own "Next steps" is the maintained version; if the
-two disagree, trust `STATUS.md`, and update this file to match.)
+two disagree, trust `STATUS.md`, and update this file to match. One exception, as of
+2026-09-21: STATUS.md still lists the scripted build as open item 1. It isn't - see item 1
+below; STATUS.md is regenerated from `rdfc2im/docs.py`, which is where that text has to change.)
 
-1. Script the whole build end to end (the paper calls this the most important next step).
+1. ~~Script the whole build end to end~~ **DONE (2026-09-21)** - `tools/full-build.sh`, 18
+   phases from RDF Portal to a running, fully-configured mine, with `--dry-run`, `--from`,
+   `--only` and a live dashboard (`tools/watch-build.sh`). First real execution fixed ~30
+   genuine bugs; `make test-live` now checks the result against the running system. See
+   `BUILD.md`. What remains here is breadth, not the script: it has only been run on one
+   machine, and only for the 9-source demo panel.
 2. Re-integrate `ncbigene` (with the D14 key-ambiguity fix) into a live mine and confirm the fix
    holds under a real load, not just in the regenerated items file.
 3. Give `GWASResult` a real integration key; review the DRAFT keys on `Pathway` and `MeshTerm`.
@@ -84,7 +94,8 @@ two disagree, trust `STATUS.md`, and update this file to match.)
   having completed and verified something (a database retrofit, a postprocessing step) turned out
   on direct inspection to be incomplete or wrong. Check the live system yourself - a query, a row
   count, a REST call - before passing a claim on as fact, especially for anything a future
-  decision might depend on.
+  decision might depend on. `make test-live` (tests/test_live_mine.py) now does exactly this for
+  a built mine, with each check anchored to a specific bug that once passed silently.
 - **Multi-hour build/debug work goes in a background agent** (a fork, if continuing this exact
   conversation; a fresh subagent otherwise), not inline - it keeps verbose build logs and
   iterative debugging out of the main conversation's context, and lets you keep working (or the
