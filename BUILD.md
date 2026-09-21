@@ -282,8 +282,9 @@ a source postprocessor whose failure `PostProcessPlugin` catches, prints as one 
 carries on from with exit code 0; an `integrate` loop whose regex silently skipped the stock
 reactome source entirely, so nine sources loaded cleanly and reactome's data simply never
 arrived. None of those are visible to an offline test, and several of them survived every
-dry run. With no mine reachable the live tests skip rather than fail, so plain `make test`
-stays green offline. Point them elsewhere with
+dry run. The live tests are opt-in - `make test-live` sets `RDFC2IM_LIVE=1`, and they skip if no
+mine is reachable - so plain `make test` stays green offline and ignores a stale mine left
+running from an earlier session. Point them elsewhere with
 `MINE_BASE=http://host:8090/humanmine SOLR_BASE=http://host:8983 make test-live`.
 
 Then look at it: `http://localhost:8090/humanmine` (classic UI, with the demo templates on the

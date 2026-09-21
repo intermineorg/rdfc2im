@@ -123,7 +123,7 @@ existing mine by hand rather than building one from scratch.
 | `tools/full-build.sh` | RDF to a running, fully-configured mine in 18 phases. `--dry-run`, `--list-phases`, `--from PHASE`/`--only PHASE` to resume, `--sources`/`--genes`/`--taxon` to rescope. See `BUILD.md` for prerequisites and troubleshooting. |
 | `tools/watch-build.sh` | live per-phase dashboard for a build in progress (read-only; `LOG_DIR=<dir>` if the logs are elsewhere) |
 | `make test` | offline unit tests on synthetic fixtures |
-| `make test-live` | integration checks against a *running* mine - real REST queries and Solr assertions. Skips cleanly when no mine is reachable, so `make test` stays green on a fresh checkout. |
+| `make test-live` | integration checks against a *running* mine - real REST queries and Solr assertions. Opt-in (`make test-live` sets `RDFC2IM_LIVE=1`) and skips when no mine is reachable, so plain `make test` stays green on a fresh checkout and ignores any stale mine left running. |
 
 `make test-live` exists because most of the bugs found when this build was first run end to end
 were invisible offline: a Gradle task reporting SUCCESS while silently indexing nothing, a

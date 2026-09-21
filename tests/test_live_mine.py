@@ -12,13 +12,14 @@ Every check here is anchored to a real bug found on 2026-09-21, named in each te
 so a regression tells you not just "this broke" but "this specific thing broke again, here is
 what it was last time".
 
-Running them:
+Running them (opt-in - see live_enabled):
     make test-live                       # or:
-    python3 tests/run.py                 # runs these too; skips cleanly with no mine
-    python3 -m pytest tests/test_live_mine.py -v
+    RDFC2IM_LIVE=1 python3 -m pytest tests/test_live_mine.py -v
 
-With no mine reachable every test SKIPS rather than fails, so `make test` stays green on a
-machine that has only ever checked out the repo. Point them somewhere else with:
+Unless RDFC2IM_LIVE=1 every test SKIPS, and with it set they still SKIP if no mine is reachable,
+so `make test` stays green on a machine that has only ever checked out the repo - including one
+where a stale mine from an earlier session happens to still be running. Point them somewhere
+else with:
     MINE_BASE=http://host:8090/humanmine SOLR_BASE=http://host:8983 make test-live
 """
 from __future__ import annotations
@@ -68,7 +69,15 @@ def _get_json(url: str, timeout: int = TIMEOUT):
     return json.loads(_get(url, timeout))
 
 
+def live_enabled() -> bool:
+    """Live checks are opt-in. A reachable mine is not consent to test it: a stale mine left
+    running from an earlier session made plain `make test` fail (tests/test_live_gating.py)."""
+    return os.environ.get("RDFC2IM_LIVE") == "1"
+
+
 def mine_up() -> bool:
+    if not live_enabled():
+        return False
     try:
         _get(f"{MINE_BASE}/service/version", timeout=5)
         return True
@@ -77,6 +86,8 @@ def mine_up() -> bool:
 
 
 def solr_up() -> bool:
+    if not live_enabled():
+        return False
     try:
         _get(f"{SOLR_BASE}/solr/admin/cores?action=STATUS", timeout=5)
         return True
@@ -123,13 +134,13 @@ def test_mine_serves_version():
     'no userprofile schema' bug, where every request 500'd with ContextNotInitialisedException.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     assert _get(f"{MINE_BASE}/service/version").strip(), "version endpoint returned nothing"
 
 
 def test_mine_serves_model():
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     _get(f"{MINE_BASE}/service/model")
 
 
@@ -145,7 +156,7 @@ def test_autocomplete_index_is_populated():
     asserts on document count rather than on the absence of an error message.
     """
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     n = solr_count("humanmine-autocomplete")
     assert n > 0, "humanmine-autocomplete core is empty - create-autocomplete-index did nothing"
 
@@ -159,7 +170,7 @@ def test_autocomplete_covers_gene():
     an addition this project makes deliberately, not an upstream default to fall back on.
     """
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     classes = autocomplete_classes()
     assert "gene" in {c.lower() for c in classes}, (
         f"Gene missing from the autocomplete index; indexed classes were {sorted(classes)}. "
@@ -170,7 +181,7 @@ def test_autocomplete_covers_gene():
 def test_autocomplete_covers_protein():
     """Protein is autocompleted - same reasoning as Gene; also not an upstream default."""
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     classes = autocomplete_classes()
     assert "protein" in {c.lower() for c in classes}, (
         f"Protein missing from the autocomplete index; indexed classes were {sorted(classes)}.")
@@ -184,7 +195,7 @@ def test_autocomplete_covers_configured_ontology_classes():
     would point at the source-priority machinery rather than at the indexer.
     """
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     classes = {c.lower() for c in autocomplete_classes()}
     for expected in ("goterm", "pathway", "disease"):
         assert expected in classes, f"{expected} missing from autocomplete index ({sorted(classes)})"
@@ -204,7 +215,7 @@ def test_autocomplete_finds_a_real_gene_symbol():
     test first failed against an index that was in fact entirely correct.
     """
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     if "gene" not in {c.lower() for c in autocomplete_classes()}:
         return _skip("Gene not yet in the autocomplete index (see test_autocomplete_covers_gene)")
     n = solr_count("humanmine-autocomplete", f'symbol:"{EXAMPLE_GENE}"')
@@ -242,7 +253,7 @@ def test_keyword_search_endpoint_responds():
     See test_keyword_search_index_is_in_sync_with_the_database for the guard on that cause.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     try:
         payload = _get_json(f"{MINE_BASE}/service/search?q={EXAMPLE_GENE}&size=5")
     except urllib.error.HTTPError as e:
@@ -254,7 +265,7 @@ def test_keyword_search_endpoint_responds():
 def test_keyword_search_finds_the_example_gene():
     """Searching a panel gene symbol returns at least one hit."""
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     try:
         payload = _get_json(f"{MINE_BASE}/service/search?q={EXAMPLE_GENE}&size=5")
     except urllib.error.HTTPError as e:
@@ -279,7 +290,7 @@ def test_keyword_search_matches_partial_words():
     count so it does not become a brittle restatement of the current panel's contents.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     prefix = EXAMPLE_GENE[:3].lower()          # "cyp"
     payload = _get_json(f"{MINE_BASE}/service/search?q={prefix}&size=20")
     if not payload.get("wasSuccessful", False):
@@ -316,9 +327,9 @@ def test_keyword_search_index_is_in_sync_with_the_database():
     right and only the ids are wrong.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     if not solr_up():
-        return _skip(f"no solr at {SOLR_BASE}")
+        return _skip(f"live checks off or no solr at {SOLR_BASE} (make test-live)")
     if solr_count("humanmine-search", "*:*") == 0:
         raise AssertionError(
             "humanmine-search is empty - create-search-index has not run against this database")
@@ -349,7 +360,7 @@ def test_gene_panel_is_panel_sized():
     loosely because a source legitimately contributing a few extra Gene stubs is not a bug.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     rows = query_rows("Gene.primaryIdentifier", "Gene.primaryIdentifier", "!=", "__none__")
     assert 0 < len(rows) < 1000, (
         f"expected a panel-sized Gene table, got {len(rows)} - is a source unscoped?")
@@ -363,7 +374,7 @@ def test_example_gene_resolves_with_cross_source_identifiers():
     that one source failed to load.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     rows = query_rows("Gene.primaryIdentifier Gene.symbol Gene.organism.taxonId",
                       "Gene.symbol", "=", EXAMPLE_GENE)
     assert rows, f"{EXAMPLE_GENE} not found"
@@ -381,7 +392,7 @@ def test_pathways_have_protein_participants():
     likely means that source stopped being built, staged, or integrated.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     rows = query_rows("Pathway.name Pathway.proteins.primaryAccession",
                       "Pathway.identifier", "=", EXAMPLE_PATHWAY)
     assert rows, f"{EXAMPLE_PATHWAY} has no protein participants"
@@ -399,7 +410,7 @@ def test_genes_have_pathways():
     was fully populated. A gene-centric mine wants the gene-level link most of all.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     rows = query_rows("Gene.symbol Gene.pathways.identifier Gene.pathways.name",
                       "Gene.symbol", "=", EXAMPLE_GENE)
     assert rows, (f"{EXAMPLE_GENE} has no pathways - has the reactome source postprocess "
@@ -419,7 +430,7 @@ def test_pathway_descriptions_are_not_starved_by_source_priority():
     pathway only one source knows about would pass even with the bug present.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     rows = query_rows("Pathway.identifier Pathway.name Pathway.description",
                       "Pathway.identifier", "=", EXAMPLE_PATHWAY)
     assert rows, f"{EXAMPLE_PATHWAY} not found"
@@ -438,7 +449,7 @@ def test_classic_ui_webconfig_is_valid():
     webconfig-model.xml trimmed of widgets whose data it does not load.
     """
     if not mine_up():
-        return _skip(f"no mine at {MINE_BASE}")
+        return _skip(f"live checks off or no mine at {MINE_BASE} (make test-live)")
     try:
         body = _get(f"{MINE_BASE}/begin.do")
     except urllib.error.HTTPError as e:
