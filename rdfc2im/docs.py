@@ -98,8 +98,10 @@ def _write_status(ddir, per, ws, sources_cfg, out):
          "| `check` | runs (mapping vs model, `via` ranges, items ref_ids, keys); passes with 0 hard problems |",
          "| `humanmine-items` source | done: stock intermine-items-**large**-xml-file under its own type name + generated keys/additions; no Java |",
          "| `linkml` (HumanMine LinkML schema with corrected field terms) | done - `curation/linkml/humanmine.yaml`; not yet used by `check` |",
-         "| InterMine build + load | **done** - a working demonstration mine, 9 sources (`go`/`ncbigene`/`reactome` in full, "
+         "| InterMine build + load | **done** - a working demonstration mine, 9 rdfc2im sources (`go`/`ncbigene`/`reactome` in full, "
          "`hgnc`/`ensembl`/`uniprot`/`clinvar`/`gwascatalog` limited to a 113-gene panel, `pubmed` to their cited publications), "
+         "plus the stock `reactome` source loaded alongside ours - it is what gives `Pathway` its `proteins` (and, via its own "
+         "postprocessor, `Gene.pathways`), which our mapping never writes. Built by `tools/full-build.sh` (see `BUILD.md`) and "
          "served with BlueGenes; see LOAD-TRIAL.md, and `report/paper/paper.md` for the write-up (BH26JP BioHackrXiv report) |", "",
          "## Per-source status", "",
          "Row statuses: **sure** = evidence in the uploads (term URI / Java converter / .properties / exact name); "
@@ -144,20 +146,22 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "(one section per source's first real load, in the order they were done) that the paper's Results and Table 3 "
           "are drawn from.",
           "",
-          "**The live demo mine does not persist across sandbox sessions.** Docker containers, the Postgres volumes, the "
-          "Solr index and the userprofile-only templates all live inside whatever sandbox built them; a fresh session "
-          "starts with none of it and must rebuild from LOAD-TRIAL.md's recipe (the `## Reproducing it` section covers "
-          "the original `go`-only trial; the fuller 9-source build's steps - postprocessing, the Solr service, template "
-          "SQL, `trial-stage.sh`'s jar patches - are recorded in the later per-source and `## Postprocessing and public "
-          "templates` sections of the same file, not yet consolidated into one script).",
+          "**The live demo mine does not persist if its machine or containers go away.** The data lives in the Docker "
+          "named volumes `rdfc2im-pgdata` and `rdfc2im-solrdata`, not in the checkout. Rebuilding it is no longer a "
+          "matter of working through LOAD-TRIAL.md by hand, though: it is one command, `tools/full-build.sh`, "
+          "documented from scratch in `BUILD.md`. To preserve an already-loaded mine instead of reloading it, "
+          "`pg_dump` the `humanmine-production` and `humanmine-userprofile` databases.",
           "",
           "## Next steps",
           "",
           "In priority order, matching the paper's Future Work:",
           "",
-          "1. **Script the whole build**, from RDF to a running, fully-configured mine (postprocessing, Solr, templates, "
-          "the trimmed web configuration) - the paper calls this the most important next step, and LOAD-TRIAL.md has "
-          "every step it would need to encode, just not yet as one script.",
+          "1. ~~**Script the whole build**~~ - **DONE** (2026-09-21). `tools/full-build.sh` takes it from RDF to a "
+          "running, fully-configured mine in 18 phases, covering postprocessing, Solr, templates and the trimmed web "
+          "configuration; `--dry-run`/`--from`/`--only` make it resumable, `tools/watch-build.sh` shows live progress, "
+          "and `make test-live` asserts the result. See `BUILD.md`. Running it for real for the first time found and "
+          "fixed ~30 bugs that no offline test could have caught, several of them in rdfc2im itself rather than the "
+          "script. What remains is breadth (item 5), not the script.",
           "2. **Re-load `ncbigene` with the D14 fix applied** and confirm live that the 255-gene ambiguity is actually "
           "resolved in a running mine, not just in the regenerated items file - the fix was verified offline but never "
           "re-integrated into the demo mine, to avoid disturbing an already-stable build.",

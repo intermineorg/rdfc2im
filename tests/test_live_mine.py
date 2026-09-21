@@ -191,18 +191,26 @@ def test_autocomplete_covers_configured_ontology_classes():
 
 
 def test_autocomplete_finds_a_real_gene_symbol():
-    """A real panel gene symbol is actually retrievable, not merely 'some gene rows exist'.
+    """A real panel gene symbol is actually retrievable, not merely 'some Gene rows exist'.
 
     Asserting on a known symbol rather than a count catches the case where the index is full
     of the right class but the wrong field - e.g. indexing Gene.primaryIdentifier only, so
     typing 'CYP2D6' finds nothing while the doc count still looks healthy.
+
+    Queries the `symbol` field explicitly. A bare `"CYP2D6"` term query matches nothing here
+    no matter how healthy the index is: the autocomplete core stores one document per
+    (class, field, value) with the value under its own field name, and has no default search
+    field configured for a fieldless query to fall back on. Getting that wrong is how this
+    test first failed against an index that was in fact entirely correct.
     """
     if not solr_up():
         return _skip(f"no solr at {SOLR_BASE}")
     if "gene" not in {c.lower() for c in autocomplete_classes()}:
         return _skip("Gene not yet in the autocomplete index (see test_autocomplete_covers_gene)")
-    n = solr_count("humanmine-autocomplete", f'"{EXAMPLE_GENE}"')
-    assert n > 0, f"{EXAMPLE_GENE} not found in the autocomplete index"
+    n = solr_count("humanmine-autocomplete", f'symbol:"{EXAMPLE_GENE}"')
+    assert n > 0, (
+        f"{EXAMPLE_GENE} not found under `symbol` in the autocomplete index - check that "
+        "Gene.autocomplete in curation/autocomplete_override.properties still lists `symbol`")
 
 
 # ----------------------------------------------------------------- keyword search
