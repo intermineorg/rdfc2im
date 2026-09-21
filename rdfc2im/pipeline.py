@@ -47,8 +47,12 @@ def run_source(model, config_dir: str, out_dir: str, knowledge: Knowledge, sourc
             os.remove(old)
         return {"counts": _counts(rows), "tables": 0, "new_fields": 0, "messages": res["messages"],
                 "subjects": res["subjects"], "rows": rows, "cfg": cfg, "skipped": skip_reason}
+    # source_cfg's own `use_from: false` (sources.yaml) can turn FROM off for a source whose
+    # endpoint mis-handles it (see ensembl's entry) even on a run that otherwise wants it; it
+    # can only narrow the caller's use_from, never force it back on for a `--no-from` run.
+    effective_use_from = use_from and source_cfg.get("use_from", True) is not False
     qb = QueryBuilder(cfg, node_by_key, types=types, distinct=source_cfg.get("distinct", True) is not False,
-                      use_from=use_from)
+                      use_from=effective_use_from)
     qdir = os.path.join(out_dir, "queries")
     os.makedirs(qdir, exist_ok=True)
     for old in glob.glob(os.path.join(qdir, "*.sparql")):

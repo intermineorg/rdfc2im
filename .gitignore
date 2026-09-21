@@ -26,7 +26,15 @@ out/*/items/
 # Trial stack build output (see LOAD-TRIAL.md); the compose file itself is tracked.
 trial/artifacts/
 .trial-home
+# Sandbox-local BIND_ADDR override full-build.sh generates (see its own header comment) -
+# never commit this, only the tracked trial/docker-compose.yml.
+trial/docker-compose.local.yml
+
+# humanmine-items is registered as a real Gradle subproject (see settings.gradle wiring in
+# tools/full-build.sh) - its own build/ output lands here, not under TRIAL_HOME.
+humanmine-items/build/
 
 __pycache__/
 *.pyc
 .pytest_cache/
+.build-logs/

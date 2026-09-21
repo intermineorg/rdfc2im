@@ -431,6 +431,37 @@ def _carry_missing_definitions(model: InterMineModel, writers: Dict[str, List[st
             rd = model.classes.get(fd.type)  # the range must exist too
             if rd is not None and not any(_is_core(p) for p in rd.source_files):
                 declare(fd.type)
+            if fd.reverse:
+                # Gradle's per-bio-source ModelMergerTask (mergeModels) validates THIS project's
+                # additions.xml in isolation against the bare stock genomic_model.xml - it never
+                # sees sibling bio-sources' own additions files, even ones already declaring the
+                # very same field (confirmed live: clinvar's own clinvar_additions.xml already
+                # declares this exact Gene.alleles collection, reverse="gene" - and it still
+                # doesn't help, because that file plays no part in humanmine-items' own isolated
+                # mergeModels run). So "already present elsewhere in the live/merged model" does
+                # NOT mean our own additions.xml can omit it - each source's additions file must
+                # be self-consistent on its own for ITS OWN mergeModels to pass. That is exactly
+                # what this function's own docstring already calls "over-carrying": "declaring
+                # the same class in several additions files is the normal InterMine pattern
+                # ... and the plugin merges by name" - this is that same pattern, for a field
+                # rather than a whole class. Skip only when something in `writers` genuinely
+                # writes this field itself (not just holds an incidental empty priority-fields
+                # entry - `_priority_fields` can populate a key with `writers.setdefault(f, [])`
+                # and no writer, so check for a real entry, not just key presence).
+                rev_key = f"{fd.type}.{fd.reverse}"
+                if not writers.get(rev_key):
+                    rev_el = declare(fd.type)
+                    if rev_el is not None and not any(
+                            isinstance(f.tag, str) and f.get("name") == fd.reverse for f in rev_el):
+                        # Use the real declared kind wherever the model already knows it (core,
+                        # an allowed source's additions, or the live model - all equally valid
+                        # precedent); fall back to the standard InterMine reference<->collection
+                        # pairing only for a field with no precedent anywhere.
+                        existing_rev = model.field(fd.type, fd.reverse)
+                        rev_kind = (existing_rev.kind if existing_rev is not None
+                                    else ("collection" if fd.kind == "reference" else "reference"))
+                        etree.SubElement(rev_el, rev_kind, name=fd.reverse,
+                                          **{"referenced-type": cls, "reverse-reference": fld})
         if cls not in carried:
             carried.append(f"{cls}.{fld}")
     return carried

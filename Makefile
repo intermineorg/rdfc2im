@@ -46,5 +46,8 @@ docs:       ; $(PY) -m rdfc2im docs
 test:       ; $(PY) -m pytest -q tests 2>/dev/null || $(PY) tests/run.py
 # humanmine-items/build.gradle declares `resources { srcDirs = ['resources'] }` (the layout every
 # Java-less bio-source uses), so the keys/additions must land in resources/, not src/main/resources/.
-fork-sync:  ; mkdir -p humanmine-items/resources && rm -f humanmine-items/resources/humanmine-items_keys.properties humanmine-items/resources/humanmine-items_additions.xml && cp out/_mine/humanmine-items_keys.properties out/_mine/humanmine-items_additions.xml humanmine-items/resources/
+# `cat src > dst`, not `cp`: plain `cp` has silently zeroed files on this virtiofs-backed
+# workspace mount (confirmed live - a 4097-byte file copied to 4097 bytes of pure NUL), same
+# issue `make docs` was already patched for below; fork-sync wasn't, until it hit it for real.
+fork-sync:  ; mkdir -p humanmine-items/resources && rm -f humanmine-items/resources/humanmine-items_keys.properties humanmine-items/resources/humanmine-items_additions.xml && cat out/_mine/humanmine-items_keys.properties > humanmine-items/resources/humanmine-items_keys.properties && cat out/_mine/humanmine-items_additions.xml > humanmine-items/resources/humanmine-items_additions.xml
 clean:      ; rm -rf out/_mine out/_docs

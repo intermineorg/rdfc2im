@@ -170,6 +170,16 @@ ensembl:
   gene_scope_field: secondaryIdentifier
   scope: good
   note: not a HumanMine source today; supplies Ensembl ids/biotypes/locations that ncbi-gene lacks
+  # Confirmed live: adding FROM <.../dataset/ensembl> to a query combining a VALUES clause with
+  # the obo:RO_0002162 taxonomy filter makes rdfportal.org/ebi/sparql return zero rows for genes
+  # that do exist (e.g. CYP2D6's ENSG00000165841, isolated and reproduced directly against the
+  # endpoint) - some graph-scoping interaction specific to this endpoint's Virtuoso instance, not
+  # a correctness issue with the pattern itself. resolve_ensembl_symbols (scope.py) already omits
+  # FROM for exactly this reason; the real generated fetch query didn't, and silently fetched 0
+  # rows for all 4 of ensembl's tables on the first real run. use_from: false is per-source so
+  # every other source keeps FROM (needed to disambiguate results on RDF Portal's shared
+  # multi-dataset endpoint) - only ensembl's own endpoint has this quirk.
+  use_from: false
 mesh:
   replaces: []
   data_source_name: MeSH

@@ -16,8 +16,14 @@ services:
     # Default max_connections (100) isn't enough for InterMine's have.file.xml.tgt loader
     # (XmlDataLoaderTask), which opens far more concurrent connections than the have.large
     # loader at real data volumes - confirmed hitting "sorry, too many clients already" loading
-    # hgnc (44k Gene items) at the default. 300 cleared it with room to spare.
-    command: ["postgres", "-c", "max_connections=300"]
+    # hgnc (44k Gene items) at the default. 300 cleared it once for a single source, but a full
+    # first-time build (9 sources, each `./gradlew :dbmodel:integrate` in sequence reusing the
+    # same long-lived Gradle daemon) confirmed live it still exhausts 300 partway through the
+    # 9-source loop - the daemon's own JDBC connections apparently aren't released between
+    # per-source invocations. 2000 gives generous headroom (container has 15Gi RAM available;
+    # max_connections mostly reserves memory, not active usage) rather than chasing the exact
+    # daemon-reuse leak or manually restarting postgres between every source.
+    command: ["postgres", "-c", "max_connections=2000"]
     environment:
       POSTGRES_USER: intermine
       POSTGRES_PASSWORD: intermine

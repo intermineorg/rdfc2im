@@ -24,17 +24,55 @@
     <attribute name="ecNumber" type="java.lang.String"/>
     <reference name="pathway" referenced-type="Pathway" reverse-reference="reactions"/>
   </class>
-  <!-- clinvar -->
+  <!-- clinvar. `diseases` is emitted by items.py as an IMPLICIT link (clinvar's disease_label
+       column has no `via` - see columns.tsv's root="Allele" - so items.py infers the collection
+       from the row's root class), which project.py's reverse-reference carrying never sees
+       (that only scans explicit mapped-column writers). Confirmed live: BUILD FAILED loading
+       humanmine-clinvar - "MetaDataException: Collection not found in class: Allele.diseases" -
+       50373 real <collection name="diseases"> references in clinvar's own items.xml, dropped
+       entirely otherwise. Both sides copied verbatim from stock clinvar's own
+       clinvar_additions.xml (the source we replace) - same class/field, not a new invention. -->
   <class name="Allele" is-interface="true">
     <attribute name="reviewStatus" type="java.lang.String"/>
     <attribute name="submissionCount" type="java.lang.Integer"/>
+    <collection name="diseases" referenced-type="Disease" reverse-reference="alleles"/>
+  </class>
+  <!-- extends BioEntity, not just Annotatable like stock clinvar's own declaration: every
+       loaded item is auto-tagged with its DataSet by the loader, and BioEntity is what
+       declares `dataSets` (core.xml) - confirmed live, BUILD FAILED with "Collection not found
+       in class: Disease.dataSets" when Disease only extended Annotatable. Adding a standalone
+       Disease.dataSets field instead (kept extends="Annotatable") does NOT work either -
+       confirmed live: mergeModels still fails, because DataSet.bioEntities' own declared
+       referenced-type is "BioEntity", and the merger checks that reverse-reference type
+       compatibility, not just field-name existence - Disease has to actually BE a BioEntity.
+       In a full HumanMine deployment some other disease-touching source (we run none) must
+       independently declare this same extends, merging it in; here it only comes from us. -->
+  <class name="Disease" is-interface="true" extends="BioEntity">
+    <collection name="alleles" referenced-type="Allele" reverse-reference="diseases"/>
+  </class>
+  <!-- uniprot. Another items.py-implicit pair (no `via` column maps either side), copied
+       verbatim from stock uniprot's own uniprot_additions.xml (a source we run alongside, not
+       replace - alongside sources' own additions aren't in our humanmine-items' isolated
+       mergeModels either, same reasoning as clinvar/huge-gwas above). Confirmed live: BUILD
+       FAILED loading humanmine-uniprot - "Collection not found in class: Protein.ecNumbers". -->
+  <class name="Protein" is-interface="true">
+    <collection name="ecNumbers" referenced-type="ECNumber" reverse-reference="proteins"/>
+  </class>
+  <class name="ECNumber" is-interface="true">
+    <collection name="proteins" referenced-type="Protein" reverse-reference="ecNumbers"/>
   </class>
   <!-- mesh: MeshTerm has only `name`; the D-identifier lets pubmed and mesh rows merge -->
   <class name="MeshTerm" is-interface="true">
     <attribute name="identifier" type="java.lang.String"/>
   </class>
-  <!-- huge-gwas -->
+  <!-- huge-gwas. associatedGenes is another items.py-implicit collection (no `via` column maps
+       it - see Allele.diseases above for why project.py's carrying never sees these), copied
+       verbatim from stock huge-gwas's own huge-gwas_additions.xml (the source gwascatalog
+       replaces) - one-way, no reverse-reference declared there either, so none added here.
+       Confirmed live: BUILD FAILED loading humanmine-gwascatalog - "Collection not found in
+       class: GWASResult.associatedGenes". -->
   <class name="GWASResult" is-interface="true">
     <attribute name="mappedTraitUri" type="java.lang.String"/>
+    <collection name="associatedGenes" referenced-type="Gene"/>
   </class>
 </classes>

@@ -54,13 +54,12 @@
 #   MINE_TITLE        Display name baked into the webapp and BlueGenes. Default matches the demo
 #                     panel; override for a differently-scoped build.
 #
-# Known gap, flagged rather than guessed at: the exact command that resolves BlueGenes' Clojure
-# dependencies into trial/artifacts/bluegenes-lib/ was run this session (LOAD-TRIAL.md records
-# only the *result* - "resolving its 46 declared dependencies gives 178 jars", BlueGenes 1.4.5 -
-# not the command itself). phase_resolve_bluegenes_deps below is a reasoned reconstruction
-# (a throwaway Gradle project depending on the Clojars artifact, since Clojars publishes
-# Maven-compatible poms), not a replay of a verified command. Confirm it live before trusting it;
-# see that function's own comment.
+# phase_resolve_bluegenes_deps was a reasoned reconstruction (LOAD-TRIAL.md recorded only the
+# *result* of resolving BlueGenes' Clojure dependencies - "178 jars" - not the exact command) -
+# now confirmed live (2026-09-21, outside this script, before any real build attempt): the
+# throwaway-project approach below, run standalone with Gradle 4.9 / JDK 8, resolves
+# org.intermine:bluegenes:1.4.5 from Clojars + Maven Central to exactly 178 jars, matching
+# LOAD-TRIAL.md's number exactly. No longer a guess.
 set -euo pipefail
 
 # ============================================================== configuration
@@ -97,7 +96,7 @@ ONLY_PHASE=""
 # source here without also adding its scope mode, or it silently gets a full, unscoped fetch.
 declare -A SCOPE_MODE=(
   [go]=none [hpo]=none [mp]=none [uberon]=none [mesh]=none [homologene]=none [expressionatlas]=none
-  [ncbigene]=full [reactome]=full
+  [ncbigene]=panel [reactome]=full
   [hgnc]=panel [ensembl]=panel [uniprot]=panel [clinvar]=panel [gwascatalog]=panel
   [pubmed]=pmid
 )
@@ -109,8 +108,9 @@ TIMING_TSV="$LOG_DIR/build-$RUN_ID.timing.tsv"
 STATUS_FILE="$LOG_DIR/build-$RUN_ID.status"   # one line, current phase - `watch cat` this for a live view
 
 PHASES=(check_prereqs fetch_inputs rdfc2im_pipeline rdfc2im_project build_humanmine_items
-        prepare_mine_checkout start_databases build_dbmodel integrate_sources postprocess
-        build_webapp resolve_bluegenes_deps stage_artifacts start_mine_stack apply_templates verify)
+        prepare_mine_checkout stage_src_data start_databases build_dbmodel integrate_sources
+        postprocess build_webapp resolve_bluegenes_deps stage_artifacts start_mine_stack
+        apply_templates verify)
 
 # ============================================================== logging & timing
 # Every log line goes to both the terminal and $LOGFILE, timestamped, so `tail -f "$LOGFILE"`
@@ -213,6 +213,26 @@ phase_check_prereqs() {
       "known sources: ${!SCOPE_MODE[*]}"
   done
   mkdir -p "$TRIAL_HOME"
+  # rdfc2im.yaml's src_data_dir (/micklem/data/rdfc2im - a real Micklem-lab deployment path,
+  # deliberately not rewritten to somewhere sandbox-local; see phase_stage_src_data) lives under
+  # a root-owned path on a fresh sandbox. One-time, idempotent: only touches it if not already
+  # ours.
+  if [ ! -w /micklem ] 2>/dev/null || [ ! -e /micklem ]; then
+    run sudo mkdir -p /micklem
+    run sudo chown "$(id -u):$(id -g)" /micklem
+  fi
+  # Gradle 4.9's daemon default heap (1024m) is not enough for InterMine's
+  # ParallelBatchingFetcher, which spawns a worker thread per available CPU core, each doing its
+  # own DataTracker.prefetchIds() - confirmed live: "OutOfMemoryError: GC overhead limit
+  # exceeded" in a worker thread on the very first source's load. The exception is in a
+  # background thread, not main, so the daemon doesn't fail cleanly - it spins in a GC
+  # death-spiral, burning CPU with no forward progress, rather than exiting. GRADLE_USER_HOME's
+  # own gradle.properties (default ~/.gradle) applies to every daemon Gradle starts from here,
+  # across both the humanmine and humanmine-bio-sources checkouts.
+  local gradle_props="$HOME/.gradle/gradle.properties"
+  if ! grep -q "^org.gradle.jvmargs" "$gradle_props" 2>/dev/null; then
+    write_file "$gradle_props" "org.gradle.jvmargs=-Xmx4096m"
+  fi
   log "prerequisites OK"
 }
 
@@ -249,7 +269,12 @@ phase_rdfc2im_pipeline() {
       # main_reference, uniprot's main_citation, gwascatalog, reactome) - see LOAD-TRIAL.md's
       # pubmed section. Requires those sources' items to already exist on disk.
       local pmid_file="$TRIAL_HOME/cited_pmids.txt"
-      run bash -c "grep -hoE '\"[0-9]{4,9}\"' out/{hgnc,uniprot,gwascatalog,reactome}/items/*.xml 2>/dev/null \
+      # -a forces text mode: without it, grep inside this `bash -c` context (unlike an interactive
+      # shell) mis-detects these UTF-8 items XML files as binary and reports "binary file matches"
+      # with zero actual matches - confirmed live, silently produced an empty cited_pmids.txt, which
+      # made cli.py's `if pmids and pmid_field` (falsy on []) fall through to an unrestricted,
+      # LIMIT-0 fetch of all of PubMed instead of the intended PMID-scoped one.
+      run bash -c "grep -ahoE '\"[0-9]{4,9}\"' out/{hgnc,uniprot,gwascatalog,reactome}/items/*.xml 2>/dev/null \
                     | tr -d '\"' | sort -u > '$pmid_file'"
       run python3 -m rdfc2im fetch --source pubmed --limit 0 --force --pmids "@$pmid_file"
     else
@@ -258,12 +283,17 @@ phase_rdfc2im_pipeline() {
     run python3 -m rdfc2im tsv --source "$src"
     run python3 -m rdfc2im items --source "$src"
   done
-  run python3 -m rdfc2im check
 }
 
 phase_rdfc2im_project() {
   source "$HERE/.venv/bin/activate"
   run python3 -m rdfc2im project
+  # `check` needs out/_mine/project.xml (rdfc2im check -> check_project(..., out/_mine, ...)), which
+  # `project` above is what creates - USAGE.md's own documented order is project -> check -> docs.
+  # Originally called at the end of phase_rdfc2im_pipeline, before project.xml existed - confirmed
+  # live: "check: no project.xml - run `rdfc2im project` first", exit 2. --dry-run never runs `check`
+  # for real, so this ordering bug survived every prior dry-run test.
+  run python3 -m rdfc2im check
   run make fork-sync
 }
 
@@ -277,14 +307,17 @@ phase_build_humanmine_items() {
         "$bio/settings.gradle"
   fi
   if ! grep -q "bio-source-humanmine-items" "$bio/settings.gradle" 2>/dev/null; then
-    run bash -c "cat >> '$bio/settings.gradle' <<'GRADLE'
+    # An absolute path, not a relative guess up from $bio: the original '../../../humanmine-items'
+    # assumed TRIAL_HOME sits a fixed depth alongside the rdfc2im checkout as a sibling directory.
+    # Confirmed live that assumption doesn't hold here (TRIAL_HOME under ~/intermine-build/, the
+    # checkout under /Users/gos/git/rdfc2im/ - unrelated trees): it resolved to
+    # /home/agent/humanmine-items, which doesn't exist - "Basedir ... does not exist", Gradle
+    # initConfig FAILED. $HERE is already known precisely, so use it directly instead of guessing.
+    run bash -c "cat >> '$bio/settings.gradle' <<GRADLE
 
 include ':bio-source-humanmine-items'
-project(':bio-source-humanmine-items').projectDir = new File(settingsDir, '../../../humanmine-items')
+project(':bio-source-humanmine-items').projectDir = new File('$HERE/humanmine-items')
 GRADLE"
-    log "NOTE: registered humanmine-items via a relative path from $bio - if TRIAL_HOME is not"
-    log "  a sibling of the rdfc2im checkout at the expected depth, fix this path by hand (see"
-    log "  humanmine-items/README.md for the exact settings.gradle stanza)."
   fi
   run_in "$bio" "${GRADLE_ENV[@]}" ./gradlew :bio-source-humanmine-items:install
 }
@@ -304,8 +337,50 @@ write_file() {
 
 phase_prepare_mine_checkout() {
   local mine="$TRIAL_HOME/humanmine"
+  # shellcheck disable=SC1090
+  source "$HERE/.venv/bin/activate"   # tools/reduce_mine.py below needs lxml
   [ -d "$mine" ] || run cp -r "$UPSTREAM_CACHE/humanmine" "$mine"
+  # webapp/build.gradle pulls the Gretty plugin from JCenter/Bintray (dead since 2021, same class
+  # of problem already worked around for bio-source-humanmine-static) - confirmed live: 403
+  # Forbidden from jcenter.bintray.com, which fails Gradle's CONFIGURE phase for the whole
+  # humanmine project (every subproject is evaluated up front, so this breaks :dbmodel:builddb
+  # too, not just :webapp). Gretty is only used for its own embedded-Jetty dev-convenience tasks
+  # (`gretty run`) - nothing in `war`'s own dependsOn graph needs it, and this build's actual
+  # deployment goes through the Tomcat container (trial/docker-compose.yml), never gretty. Safe
+  # to disable: comment out the plugin apply and its now-orphaned `gretty {}` config block.
+  if grep -q "^apply from:.*gretty.plugin" "$mine/webapp/build.gradle" 2>/dev/null; then
+    run sed -i.bak \
+      -e 's|^\(apply from:.*gretty\.plugin.*\)$|// \1  # disabled by full-build.sh: dead JCenter plugin|' \
+      -e '/^gretty {/,/^}/{ s/^/\/\/ /; }' \
+      "$mine/webapp/build.gradle"
+  fi
+  # dbmodel/build.gradle's soTermListFilePath/soAdditionFilePath are relative strings, passed
+  # straight into an Ant task (DBModelPlugin.groovy: `ant.createSoModel(soTermListFile:
+  # config.soTermListFilePath, outputFile: config.soAdditionFilePath)`) with no project.file(...)
+  # resolution first. Ant resolves a relative path against the JVM's OS-level `user.dir`, which
+  # for a Gradle DAEMON process is fixed at $GRADLE_USER_HOME/daemon/<version>/ for the daemon's
+  # whole lifetime, not the calling client's directory - confirmed live: createSoModel failed
+  # looking for ".../daemon/4.9/dbmodel/resources/so_terms" (that exact prefix), even against a
+  # freshly restarted daemon started from the right directory. A genuine bug in intermine's own
+  # gradle plugin, not rdfc2im or full-build.sh; making both paths absolute here avoids it
+  # without disabling the daemon for every other ./gradlew call this script makes.
+  if grep -q '^\s*soTermListFilePath = "dbmodel/resources/so_terms"' "$mine/dbmodel/build.gradle" 2>/dev/null; then
+    run sed -i.bak \
+      -e "s|soTermListFilePath = \"dbmodel/resources/so_terms\"|soTermListFilePath = \"$mine/dbmodel/resources/so_terms\"|" \
+      -e "s|soAdditionFilePath = \"dbmodel/build/so_additions.xml\"|soAdditionFilePath = \"$mine/dbmodel/build/so_additions.xml\"|" \
+      "$mine/dbmodel/build.gradle"
+  fi
   write_file "$mine/project.xml" "$(cat out/_mine/project.xml)"
+  # rdfc2im's own project.xml keeps HumanMine's full ~40-source list, our sources inserted as
+  # replacements (USAGE.md) - correct for a full mine, wrong for this reduced demo build.
+  # dbmodel:addSourceDependencies tries to resolve a Maven jar for every listed source, and the
+  # ~39 stock sources we don't run were only ever published to JCenter/Bintray (dead since 2021,
+  # confirmed live: 403 from jcenter.bintray.com, and confirmed absent from Maven Central too -
+  # not a dead-link, genuinely unpublished anywhere else). Trim to just our own sources (all
+  # share one `type`, set once in rdfc2im.yaml) - the same reduction LOAD-TRIAL.md's own
+  # "Reducing a mine" section describes doing by hand for the original go-only trial ("project.xml
+  # lists only humanmine-go"), generalised to all 9 and finally scripted instead of manual.
+  run python3 tools/reduce_mine.py sources "$mine/project.xml" humanmine-items
   # HumanMine's own priorities file, merged with our sources (rdfc2im project already did the
   # merge; this just deploys it) - re-syncing after adding a source is required, not optional
   # (confirmed live, LOAD-TRIAL.md's hgnc section, finding 3).
@@ -338,10 +413,42 @@ db.userprofile-production.datasource.password=intermine
 default.intermine.properties.file=$prod_props
 webapp.baseurl=http://localhost:8090
 webapp.path=humanmine
+# webapp/build.gradle's cargo {} block (Gradle-Cargo remote-Tomcat deploy plugin) eagerly reads
+# this during Gradle's CONFIGURE phase, not lazily when a cargo task actually runs - confirmed
+# live: it calls getServerName(props.getProperty("webapp.deploy.url")) with a null deployUrl,
+# which NPEs on deployUrl.contains("//") and fails the whole project's configuration (blocking
+# :dbmodel:builddb too, same class of problem as the gretty fix above). The code LOOKS like it
+# should skip this via `if (props.hasProperty("webapp.hostname")) ... else getServerName(...)`,
+# but that's a Groovy trap: Properties.hasProperty(key) is the Groovy MOP method (does this
+# OBJECT have a declared field/property with this name?), not Properties.containsKey(key) - it
+# is FALSE for every loaded entry, always, regardless of what's in the file, so the `else`
+# branch always runs and webapp.hostname (tried first, see prior commit) can never help. Setting
+# webapp.deploy.url instead works because THAT one is read with the real, correct
+# Properties.getProperty(key) API. This build never runs a cargo task at all (deployment goes
+# through the Tomcat container in trial/docker-compose.yml instead), so the value only needs to
+# be a syntactically valid URL - reusing webapp.baseurl's is the natural choice.
+webapp.deploy.url=http://localhost:8090
 project.title=$MINE_TITLE
 PROPS
 )"
   log "~/.intermine/humanmine.properties done (default.intermine.properties.file=$prod_props)"
+}
+
+phase_stage_src_data() {
+  # project.xml's src.data.file for each of our sources points at rdfc2im.yaml's src_data_dir
+  # (/micklem/data/rdfc2im/<source>/<source>.xml - a real Micklem-lab deployment path; USAGE.md
+  # documents this as where "items/<source>.xml will live on the build machine", i.e. something
+  # meant to be staged there, not rewritten). Nothing before this phase ever puts a file there -
+  # confirmed live: :dbmodel:integrate died on the very first source, "Exception while reading
+  # from: /micklem/data/rdfc2im/clinvar/clinvar.xml" - this step was simply missing. Symlink
+  # rather than copy: these items files can be large (clinvar alone is 54039 items) and a
+  # symlink keeps out/ as the single source of truth, so a later `rdfc2im items` re-run is
+  # picked up without re-staging.
+  for src in $SOURCES; do
+    local dest_dir="/micklem/data/rdfc2im/$src"
+    run mkdir -p "$dest_dir"
+    run ln -sf "$HERE/out/$src/items/$src.xml" "$dest_dir/$src.xml"
+  done
 }
 
 phase_start_databases() {
@@ -352,11 +459,17 @@ phase_start_databases() {
 # Untracked, sandbox-local override generated by full-build.sh (BIND_ADDR=$BIND_ADDR).
 # Never commit this - the tracked trial/docker-compose.yml deliberately binds 127.0.0.1
 # and expects ssh -L; this is for sandboxes that publish ports a different way instead.
+#
+# !override (not a plain list): Compose merges \`ports:\` across -f files by concatenating,
+# not replacing - confirmed live, every service ended up with BOTH the base file's 127.0.0.1
+# binding AND this one simultaneously, and since 0.0.0.0 already covers 127.0.0.1, the second
+# bind failed with "address already in use" ("docker compose ... up" died before any container
+# actually started). \`!override\` (Compose spec's sequence-merge tag) replaces the list instead.
 services:
-  postgres: {ports: ["$BIND_ADDR:$PG_PORT:5432"]}
-  solr:     {ports: ["$BIND_ADDR:$SOLR_PORT:8983"]}
-  mine:     {ports: ["$BIND_ADDR:8090:8090"]}
-  bluegenes: {ports: ["$BIND_ADDR:$BG_PORT:5000"]}
+  postgres: {ports: !override ["$BIND_ADDR:$PG_PORT:5432"]}
+  solr:     {ports: !override ["$BIND_ADDR:$SOLR_PORT:8983"]}
+  mine:     {ports: !override ["$BIND_ADDR:8090:8090"]}
+  bluegenes: {ports: !override ["$BIND_ADDR:$BG_PORT:5000"]}
 YML
 )"
     compose_files+=(-f "$override")
@@ -371,20 +484,40 @@ YML
     done
   fi
   for db in humanmine-production humanmine-items humanmine-userprofile; do
-    run docker exec rdfc2im-postgres psql -U intermine -d postgres -c \
-      "SELECT 'CREATE DATABASE \"$db\"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')\\gexec"
+    # \gexec must be fed via stdin, not -c: confirmed live that psql's -c mode never recognises
+    # it as a meta-command regardless of line placement (it's sent to the server as literal SQL
+    # text and fails with "syntax error at or near \"\\\""), while the identical text piped
+    # through stdin (`docker exec -i ... <<SQL`) works. `-i` + a heredoc, matching the same
+    # pattern phase_apply_templates already uses below for demo_public_templates.sql.
+    run bash -c "docker exec -i rdfc2im-postgres psql -U intermine -d postgres <<SQL
+SELECT 'CREATE DATABASE \"$db\"' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')
+\\gexec
+SQL"
   done
   # Solr's image only precreates one core via `command:`; both of this mine's cores are made
-  # here instead, then made searchable by tools/solr-search-schema-fix.sh (idempotent: it just
-  # replaces a field-type definition, safe to run again on an existing core).
+  # here. tools/solr-search-schema-fix.sh does NOT run here (moved to phase_postprocess) - see
+  # that phase's own comment for why: it needs a field type Solr's schemaless configset only
+  # creates once real documents exist, which they don't yet on a freshly created, empty core.
   for core in humanmine-search humanmine-autocomplete; do
     run bash -c "docker exec rdfc2im-solr solr create_core -c $core 2>&1 | grep -qv 'already exists' || true"
   done
-  run env SOLR_URL="http://localhost:$SOLR_PORT" sh tools/solr-search-schema-fix.sh
 }
 
 phase_build_dbmodel() {
-  run_in "$TRIAL_HOME/humanmine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:builddb
+  local mine="$TRIAL_HOME/humanmine"
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:builddb
+  # genomic_priorities.properties (as written by phase_prepare_mine_checkout) still has entries
+  # for classes only some OTHER, unrun stock source would have contributed (ProteinDomain, from
+  # protein-atlas) - the exact "Reducing a mine" failure LOAD-TRIAL.md documents: PriorityConfig
+  # throws "Class 'ProteinDomain' not found in model", which fails IntegrationWriter
+  # instantiation for every single source, not just one - confirmed live. Must run AFTER builddb
+  # (needs the real merged genomic_model.xml, not the live HumanMine model - same rule LOAD-
+  # TRIAL.md states) and BEFORE integrate_sources (which needs a working IntegrationWriter).
+  # shellcheck disable=SC1090
+  source "$HERE/.venv/bin/activate"
+  run python3 tools/reduce_mine.py priorities \
+    "$mine/dbmodel/resources/genomic_priorities.properties" \
+    "$mine/dbmodel/build/resources/main/genomic_model.xml"
 }
 
 phase_integrate_sources() {
@@ -413,7 +546,23 @@ phase_postprocess() {
   # produce anything real (confirmed live). update-data-sources needs a Micklem-lab-specific
   # file path this build does not have; also skipped.
   local mine="$TRIAL_HOME/humanmine"
-  for task in create-references create-attribute-indexes create-search-index create-autocomplete-index summarise-objectstore; do
+  for task in create-references create-attribute-indexes; do
+    run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess="$task"
+  done
+  # solr-search-schema-fix.sh must run AFTER a first create-search-index pass, not before:
+  # confirmed live, calling it against a freshly created empty core 400s with "The field type
+  # 'analyzed_string' is not present in this schema, and so cannot be replaced" - Solr's
+  # schemaless configset only creates that field type once a real document uses it (see that
+  # script's own header comment). Originally called from phase_start_databases, right after the
+  # core is created and before anything has been indexed into it - moved here instead. Its own
+  # header comment already documents the fix-then-reindex sequence (the schema change is not
+  # retroactive): index once, fix the type, clear the now-wrongly-analyzed docs, index again.
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess=create-search-index
+  run env SOLR_URL="http://localhost:$SOLR_PORT" sh tools/solr-search-schema-fix.sh
+  run curl -sf "http://localhost:$SOLR_PORT/solr/humanmine-search/update?commit=true" \
+    -H "Content-Type: application/json" -d '{"delete": {"query": "*:*"}}'
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess=create-search-index
+  for task in create-autocomplete-index summarise-objectstore; do
     run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:postProcess -Pprocess="$task"
   done
 }
@@ -423,12 +572,10 @@ phase_build_webapp() {
 }
 
 phase_resolve_bluegenes_deps() {
-  # UNVERIFIED - see this script's header comment. LOAD-TRIAL.md records that resolving
-  # BlueGenes 1.4.5's 46 declared dependencies gives 178 jars, but not the exact command used to
-  # do it. This reconstruction depends on Clojars (a Maven-compatible repository) serving a
-  # `bluegenes` artifact under the `org.intermine` group at that version; confirm this resolves
-  # before trusting trial-stage.sh's output. If the coordinate is wrong, this fails loudly at
-  # `resolveBgDeps` (an unresolvable dependency), not silently.
+  # Confirmed live 2026-09-21 (standalone, ahead of any real build attempt): resolves to exactly
+  # 178 jars, matching LOAD-TRIAL.md's number exactly - see this script's header comment. If the
+  # `org.intermine:bluegenes:1.4.5` coordinate or the Clojars repo ever changes, this fails loudly
+  # at `resolveBgDeps` (an unresolvable dependency), not silently.
   local bgdir="$TRIAL_HOME/bgdeps"
   write_file "$bgdir/build.gradle" "$(cat <<'GRADLE'
 repositories {
