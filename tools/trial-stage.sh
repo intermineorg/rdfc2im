@@ -2,7 +2,7 @@
 # Collect the build outputs the trial stack mounts.  Idempotent; re-run after rebuilding
 # the war or changing the mapping.
 #
-#   TRIAL_HOME  where the mine was built (contains trialmine/ and bgdeps/)
+#   TRIAL_HOME  where the mine was built (contains humanmine/ and bgdeps/)
 #
 # Produces, all gitignored:
 #   trial/artifacts/humanmine/       the webapp, exploded, with its DB host patched
@@ -15,7 +15,7 @@ TRIAL_HOME=${TRIAL_HOME:-}
 [ -n "$TRIAL_HOME" ] || { [ -f "$HERE/.trial-home" ] && TRIAL_HOME=$(cat "$HERE/.trial-home"); }
 [ -n "$TRIAL_HOME" ] || { echo "trial-stage: set TRIAL_HOME (or write it to .trial-home)" >&2; exit 1; }
 
-WAR=$TRIAL_HOME/trialmine/webapp/build/libs/webapp.war
+WAR=$TRIAL_HOME/humanmine/webapp/build/libs/webapp.war
 CP=$TRIAL_HOME/bgdeps/classpath.txt
 [ -f "$WAR" ] || { echo "trial-stage: no war at $WAR - run ./gradlew :webapp:war first" >&2; exit 1; }
 [ -f "$CP" ]  || { echo "trial-stage: no classpath at $CP - run the bgdeps resolve first" >&2; exit 1; }
