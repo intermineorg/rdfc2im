@@ -401,6 +401,21 @@ phase_prepare_mine_checkout() {
       -e "s|soAdditionFilePath = \"dbmodel/build/so_additions.xml\"|soAdditionFilePath = \"$mine/dbmodel/build/so_additions.xml\"|" \
       "$mine/dbmodel/build.gradle"
   fi
+  # webapp/build.gradle's warWebApp task never told Gradle's War type where the REAL (struts-
+  # merged, by addStrutsConfig) WEB-INF/web.xml lives, so it silently produced a war with NO
+  # web.xml at all - confirmed live: the war deployed and Tomcat logged success, but every
+  # request 404'd (no servlet mappings exist without one), with nothing resembling an error
+  # anywhere in Tomcat's own logs. Gradle's War task manages WEB-INF/web.xml through its own
+  # dedicated `webXml` property, not through the generic `from()` copy, and since `webXml` was
+  # never set, nothing added one. Must ALSO exclude it from `from()` - setting webXml alone
+  # added it twice (once via the property, once because it's a real file under
+  # explodedWebAppDir), producing a corrupted war with two overlapping web.xml entries that
+  # `unzip` refused as "possible zip bomb".
+  if grep -q '^\s*exclude "WEB-INF/web.properties"$' "$mine/webapp/build.gradle" 2>/dev/null; then
+    run sed -i.bak \
+      -e 's|exclude "WEB-INF/web.properties"|exclude "WEB-INF/web.properties", "WEB-INF/web.xml"\n    webXml = file("${explodedWebAppDir}/WEB-INF/web.xml")|' \
+      "$mine/webapp/build.gradle"
+  fi
   write_file "$mine/project.xml" "$(cat out/_mine/project.xml)"
   # rdfc2im's own project.xml keeps HumanMine's full ~40-source list, our sources inserted as
   # replacements (USAGE.md) - correct for a full mine, wrong for this reduced demo build.
@@ -460,6 +475,17 @@ webapp.path=humanmine
 # be a syntactically valid URL - reusing webapp.baseurl's is the natural choice.
 webapp.deploy.url=http://localhost:8090
 project.title=$MINE_TITLE
+# Neither default.intermine.production.properties nor anywhere else sets these - every real
+# InterMine deployment must supply its own (confirmed: grep for superuser.account across every
+# upstream checkout found it only in test/CI fixtures, never a real default). Without it,
+# :webapp:loadDefaultTemplates (part of :dbmodel:buildUserDB, which creates the userprofile
+# schema) fails live: "Unable to load super user profile" / "Loading default templates and tags
+# into profile null" - and without THAT, the webapp's own ActionServlet fails to initialise at
+# startup ("userprofileOSW is null"), so InterMineContext never initialises and every request
+# 500s with ContextNotInitialisedException, however long you wait. Values match the convention
+# every one of intermine's own CI/test properties files uses (config/ci.properties etc).
+superuser.account=superuser@intermine.org
+superuser.initialPassword=intermine
 PROPS
 )"
   log "~/.intermine/humanmine.properties done (default.intermine.properties.file=$prod_props)"
@@ -517,6 +543,15 @@ SQL"
 phase_build_dbmodel() {
   local mine="$TRIAL_HOME/humanmine"
   run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:builddb
+  # os.production only - the userprofile database's own schema (savedtemplatequery, tag, ...)
+  # is a SEPARATE task, never run anywhere else in this script. Without it the webapp's own
+  # ActionServlet fails to initialise at startup ("userprofileOSW is null" - confirmed live),
+  # InterMineContext never initialises, and every single request 500s with
+  # ContextNotInitialisedException regardless of how long you wait - a much bigger symptom than
+  # its cause looks like. buildUserDB (not just createUserDB) also loads the superuser account
+  # and default templates (:webapp:loadDefaultTemplates), which curation/demo_public_templates.sql
+  # depends on via foreign key (phase_apply_templates' own inserts reference the superuser row).
+  run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:buildUserDB
   # genomic_priorities.properties (as written by phase_prepare_mine_checkout) still has entries
   # for classes only some OTHER, unrun stock source would have contributed (ProteinDomain, from
   # protein-atlas) - the exact "Reducing a mine" failure LOAD-TRIAL.md documents: PriorityConfig
