@@ -26,9 +26,14 @@ from .items import table_root
 ABSTRACT = {"InterMineObject", "Annotatable", "BioEntity"}
 
 
-def source_dirs(out_root: str) -> List[str]:
+def source_dirs(out_root: str, only: Optional[List[str]] = None) -> List[str]:
+    """Translated sources under out_root - all of them, or just `only` (a build's source list).
+
+    Every out/<dir> with a columns.tsv counts, and such files are derived output that outlives the
+    build that made them, so "everything translated" is not "what this build is for"."""
     return sorted(d for d in os.listdir(out_root)
-                  if not d.startswith("_") and os.path.exists(os.path.join(out_root, d, "columns.tsv")))
+                  if not d.startswith("_") and os.path.exists(os.path.join(out_root, d, "columns.tsv"))
+                  and (only is None or d in only))
 
 
 def load_columns(out_root: str, src: str) -> Dict[str, List[dict]]:
@@ -52,7 +57,8 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
                 src_data_dir: str, humanmine_project: Optional[str], sources_cfg: dict,
                 extensions_xml: Optional[str], source_version: Optional[str] = None,
                 priorities: Optional[str] = None,
-                priorities_override: Optional[str] = None, log=print) -> dict:
+                priorities_override: Optional[str] = None, only: Optional[List[str]] = None,
+                log=print) -> dict:
     os.makedirs(project_out, exist_ok=True)
     report: List[str] = []
     new_sources: List[etree._Element] = []
@@ -62,7 +68,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
     # fields each `alongside` source writes, attributes and references (collections just union)
     alongside: Dict[str, List[str]] = {}          # our source name -> stock sources it supplements
     alongside_fields: Dict[str, List[str]] = {}   # Class.field -> [our source names]
-    for src in source_dirs(out_root):
+    for src in source_dirs(out_root, only):
         tables = load_columns(out_root, src)
         if not tables:
             continue
@@ -207,7 +213,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
     # ---- additions
     classes_el = etree.Element("classes")
     merged: Dict[str, etree._Element] = {}
-    add_files = [os.path.join(out_root, s, "additions.xml") for s in source_dirs(out_root)]
+    add_files = [os.path.join(out_root, s, "additions.xml") for s in source_dirs(out_root, only)]
     if extensions_xml and os.path.exists(extensions_xml):
         add_files.append(extensions_xml)
     for p in add_files:
@@ -234,7 +240,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
 
     # ---- priorities
     replaced_by: Dict[str, List[str]] = {}
-    for src in source_dirs(out_root):
+    for src in source_dirs(out_root, only):
         for r in sources_cfg.get(src, {}).get("replaces") or []:
             replaced_by.setdefault(r, []).append(f"humanmine-{src}")
     text = merge_priorities(priorities if priorities and os.path.exists(priorities) else None,

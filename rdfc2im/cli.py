@@ -341,7 +341,8 @@ def run(a, ws) -> int:
         return gen_project(out, os.path.join(out, "_mine"), m, ws["type"], ws["src_data_dir"],
                            ws.get("project_xml"), sources_cfg, ws.get("extensions"),
                            ws.get("source_version"), ws.get("priorities"),
-                           ws.get("priorities_override"))
+                           ws.get("priorities_override"),
+                           only=a.source or ws.get("sources"))
 
     def do_check(m):
         return check_project(out, os.path.join(out, "_mine"), m, ws["type"], ws.get("project_xml"), sources_cfg)

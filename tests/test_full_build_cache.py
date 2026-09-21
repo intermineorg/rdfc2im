@@ -145,3 +145,14 @@ def test_logs_default_to_the_repository_so_a_host_can_watch_them(tmp_path):
         for ext in (".log", ".status", ".timing.tsv"):
             if os.path.exists(mine + ext):
                 os.unlink(mine + ext)
+
+
+def test_project_is_scoped_to_the_sources_being_built(tmp_path):
+    """--sources scoped the fetch but not the mine: `project` was run with no source list, so any
+    stale out/<dir>/columns.tsv from an earlier session leaked into project.xml (phase 11 then died
+    loading humanmine-expressionatlas, which was never in the panel)."""
+    plan = _plan(tmp_path, "--only", "rdfc2im_project", "--sources", "go hgnc")
+    if plan is None:
+        return
+    cmd = next(c for c in _cmds(plan) if "rdfc2im project" in c)
+    assert cmd.endswith("rdfc2im project --source go --source hgnc"), cmd

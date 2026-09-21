@@ -530,3 +530,36 @@ def test_a_one_way_collection_needs_no_reverse_end(tmp_path):
           <collection name="dataSets" referenced-type="DataSet"/>
         </class>""")
     assert rc == 0 and not hard, hard
+
+
+# ---- `project` honours the source list it is given
+
+def test_project_covers_only_the_requested_sources_not_every_stale_directory(tmp_path):
+    """The second fresh full-build.sh run died in phase 11 loading humanmine-expressionatlas - a
+    source nobody asked for. `rdfc2im project` took every out/<dir> that had a columns.tsv, and this
+    workspace still held the translate outputs of six sources from an earlier hand session
+    (expressionatlas, homologene, hpo, mesh, mp, uberon). full-build.sh never told `project` which
+    sources it was building, so its `--sources` list scoped the fetch but not the mine: project.xml
+    listed all twelve, and so did the additions (AnatomyTerm, HPOTerm, ...)."""
+    from rdfc2im.project import gen_project
+    m, out_root, mine = _project_setup(tmp_path, [
+        _col(0, "AnatomyTerm", "identifier", required="yes"),
+        _col(1, "AnatomyTerm", "namespace"),
+    ])
+    (tmp_path / "out" / "hgnc").mkdir()
+    write_tsv(str(tmp_path / "out" / "hgnc" / "columns.tsv"),
+              [_col(0, "Protein", "primaryAccession", required="yes")], COL_COLUMNS)
+
+    def run(only):
+        gen_project(out_root, mine, m, "humanmine-items", "/data", None, {}, None,
+                    source_version="4.3.0", only=only, log=lambda *a: None)
+        px = etree.parse(os.path.join(mine, "project.xml")).getroot()
+        names = [s.get("name") for s in px.iter("source")]
+        add = etree.parse(os.path.join(mine, "humanmine-items_additions.xml")).getroot()
+        return names, {c.get("name") for c in add.iter("class")}
+
+    names, classes = run(["hgnc"])
+    assert names == ["humanmine-hgnc"], names
+    assert "AnatomyTerm" not in classes, "a class only the unrequested source needs leaked into the mine"
+    names, classes = run(None)                 # no restriction: everything translated, as before
+    assert names == ["humanmine-hgnc", "humanmine-uberon"] and "AnatomyTerm" in classes

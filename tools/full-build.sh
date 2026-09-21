@@ -340,7 +340,12 @@ phase_rdfc2im_pipeline() {
 
 phase_rdfc2im_project() {
   source "$HERE/.venv/bin/activate"
-  run python3 -m rdfc2im project
+  # Scope the mine to $SOURCES, exactly as the fetch was. Without --source, `project` takes every
+  # out/<dir> that has a columns.tsv - and those are derived files that outlive the build that made
+  # them, so stale translate output from sources nobody asked for ended up in project.xml and
+  # :dbmodel:integrate died loading one of them (confirmed live: humanmine-expressionatlas).
+  local src_flags=(); for s in $SOURCES; do src_flags+=(--source "$s"); done
+  run python3 -m rdfc2im project "${src_flags[@]}"
   # `check` needs out/_mine/project.xml (rdfc2im check -> check_project(..., out/_mine, ...)), which
   # `project` above is what creates - USAGE.md's own documented order is project -> check -> docs.
   # Originally called at the end of phase_rdfc2im_pipeline, before project.xml existed - confirmed
