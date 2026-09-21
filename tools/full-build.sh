@@ -690,6 +690,23 @@ phase_build_dbmodel() {
   run python3 tools/reduce_mine.py priorities \
     "$mine/dbmodel/resources/genomic_priorities.properties" \
     "$mine/dbmodel/build/resources/main/genomic_model.xml"
+  # Same "Reducing a mine" class of problem, different file and a much quieter failure:
+  # objectstoresummary.config.properties names HPOTerm/InteractionTerm/ProteinDomain (and
+  # Interaction/InteractionRegion) in a reduced build that loads none of them.
+  # AutoCompleter.buildIndex looks each ".autocomplete" class up by fully-qualified name and
+  # throws when the model has no descriptor, so create-autocomplete-index dies - but
+  # PostProcessPlugin CATCHES that, prints only "POSTPROCESS ... FAILED" plus the wrapped
+  # exception's generic message, and carries on, leaving the build's exit code at 0. Confirmed
+  # live: it failed on every run today that reached it and went unnoticed for exactly that
+  # reason. Both copies are trimmed - the source under resources/ and, when it already exists,
+  # the processResources output under build/resources/main/ that the postprocess classpath
+  # (dirset over buildDir) actually reads.
+  for f in "$mine/dbmodel/resources/objectstoresummary.config.properties" \
+           "$mine/dbmodel/build/resources/main/objectstoresummary.config.properties"; do
+    [ -f "$f" ] || continue
+    run python3 tools/reduce_mine.py objectstoresummary "$f" \
+      "$mine/dbmodel/build/resources/main/genomic_model.xml"
+  done
 }
 
 phase_integrate_sources() {

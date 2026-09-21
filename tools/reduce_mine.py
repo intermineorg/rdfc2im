@@ -24,8 +24,13 @@ Subcommands:
       whose views/enrich/enrichIdentifier/constraints/pathStrings paths do not resolve.
 
   objectstoresummary <objectstoresummary.config.properties> <genomic_model.xml>
-      Drop every "X.autocomplete" (or "X.fields", "X.displayName" etc - any "X.*" key) line
-      whose leading class X is not in the merged model.
+      Drop every class-keyed line (fully qualified, e.g.
+      "org.intermine.model.bio.HPOTerm.autocomplete" / ".fields") whose class is not in the
+      merged model, leaving non-class configuration keys untouched. An ".autocomplete" entry
+      for an absent class is fatal: AutoCompleter.buildIndex looks the class up by its
+      fully-qualified name and throws if the model has no descriptor for it, which
+      create-autocomplete-index reports only as a generic "Creating autocomplete index failed"
+      (the plugin catches it and keeps going, so the build's exit code stays 0).
 
 Every subcommand edits in place and prints a one-line summary of what it removed, so the effect
 is visible in the calling script's own log rather than silent.
@@ -33,6 +38,9 @@ is visible in the calling script's own log rather than silent.
 import re
 import sys
 import lxml.etree as ET
+
+
+MODEL_PACKAGE_PREFIX = "org.intermine.model."
 
 
 def load_model_classes(genomic_model_xml):
@@ -140,16 +148,29 @@ def cmd_objectstoresummary(args):
         if not s or s.startswith("#") or "=" not in s:
             kept.append(line)
             continue
-        key = s.split("=", 1)[0]
-        cls = key.split(".", 1)[0]
+        key = s.split("=", 1)[0].strip()
+        # Class-keyed entries in THIS file are fully qualified and always carry a trailing
+        # property segment: "org.intermine.model.bio.HPOTerm.autocomplete". Anything not under
+        # the model package is ordinary configuration that must survive untouched - notably
+        # "autocomplete.solrurl" (the Solr endpoint the whole feature depends on),
+        # "max.field.values" and "ignore.counts". Matching on the package prefix, rather than
+        # splitting on the first/last dot, is what keeps those: an earlier version of this
+        # function took key.split(".", 1)[0], which yields "org" for every real class line and
+        # "autocomplete"/"max"/"ignore" for the config ones - i.e. it would have dropped the
+        # entire file. It was never wired into a phase, so that never ran; fixed here rather
+        # than left as a trap.
+        if not key.startswith(MODEL_PACKAGE_PREFIX):
+            kept.append(line)
+            continue
+        cls = key.rsplit(".", 1)[0].rsplit(".", 1)[-1]   # strip ".<property>", take simple name
         if cls in classes:
             kept.append(line)
         else:
-            dropped.append(key)
+            dropped.append(cls)
     with open(path, "w", encoding="utf-8") as fh:
         fh.writelines(kept)
     print(f"reduce_mine objectstoresummary: dropped {len(dropped)} line(s) for absent classes"
-          + (": " + ", ".join(sorted(set(d.split('.', 1)[0] for d in dropped))) if dropped else ""))
+          + (": " + ", ".join(sorted(set(dropped))) if dropped else ""))
 
 
 WIDGET_PATH_ATTRS = ["views", "enrich", "enrichIdentifier", "constraints", "pathStrings"]
