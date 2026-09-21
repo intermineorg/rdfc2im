@@ -9,11 +9,16 @@
   <class name="Gene" is-interface="true">
     <attribute name="typeOfGene" type="java.lang.String"/>
   </class>
-  <!-- reactome Phase 1 -->
+  <!-- reactome Phase 1. dataSets copied verbatim from stock reactome's own reactome_additions.xml
+       - declared there with NO reverse-reference (one-way), unlike Disease.dataSets above, so it
+       sidesteps that same DataSet.bioEntities type-compatibility issue entirely; no extends
+       change needed. Confirmed live: BUILD FAILED loading humanmine-reactome - "Collection not
+       found in class: Pathway.dataSets". -->
   <class name="Pathway" is-interface="true">
     <attribute name="description" type="java.lang.String"/>
     <reference name="organism" referenced-type="Organism"/>
     <collection name="reactions" referenced-type="PathwayReaction" reverse-reference="pathway"/>
+    <collection name="dataSets" referenced-type="DataSet"/>
   </class>
   <class name="PathwayReaction" is-interface="true">
     <attribute name="identifier" type="java.lang.String"/>
