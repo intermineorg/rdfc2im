@@ -725,6 +725,14 @@ SQL"
 
 phase_build_dbmodel() {
   local mine="$TRIAL_HOME/humanmine"
+  # Regenerate the model from scratch. dbmodel/build holds the generated genomic_model.xml (and the
+  # resources the later reduce_mine.py trims read), and Gradle considers producing it up to date
+  # when only the CONTENT of the already-installed bio-source-humanmine-items jar changed - same
+  # coordinates, new additions. Confirmed live: after Protein.keywords was added and the jar
+  # rebuilt, `builddb` succeeded in 9s having regenerated nothing, and humanmine-uniprot then died
+  # "Collection not found in class: Protein.keywords". A fresh checkout has no dbmodel/build, so
+  # only a resume (--from) or a re-run hits this - and it looks exactly like success.
+  run rm -rf "$mine/dbmodel/build"
   run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:builddb
   # builddb drops and recreates the production schema, renumbering every intermineobject.id, so
   # the humanmine-search core is instantly stale and stays that way until phase_postprocess

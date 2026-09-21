@@ -156,3 +156,20 @@ def test_project_is_scoped_to_the_sources_being_built(tmp_path):
         return
     cmd = next(c for c in _cmds(plan) if "rdfc2im project" in c)
     assert cmd.endswith("rdfc2im project --source go --source hgnc"), cmd
+
+
+def test_build_dbmodel_discards_the_previous_generated_model_before_regenerating(tmp_path):
+    """The fourth fresh-build failure repeated the third one: loading humanmine-uniprot died with
+    "Collection not found in class: Protein.keywords" AFTER Protein.keywords had been added to the
+    additions, the loader jar rebuilt, and the phase re-run. dbmodel/build/.../genomic_model.xml was
+    stale: Gradle treats model generation as up to date when only the CONTENT of an already
+    installed jar changed (same coordinates), so `builddb` succeeded in 9 seconds and regenerated
+    nothing. Any resume (--from) or re-run in an existing checkout after the additions changed hits
+    it - and it looks exactly like success. The generated output must be removed first."""
+    plan = _plan(tmp_path, "--only", "build_dbmodel")
+    if plan is None:
+        return
+    cmds = _cmds(plan)
+    rm = next(i for i, c in enumerate(cmds) if c.startswith("rm -rf ") and c.endswith("/humanmine/dbmodel/build"))
+    builddb = next(i for i, c in enumerate(cmds) if ":dbmodel:builddb" in c)
+    assert rm < builddb
