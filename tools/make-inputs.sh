@@ -35,23 +35,17 @@ clone https://github.com/intermine/intermine.git             intermine --filter=
 clone https://github.com/intermine/humanmine.git             humanmine
 clone https://github.com/intermine/humanmine-bio-sources.git humanmine-bio-sources
 
-# copy_tree SRC DST: copy SRC's contents into DST, leaving out .git, and check the result.
-# in/ never needs a .git (the clones stay in $CACHE), and copying one is what broke this script:
-# a plain `cp -r` of a clone failed on its read-only pack file on the virtiofs workspace mount
-# ("failed to extend ... pack: Permission denied", a 0-byte pack left behind) - for a directory
-# the script then deleted anyway. tar streams through read/write rather than cp's fast path, and
-# the checksum comparison is because plain `cp` has also been seen to write the right number of
-# NULs on that mount without failing.
-copy_tree() {
-    mkdir -p "$2"
-    (cd "$1" && tar --exclude=.git -cf - .) | (cd "$2" && tar -xf -)
-    want=$(cd "$1" && find . -name .git -prune -o -type f -exec md5sum {} + | sort -k2)
-    got=$(cd "$2" && find . -type f -exec md5sum {} + | sort -k2)
-    if [ "$want" != "$got" ]; then
-        echo "ERROR: copying $1 to $2 did not produce identical files" >&2
-        exit 1
-    fi
-}
+# Trees are copied by tools/copy_tree.py, files by copy_file - never `cp -r` or `tar`. Both failed
+# here on the virtiofs workspace mount, one after the other, on the first fresh run:
+#   cp -r of a clone:  "failed to extend ... .git/objects/pack/pack-....pack: Permission denied",
+#                      leaving a 0-byte pack (in a .git the script then deleted anyway)
+#   tar | tar:         "tar: .: Directory renamed before its status could be extracted" (tar
+#                      compares inode numbers, which that mount does not keep stable)
+# copy_tree.py uses plain chunked read/write, re-reads every file it wrote and compares, leaves
+# .git out, and keeps modes (gradlew) and symlinks. Plain `cp` has also been seen to write the
+# right number of NULs on that mount without failing, hence copy_file's cmp.
+TOOLS=$(cd "$(dirname "$0")" && pwd)     # next to this script, whatever the caller's cwd
+copy_tree() { python3 "$TOOLS/copy_tree.py" "$@"; }
 
 copy_file() {                   # copy_file SRC DST - a small file, checked
     cp "$1" "$2"
@@ -60,9 +54,9 @@ copy_file() {                   # copy_file SRC DST - a small file, checked
 
 echo "assembling in/"
 rm -rf in/config in/intermine in/humanmine-bio-sources
-copy_tree "$CACHE/rdf-config/config"       in/config
-copy_tree "$CACHE/intermine/bio"           in/intermine/bio
-copy_tree "$CACHE/humanmine-bio-sources"   in/humanmine-bio-sources
+copy_tree "$CACHE/rdf-config/config"       in/config             --exclude .git
+copy_tree "$CACHE/intermine/bio"           in/intermine/bio      --exclude .git
+copy_tree "$CACHE/humanmine-bio-sources"   in/humanmine-bio-sources --exclude .git
 copy_file "$CACHE/humanmine/project.xml"   in/humanmine_project.xml
 copy_file "$CACHE/humanmine/dbmodel/resources/genomic_priorities.properties" in/humanmine_priorities.properties
 

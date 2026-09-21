@@ -31,6 +31,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import time
 
 DEFAULT_CACHE_DIR = "cached_raw_data"
@@ -93,6 +94,45 @@ def _copy_verified(src: str, dst: str, expect_md5: str | None = None) -> str:
     if os.path.exists(tmp):
         os.unlink(tmp)
     raise CacheError(f"copy {src} -> {dst} kept coming out different after {COPY_ATTEMPTS} attempts ({last})")
+
+
+def copy_tree(src: str, dst: str, exclude: tuple = ()) -> int:
+    """Make dst an identical copy of src (minus any entry named in `exclude`), file by verified file.
+
+    For mounts where `cp` and `tar` both misbehave (see tools/make-inputs.sh): only chunked
+    read/write is used, every file is re-read and compared (_copy_verified), and nothing depends
+    on inode numbers. Symlinks are recreated, empty directories kept, permission bits preserved
+    (a clone's gradlew must stay executable). dst is replaced, not merged into, so a file upstream
+    deleted does not survive a refresh. Returns the number of regular files copied.
+    """
+    if not os.path.isdir(src):
+        raise CacheError(f"copy_tree: {src} is not a directory")
+    if os.path.lexists(dst):
+        shutil.rmtree(dst) if os.path.isdir(dst) and not os.path.islink(dst) else os.unlink(dst)
+    os.makedirs(dst)
+    n = 0
+    for base, dirs, files in os.walk(src):
+        dirs[:] = sorted(d for d in dirs if d not in exclude)
+        rel = os.path.relpath(base, src)
+        out = dst if rel == "." else os.path.join(dst, rel)
+        for d in list(dirs):
+            sp = os.path.join(base, d)
+            if os.path.islink(sp):          # os.walk lists a symlink to a directory among dirs
+                os.symlink(os.readlink(sp), os.path.join(out, d))
+                dirs.remove(d)
+            else:
+                os.makedirs(os.path.join(out, d), exist_ok=True)
+        for f in sorted(files):
+            if f in exclude:
+                continue
+            sp, dp = os.path.join(base, f), os.path.join(out, f)
+            if os.path.islink(sp):
+                os.symlink(os.readlink(sp), dp)
+                continue
+            _copy_verified(sp, dp)
+            os.chmod(dp, stat.S_IMODE(os.stat(sp).st_mode))
+            n += 1
+    return n
 
 
 def _check_group(group: str) -> None:

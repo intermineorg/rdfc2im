@@ -95,3 +95,12 @@ def test_a_rerun_replaces_the_previous_copy_rather_than_merging_into_it(tmp_path
                         text=True, env=dict(os.environ, CACHE=str(tmp_path / "upstream"), MINE="http://127.0.0.1:9"))
     assert r2.returncode == 0, r2.stdout + r2.stderr
     assert not stale.exists()
+
+
+def test_script_copies_trees_only_through_the_verified_copier():
+    """Both `cp -r` and `tar | tar` failed on the virtiofs workspace mount (see test_copy_tree.py),
+    and that mount cannot be reproduced here - so pin that the script does not go back to either."""
+    text = open(os.path.join(ROOT, "tools", "make-inputs.sh")).read()
+    code = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+    assert "cp -r" not in code and "tar " not in code
+    assert "copy_tree.py" in code and code.count('copy_tree "') >= 3
