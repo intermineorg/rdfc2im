@@ -44,6 +44,13 @@ docs:       ; $(PY) -m rdfc2im docs
 	cat out/_docs/STATUS.md > STATUS.md
 	cat out/_docs/CURATION_GUIDE.md > CURATION_GUIDE.md
 test:       ; $(PY) -m pytest -q tests 2>/dev/null || $(PY) tests/run.py
+# Live checks against a mine tools/full-build.sh has actually built and started (tests/
+# test_live_mine.py). Every other test here runs offline on synthetic fixtures; these ask the
+# running system real questions, because that is the only thing that catches the failure mode
+# this project keeps hitting - a step that reports success while silently doing nothing. They
+# SKIP rather than fail when no mine is reachable, so plain `make test` stays green offline.
+# Override the endpoints with MINE_BASE=... SOLR_BASE=... for a mine on another host.
+test-live:  ; $(PY) -m pytest -q tests/test_live_mine.py -v 2>/dev/null || $(PY) tests/run.py
 # humanmine-items/build.gradle declares `resources { srcDirs = ['resources'] }` (the layout every
 # Java-less bio-source uses), so the keys/additions must land in resources/, not src/main/resources/.
 # `cat src > dst`, not `cp`: plain `cp` has silently zeroed files on this virtiofs-backed
