@@ -238,6 +238,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
             replaced_by.setdefault(r, []).append(f"humanmine-{src}")
     text = merge_priorities(priorities if priorities and os.path.exists(priorities) else None,
                             writers, replaced_by, alongside, alongside_fields)
+    text = _apply_priority_overrides(text, "curation/priorities_override.properties")
     with open(os.path.join(project_out, "genomic_priorities.properties"), "w") as fh:
         fh.write(text)
     with open(os.path.join(project_out, "links_report.txt"), "w") as fh:
@@ -254,6 +255,47 @@ def _parse_priority(line: str):
         return None, None
     key, _, val = line.partition("=")
     return key.strip(), [v.strip() for v in val.split(",") if v.strip()]
+
+
+def _apply_priority_overrides(text: str, path: str) -> str:
+    """Replace merge_priorities()'s generated ordering for specific fields, from a small
+    hand-curated file (same role as curation/extra_allow.txt / extensions_additions.xml: a
+    human override that survives regeneration, rather than hand-editing generated output).
+
+    Exists because merge_priorities()'s `alongside` handling always ranks a stock source ahead
+    of ours for every field we write (assuming "HumanMine's value should stand" - see that
+    function's own docstring), with no way to know whether the stock source's own converter
+    actually writes that specific field at all. Confirmed live for Pathway.description: stock
+    reactome ranked first even though ReactomeConverter.java never sets it (only identifier/
+    name) - not a conflict to resolve, just a field only OUR source provides, silently starved
+    because a source that never contributes it still held the top rank. rdfc2im has no
+    introspection into what fields an external stock source's own converter writes, so this
+    class of mistake can't be caught automatically in general; list confirmed cases here instead
+    of guessing at a general heuristic that could as easily get some other field wrong the other
+    way.
+    """
+    if not os.path.exists(path):
+        return text
+    overrides = {}
+    for ln in open(path, encoding="utf-8").read().splitlines():
+        key, order = _parse_priority(ln)
+        if key:
+            overrides[key] = order
+    if not overrides:
+        return text
+    out = []
+    seen = set()
+    for ln in text.splitlines():
+        key, _ = _parse_priority(ln)
+        if key and key in overrides:
+            out.append(f"{key} = {', '.join(overrides[key])}")
+            seen.add(key)
+        else:
+            out.append(ln)
+    for key, order in overrides.items():
+        if key not in seen:
+            out.append(f"{key} = {', '.join(order)}")
+    return "\n".join(out) + "\n"
 
 
 def merge_priorities(base: Optional[str], writers: Dict[str, List[str]],
