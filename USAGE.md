@@ -107,11 +107,32 @@ per source with literal example lines.
 
 ## Delivering to HumanMine
 
+**All four steps below are automated by `tools/full-build.sh` - see `BUILD.md`.** They are kept
+here because they are what the script does, and you need them if you are delivering into an
+existing mine by hand rather than building one from scratch.
+
 1. `make fork-sync`; copy `humanmine-items/` into `humanmine-bio-sources/`, register it as `':bio-source-humanmine-items'` with `projectDir` `./humanmine-items` in `settings.gradle` (the `bio-source-` prefix is how the mine resolves the artifact - see `humanmine-items/README.md`), then `./gradlew :bio-source-humanmine-items:install`.
 2. Use `out/_mine/project.xml` (HumanMine's project.xml with `humanmine-<source>` sources inserted; superseded originals are in `replaced_sources.xml`).
 3. Put each `out/<source>/items/<source>.xml` at the `src.data.file` path (`src_data_dir` in `rdfc2im.yaml`).
 4. Review `out/_mine/humanmine-items_keys.properties` (DRAFT keys are marked) and `genomic_priorities.properties` (HumanMine's own, with our sources merged in; it replaces `dbmodel/resources/genomic_priorities.properties`) before building.
 
+## Building and testing a whole mine
+
+| command | does |
+|---|---|
+| `tools/full-build.sh` | RDF to a running, fully-configured mine in 18 phases. `--dry-run`, `--list-phases`, `--from PHASE`/`--only PHASE` to resume, `--sources`/`--genes`/`--taxon` to rescope. See `BUILD.md` for prerequisites and troubleshooting. |
+| `tools/watch-build.sh` | live per-phase dashboard for a build in progress (read-only; `LOG_DIR=<dir>` if the logs are elsewhere) |
+| `make test` | offline unit tests on synthetic fixtures |
+| `make test-live` | integration checks against a *running* mine - real REST queries and Solr assertions. Skips cleanly when no mine is reachable, so `make test` stays green on a fresh checkout. |
+
+`make test-live` exists because most of the bugs found when this build was first run end to end
+were invisible offline: a Gradle task reporting SUCCESS while silently indexing nothing, a
+postprocessor whose failure the plugin swallows so the exit code stays 0, a source-priority rule
+that drops an attribute only where two sources overlap. Each test in `tests/test_live_mine.py`
+names the specific bug it guards against.
+
 ## Not yet exercised
 
-`fetch` against the real endpoints and an actual InterMine load of an items file; `linkml-validate` is not wired into `check`.
+`linkml-validate` is not wired into `check`. (`fetch` against the real endpoints and a real
+InterMine load of an items file were both unexercised when this file was first written; both
+have since been done repeatedly - see `BUILD.md` and `LOAD-TRIAL.md`.)

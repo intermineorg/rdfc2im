@@ -119,13 +119,6 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | EnsemblGene/location/begin | `faldo:position` | `ensg_begin` | 100627108 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 | EnsemblGene/location/end | `faldo:position` | `ensg_end` | 100639991 | begin/end -> Location.start/end via Gene.chromosomeLocation is possible with Items XML; needs Location.locatedOn=Chromosome too - decide |
 
-**expressionatlas** - 2 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| DataSet | `dct:identifier` | `dataset_id` | E-GEOD-56087 | the experiment accession - part of how experiments become DataSets under D10 |
-| DataSet | `foaf:page` | `dataset_page` | <http://www.ebi.ac.uk/gxa/experiments/E-GEOD-56087> | would be DataSet.url; decide with the rest of D10 |
-
 **go** - 1 active rows (rows under a pruned branch are not listed):
 
 | subject | predicate | column | example | why open |
@@ -137,20 +130,6 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | GWASStudy | `dct:description` | `study_description` | BMI (adjusted for smoking behaviour) | spec D12: the converter's GWAS.name is the study title (line[6]), which is this; this source maps the GCST id (dct:identifier) to GWAS.name instead |
-
-**homologene** - 3 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| Group | `dct:identifier` | `group_id` | 3 | spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue |
-| Group | `rdfs:label` | `group_label` | Gene conserved in Bilateria | spec D7 - cluster metadata; meaningful only once clusters expand to pairwise Homologue |
-| Group | `orth:hasHomologousMember` | `gene` | Gene | cluster members are Gene IRIs (ncbigene:NNN); Homologue is pairwise, so the cluster must be expanded to all pairs (D7) - an `expand` option is the planned way |
-
-**mp** - 1 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| Class | `oboinowl:inSubset` | `in_subset` | obo:mp#CvDC_Terms | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
 **ncbigene** - 1 active rows (rows under a pruned branch are not listed):
 
@@ -169,12 +148,6 @@ http://purl.jp/bio/10/clinvar/variation_id	id	sssom:NoMapping			semapv:Unspecifi
 | subject | predicate | column | example | why open |
 |---|---|---|---|---|
 | Pathway | `biopax:pathwayComponent` | `pathway_component` | Pathway \| BiochemicalReaction \| TemplateReaction | the approved PathwayReaction extension (curation/extensions_additions.xml) - but the reactions and participants subtree is pruned, and it is the same subtree th |
-
-**uberon** - 1 active rows (rows under a pruned branch are not listed):
-
-| subject | predicate | column | example | why open |
-|---|---|---|---|---|
-| Class | `oboinowl:inSubset` | `in_subset` | obo:uberon/core#early_development | spec D2 - still open, but narrower than it looks: OboParser never reads `subset`, so stock HumanMine has never loaded GO-slim membership and dropping this chang |
 
 **uniprot** - 2 active rows (rows under a pruned branch are not listed):
 
@@ -202,12 +175,6 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | EnsemblGene | `so:part_of` | `ensg_chromosome` | `Chromosome.primaryIdentifier` | so:part_of is multi-valued and not chromosome-specific: a gene is part_of both its actual chromosome (.../110/homo_sapiens/GRCh38/1) and the assembly it belongs |
 | EnsemblGene | `skos:altLabel` | `ensg_altlabel` | `Synonym.value` | knowledge |
 | EnsemblGene | `rdfs:seeAlso` | `ensg_xref` | `CrossReference.identifier` | knowledge |
-
-**expressionatlas** - 1 guesses:
-
-| subject | predicate | column | -> | why I think so |
-|---|---|---|---|---|
-| DataSet | `-self-` | `DataSet` | `DataSet.name` | no predicate carries the DataSet key; using the local name of the subject IRI |
 
 **go** - 1 guesses:
 
@@ -252,25 +219,6 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | Orphanet | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for orphanet_id |
 | EC | `-const-` | `const_DataSource_name_CrossReference_source` | `DataSource.name` | constant for ec_id |
 
-**hpo** - 1 guesses:
-
-| subject | predicate | column | -> | why I think so |
-|---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `superclass` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
-
-**mesh** - 1 guesses:
-
-| subject | predicate | column | -> | why I think so |
-|---|---|---|---|---|
-| Descriptor | `meshv:identifier` | `descriptor_id` | `MeshTerm.identifier` | new field (curation/extensions_additions.xml); pubmed fabio:hasSubjectTerm supplies the same D-ids |
-
-**mp** - 2 guesses:
-
-| subject | predicate | column | -> | why I think so |
-|---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
-| Class | `owl:deprecated` | `deprecated` | `MammalianPhenotypeTerm.obsolete` | knowledge |
-
 **ncbigene** - 2 guesses:
 
 | subject | predicate | column | -> | why I think so |
@@ -293,13 +241,6 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 |---|---|---|---|---|
 | Pathway | `biopax:comment` | `pathway_description` | `Pathway.description` | The pathway summation.  Pathway.description is an approved section-8 extension (curation/extensions_additions.xml); this note used to say it was not.  biopax:co |
 
-**uberon** - 2 guesses:
-
-| subject | predicate | column | -> | why I think so |
-|---|---|---|---|---|
-| Class | `rdfs:subClassOf` | `subclass_of` | `OntologyTerm.identifier` | is_a parents (obo source fills OntologyTerm.parents).  The filter runs on the raw term, before the transform, and is not optional: in OWL, rdfs:subClassOf also  |
-| Class | `owl:deprecated` | `deprecated` | `AnatomyTerm.obsolete` | knowledge |
-
 **uniprot** - 15 guesses:
 
 | subject | predicate | column | -> | why I think so |
@@ -320,7 +261,7 @@ These are already in the queries. To accept one, leave it (or set `status=human`
 | Citation | `dct:identifier` | `citation_doi` | `Publication.doi` | values are doi:10.1016/...; previously mapped to Publication.pubMedId, where it collided with the real PubMed id and would have become a bogus Publication once  |
 | Citation | `core:title` | `citation_title` | `Publication.title` | knowledge |
 
-Subject bindings that are guesses (`subjects.tsv`): ensembl:`EnsemblProtein`->`Protein`, hgnc:`ENA`->`CrossReference`, hgnc:`INSDC`->`CrossReference`, hgnc:`RefSeq`->`CrossReference`, hgnc:`CCDS`->`CrossReference`, hgnc:`UniProt`->`Protein`, hgnc:`MGI`->`CrossReference`, hgnc:`RGD`->`CrossReference`, hgnc:`LRG`->`CrossReference`, hgnc:`OMIM`->`Disease`, hgnc:`MiRBase`->`CrossReference`, hgnc:`Orphanet`->`CrossReference`, hgnc:`EC`->`CrossReference`, homologene:`Group`->`Homologue`, homologene:`Protein`->`Protein`, reactome:`BiochemicalReaction`->`PathwayReaction`, reactome:`UnificationXref`->`Pathway`, reactome:`OrganismXref`->`Pathway`, reactome:`LeftProtein`->`Protein`, reactome:`RightProtein`->`Protein`, reactome:`TempProtein`->`Protein`, reactome:`DegradationProtein`->`Protein`, reactome:`LeftProteinReference`->`Protein`, reactome:`RightProteinReference`->`Protein`, reactome:`TempProteinReference`->`Protein`, reactome:`DegradationProteinReference`->`Protein`, reactome:`CatalysisProtein`->`Protein`, reactome:`ControlProtein`->`Protein`, reactome:`LeftSmallMoleculeRefXref`->`Pathway`, reactome:`LeftProteinRefXref`->`Pathway`, reactome:`RightSmallMoleculeRefXref`->`Pathway`, reactome:`RightProteinRefXref`->`Pathway`, reactome:`TempSmallMoleculeRefXref`->`Pathway`, reactome:`TempProteinRefXref`->`Pathway`, reactome:`DegradationProteinRefXref`->`Pathway`, reactome:`CatalysisProteinReference`->`Protein`, reactome:`ControlProteinReference`->`Protein`, reactome:`DegradationSmallMoleculeRefXref`->`Pathway`, reactome:`CatalysisSmallMoleculeRefXref`->`Pathway`, reactome:`CatalysisProteinRefXref`->`Pathway`, reactome:`ControlSmallMoleculeRefXref`->`Pathway`, reactome:`ControlProteinRefXref`->`Pathway`, uniprot:`SubmittedNameNode`->`Protein`, uniprot:`AlternativeNameNode`->`Synonym`, uniprot:`SimpleSequence`->`Sequence`, uniprot:`DbResource`->`CrossReference`, uniprot:`Keyword`->`OntologyTerm`
+Subject bindings that are guesses (`subjects.tsv`): ensembl:`EnsemblProtein`->`Protein`, hgnc:`ENA`->`CrossReference`, hgnc:`INSDC`->`CrossReference`, hgnc:`RefSeq`->`CrossReference`, hgnc:`CCDS`->`CrossReference`, hgnc:`UniProt`->`Protein`, hgnc:`MGI`->`CrossReference`, hgnc:`RGD`->`CrossReference`, hgnc:`LRG`->`CrossReference`, hgnc:`OMIM`->`Disease`, hgnc:`MiRBase`->`CrossReference`, hgnc:`Orphanet`->`CrossReference`, hgnc:`EC`->`CrossReference`, reactome:`BiochemicalReaction`->`PathwayReaction`, reactome:`UnificationXref`->`Pathway`, reactome:`OrganismXref`->`Pathway`, reactome:`LeftProtein`->`Protein`, reactome:`RightProtein`->`Protein`, reactome:`TempProtein`->`Protein`, reactome:`DegradationProtein`->`Protein`, reactome:`LeftProteinReference`->`Protein`, reactome:`RightProteinReference`->`Protein`, reactome:`TempProteinReference`->`Protein`, reactome:`DegradationProteinReference`->`Protein`, reactome:`CatalysisProtein`->`Protein`, reactome:`ControlProtein`->`Protein`, reactome:`LeftSmallMoleculeRefXref`->`Pathway`, reactome:`LeftProteinRefXref`->`Pathway`, reactome:`RightSmallMoleculeRefXref`->`Pathway`, reactome:`RightProteinRefXref`->`Pathway`, reactome:`TempSmallMoleculeRefXref`->`Pathway`, reactome:`TempProteinRefXref`->`Pathway`, reactome:`DegradationProteinRefXref`->`Pathway`, reactome:`CatalysisProteinReference`->`Protein`, reactome:`ControlProteinReference`->`Protein`, reactome:`DegradationSmallMoleculeRefXref`->`Pathway`, reactome:`CatalysisSmallMoleculeRefXref`->`Pathway`, reactome:`CatalysisProteinRefXref`->`Pathway`, reactome:`ControlSmallMoleculeRefXref`->`Pathway`, reactome:`ControlProteinRefXref`->`Pathway`, uniprot:`SubmittedNameNode`->`Protein`, uniprot:`AlternativeNameNode`->`Synonym`, uniprot:`SimpleSequence`->`Sequence`, uniprot:`DbResource`->`CrossReference`, uniprot:`Keyword`->`OntologyTerm`
 
 ### 4.4 Recipes
 

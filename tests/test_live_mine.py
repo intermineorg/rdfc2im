@@ -218,9 +218,28 @@ def test_keyword_search_endpoint_responds():
     """/service/search answers rather than 500ing.
 
     Separate machinery from autocomplete (humanmine-search core, not humanmine-autocomplete),
-    and separately broken on 2026-09-21: the core held 176,794 documents that carried only
-    id/Category/facet_Category - no content fields at all - so quicksearch matched nothing and
-    the REST endpoint returned 500 'Service failed'.
+    and separately broken on 2026-09-21 - but NOT for the reason it first appeared to be. The
+    symptom was read as "the core's 176,794 documents carry only id/Category/facet_Category, so
+    there is no content to match". That reading is wrong, and re-reading it that way will send
+    the next person down the same dead end: InterMine indexes every content field with
+    stored=false (SolrIndexHandler/SolrObjectHandler both pass stored=false), so Solr's
+    select() NEVER returns them, in a broken mine or a perfectly healthy one. `id` is the only
+    stored field; Category/facet_Category come back only because they are type `string`, which
+    the _default configset backs with docValues. Confirm with a field query instead -
+    `gene_symbol:cyp2d6` matches whether or not select() shows you anything.
+
+    The actual cause was a stale index. :dbmodel:builddb drops and recreates the production
+    schema, renumbering every intermineobject.id, and the humanmine-search core keeps the
+    PREVIOUS build's documents until phase_postprocess re-runs create-search-index. In that
+    window every hit id is dead, and InterMine does not degrade - it dies:
+    SolrKeywordSearchHandler.getSearchHits() does objMap.get(id) with no null guard (objMap
+    comes from Objects.getObjects, which simply omits ids the objectstore cannot resolve), the
+    null object reaches SearchUtils.parseResults, which calls getObject().getClass() on it, and
+    the NPE surfaces as 500 'Service failed. Please contact support.'. Proven live by injecting
+    one document with an unresolvable id into a healthy core: the endpoint 500'd immediately and
+    recovered the moment that single document was deleted.
+
+    See test_keyword_search_index_is_in_sync_with_the_database for the guard on that cause.
     """
     if not mine_up():
         return _skip(f"no mine at {MINE_BASE}")
@@ -243,6 +262,81 @@ def test_keyword_search_finds_the_example_gene():
     if not payload.get("wasSuccessful", False):
         raise AssertionError(f"/service/search failed: {payload.get('error')!r}")
     assert payload.get("results"), f"no search hits for {EXAMPLE_GENE}"
+
+
+def test_keyword_search_matches_partial_words():
+    """A bare prefix matches, with no trailing wildcard - the EdgeNGram fix is still live.
+
+    Guards tools/solr-search-schema-fix.sh. Solr's _default schemaless configset guesses a
+    plain whitespace+lowercase type for InterMine's content fields, which gives no partial-word
+    matching at all, and InterMine's quicksearch never appends a wildcard server-side (the raw
+    query string reaches Solr unmodified - SolrKeywordSearchHandler.performSearch). Real symptom
+    on 2026-09-21: `q=cyp` returned one near-random low-relevance Gene instead of the CYP family.
+
+    The fix puts an EdgeNGramFilter on the INDEX analyzer only (minGram 3), so this asserts the
+    property a user actually cares about rather than the schema JSON: typing three characters
+    finds the genes that start with them. Asserted as a prefix relationship rather than a hit
+    count so it does not become a brittle restatement of the current panel's contents.
+    """
+    if not mine_up():
+        return _skip(f"no mine at {MINE_BASE}")
+    prefix = EXAMPLE_GENE[:3].lower()          # "cyp"
+    payload = _get_json(f"{MINE_BASE}/service/search?q={prefix}&size=20")
+    if not payload.get("wasSuccessful", False):
+        raise AssertionError(f"/service/search failed for '{prefix}': {payload.get('error')!r}")
+    symbols = [
+        r.get("fields", {}).get("symbol", "")
+        for r in payload.get("results", [])
+        if r.get("type") == "Gene"
+    ]
+    assert symbols, f"bare prefix '{prefix}' returned no Gene hits at all"
+    assert any(s.lower().startswith(prefix) for s in symbols), (
+        f"no Gene symbol starting with '{prefix}' in the hits for '{prefix}' ({symbols}) - "
+        "the EdgeNGram index analyzer is probably missing, so only whole-word matches survive; "
+        "re-run tools/solr-search-schema-fix.sh AND then create-search-index (the schema change "
+        "is not retroactive)")
+
+
+def test_keyword_search_index_is_in_sync_with_the_database():
+    """Search-index ids still resolve to real objects in the CURRENT database.
+
+    This is the guard on the actual 2026-09-21 cause (see
+    test_keyword_search_endpoint_responds): a humanmine-search core left over from a previous
+    database, holding ids that no longer resolve. :dbmodel:builddb renumbers every
+    intermineobject.id, so from the moment it runs until create-search-index re-runs, the core
+    is pointing at objects that no longer exist. One unresolvable id anywhere in a 100-row
+    result page NPEs the whole request, so the damage is invisible until a query happens to
+    reach the affected page - which is exactly how the two tests above can pass while search is
+    rotten.
+
+    Checked exactly rather than by sampling, for Gene: the panel is small enough (~113) to
+    compare the index against the database in full, and Gene is the class every quicksearch
+    actually cares about. Comparing ids is what makes this a *sync* test - a doc count would
+    look perfectly healthy on an index built against a previous database, because the count is
+    right and only the ids are wrong.
+    """
+    if not mine_up():
+        return _skip(f"no mine at {MINE_BASE}")
+    if not solr_up():
+        return _skip(f"no solr at {SOLR_BASE}")
+    if solr_count("humanmine-search", "*:*") == 0:
+        raise AssertionError(
+            "humanmine-search is empty - create-search-index has not run against this database")
+
+    indexed = solr_count("humanmine-search", "Category:Gene")
+    assert indexed > 0, "no Gene documents in humanmine-search at all"
+    url = (f"{SOLR_BASE}/solr/humanmine-search/select"
+           f"?q={urllib.parse.quote('Category:Gene')}&fl=id&rows={indexed}&wt=json")
+    indexed_ids = {int(d["id"]) for d in _get_json(url)["response"]["docs"]}
+    live_ids = {int(row[0]) for row in query_rows("Gene.id", "Gene.id", "!=", "0")}
+
+    dangling = indexed_ids - live_ids
+    assert not dangling, (
+        f"{len(dangling)} of {len(indexed_ids)} indexed Gene ids do not exist in the database "
+        f"(e.g. {sorted(dangling)[:5]}). The search index was built against a DIFFERENT "
+        "database - :dbmodel:builddb renumbers every id - or those rows are orphans. Any "
+        "quicksearch whose result page includes one of them returns HTTP 500. Fix by re-running "
+        ":dbmodel:postProcess -Pprocess=create-search-index against the CURRENT database.")
 
 
 # ----------------------------------------------------------------- loaded data invariants

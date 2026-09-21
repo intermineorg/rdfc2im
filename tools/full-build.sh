@@ -669,6 +669,23 @@ SQL"
 phase_build_dbmodel() {
   local mine="$TRIAL_HOME/humanmine"
   run_in "$mine" "${GRADLE_ENV[@]}" ./gradlew :dbmodel:builddb
+  # builddb drops and recreates the production schema, renumbering every intermineobject.id, so
+  # the humanmine-search core is instantly stale and stays that way until phase_postprocess
+  # re-runs create-search-index. In that window /service/search does not degrade gracefully, it
+  # 500s outright: SolrKeywordSearchHandler.getSearchHits() calls objMap.get(id) with no null
+  # guard (Objects.getObjects silently omits ids the objectstore cannot resolve), and that null
+  # reaches SearchUtils.parseResults, which calls getObject().getClass() on it - NPE, rendered to
+  # the user as "Service failed. Please contact support.". Confirmed live by injecting a single
+  # document with an unresolvable id into an otherwise healthy core: the endpoint 500'd
+  # immediately and recovered the instant that one document was deleted. ONE dead id anywhere in
+  # a result page takes down the whole request, not just that row.
+  # Emptying the core here converts that hard 500 into an honest zero-hit `wasSuccessful: true`
+  # until the index is rebuilt - a state phase_postprocess already passes through deliberately
+  # while the webapp is live, so it is proven safe. `|| true` (unlike the bare `run curl -sf`
+  # below) because with --from build_dbmodel after a volume wipe the core may not exist yet, and
+  # a 404 should not abort the build.
+  run bash -c "curl -sf 'http://localhost:$SOLR_PORT/solr/humanmine-search/update?commit=true' \
+    -H 'Content-Type: application/json' -d '{\"delete\": {\"query\": \"*:*\"}}' >/dev/null || true"
   # os.production only - the userprofile database's own schema (savedtemplatequery, tag, ...)
   # is a SEPARATE task, never run anywhere else in this script. Without it the webapp's own
   # ActionServlet fails to initialise at startup ("userprofileOSW is null" - confirmed live),

@@ -41,7 +41,24 @@ Upstream: `dbcls/rdf-config` (config/), `intermine/intermine` (bio/), `intermine
 (project.xml), `intermine/humanmine-bio-sources`, and `humanmine.org/humanmine/service/model`
 for the two live-model files. See `tools/make-inputs.sh`.
 
-## Quick start
+## Build a whole mine in one command
+
+If what you want is the finished article - a running, fully-configured demonstration
+HumanMine (113-gene food/drug-metabolism panel, 9 rdfc2im sources plus the stock `reactome`
+source alongside, webapp and BlueGenes serving) - you do not need the per-step workflow below:
+
+```
+tools/full-build.sh              # RDF -> running mine, 18 phases; --dry-run first if you like
+tools/watch-build.sh             # live per-phase progress, in another terminal
+make test-live                   # assert the result: real queries against the running mine
+```
+
+**Read `BUILD.md` first** - it lists the prerequisites the script checks but will not install
+for you (JDK 8, a `.venv`, standalone Gradle 4.9, Docker), what it does handle, resource
+needs, timings and troubleshooting. The rest of this README is the per-step mapping workflow,
+which is what you want when curating a source rather than building a mine.
+
+## Quick start (per-step workflow)
 
 ```
 make inputs         # build in/ from rdf-config + intermine + humanmine (once)
