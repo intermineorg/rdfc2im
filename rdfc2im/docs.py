@@ -91,7 +91,7 @@ def _write_status(ddir, per, ws, sources_cfg, out):
          "| model load (core + allowed additions + keys, inheritance-aware terms/keys) | done |",
          "| `translate` (mapping_subjects.tsv / mapping_predicates.sssom.tsv / columns.tsv / queries / sparql.yaml / additions.xml) | done for the sources below |",
          "| 3-way merge of human edits | done - tested (`tests/`) |",
-         "| `fetch` (POST queries to RDF Portal) | exercised - every generated query has returned rows from its live endpoint (small LIMITs); no full extract yet |",
+         "| `fetch` (POST queries to RDF Portal) | done - full extracts (`--limit 0`) of all 9 sources run as part of `tools/full-build.sh`, including the paging and VALUES-batching paths that endpoint row caps force (RDF Portal 200000, TogoVar 10000, MeSH its own) |",
          "| `tsv` (SPARQL-TSV -> plain TSV, transforms, constants, filters) | done - tested on synthetic fixtures; runs on `raw/` when present |",
          "| `items` (tsv/*.tsv -> Items XML with references/collections) | done - tested on synthetic fixtures; runs when `tsv/` exists |",
          "| `project` (project.xml, keys, additions, priorities, replaced_sources, links_report) | done - see `out/_mine/` |",

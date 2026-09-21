@@ -1,5 +1,12 @@
 # Load trial - `go`, end to end, 2026-09-16
 
+> **If you are here to build a mine, you want `BUILD.md`, not this file.** Everything recorded
+> below is now encoded in `tools/full-build.sh`, which does the whole thing in one command -
+> you no longer need to reconstruct a recipe from these notes. This file remains the
+> *chronological record of what each load found*: one section per source's first real load, in
+> the order they happened, with the evidence for each bug and its fix. Read it to understand
+> why something is the way it is, or before touching a source's mapping - not to drive a build.
+
 The first time an rdfc2im items file has been loaded into a real InterMine and browsed in
 BlueGenes. It found five problems in rdfc2im that nothing short of a load would have found; all
 five are fixed in the commits that reference this file. Recorded here so the next person can
