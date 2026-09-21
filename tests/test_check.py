@@ -465,3 +465,68 @@ def test_a_replacement_gap_is_hard_unless_accepted(tmp_path):
         "Gene.symbol": {"basis": "b", "reason": "stale"}}})
     assert rc == 0, msgs
     assert any("accepted_gaps entry Gene.symbol matches no gap" in x for x in msgs), msgs
+
+
+# ---- reverse references must resolve inside the isolated mergeModels
+
+def _additions(tmp_path, m_setup, body):
+    m, out_root, mine = m_setup
+    (tmp_path / "_mine" / "humanmine-items_additions.xml").write_text(
+        f'<?xml version="1.0"?>\n<classes>\n{textwrap.dedent(body)}\n</classes>\n')
+    msgs = []
+    rc = check_project(out_root, mine, m, "humanmine-items", None, {}, log=msgs.append)
+    return rc, [x for x in msgs if x.startswith("HARD")]
+
+
+def test_a_reverse_reference_whose_other_end_is_declared_nowhere_is_a_hard_problem(tmp_path):
+    """The first fresh full-build.sh run died in phase 5: bio-source-humanmine-items' own
+    mergeModels failed with "Unable to find named reverse reference 'genes' in class Pathway while
+    processing Gene.pathways". curation/extensions_additions.xml had copied Gene.pathways
+    (reverse-reference="genes") from stock reactome_additions.xml but not the Pathway.genes end it
+    points at - fine in the full mine, where the stock reactome additions supply it, fatal in that
+    isolated merge, which sees only bio-model plus our own additions. `check` passed."""
+    rc, hard = _additions(tmp_path, _setup(tmp_path, []), """\
+        <class name="Gene" is-interface="true">
+          <collection name="pathways" referenced-type="Pathway" reverse-reference="genes"/>
+        </class>
+        <class name="Pathway" is-interface="true">
+          <attribute name="name" type="java.lang.String"/>
+        </class>""")
+    assert rc == 1
+    assert len(hard) == 1 and "Gene.pathways" in hard[0] and "Pathway.genes" in hard[0], hard
+
+
+def test_a_reverse_reference_whose_target_class_is_absent_is_a_hard_problem(tmp_path):
+    rc, hard = _additions(tmp_path, _setup(tmp_path, []), """\
+        <class name="Gene" is-interface="true">
+          <collection name="pathways" referenced-type="Pathway" reverse-reference="genes"/>
+        </class>""")
+    assert rc == 1 and "Pathway.genes" in hard[0], hard
+
+
+def test_both_ends_declared_in_the_additions_is_fine(tmp_path):
+    rc, hard = _additions(tmp_path, _setup(tmp_path, []), """\
+        <class name="Gene" is-interface="true">
+          <collection name="pathways" referenced-type="Pathway" reverse-reference="genes"/>
+        </class>
+        <class name="Pathway" is-interface="true">
+          <collection name="genes" referenced-type="Gene" reverse-reference="pathways"/>
+        </class>""")
+    assert rc == 0 and not hard, hard
+
+
+def test_a_reverse_end_supplied_by_the_core_model_is_fine(tmp_path):
+    """Protein.keywords is in core.xml, so pointing a reverse-reference at it needs no redeclaration."""
+    rc, hard = _additions(tmp_path, _setup(tmp_path, []), """\
+        <class name="Term" is-interface="true">
+          <collection name="proteins" referenced-type="Protein" reverse-reference="keywords"/>
+        </class>""")
+    assert rc == 0 and not hard, hard
+
+
+def test_a_one_way_collection_needs_no_reverse_end(tmp_path):
+    rc, hard = _additions(tmp_path, _setup(tmp_path, []), """\
+        <class name="Pathway" is-interface="true">
+          <collection name="dataSets" referenced-type="DataSet"/>
+        </class>""")
+    assert rc == 0 and not hard, hard

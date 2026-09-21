@@ -219,19 +219,21 @@ supplement or they duplicate instead of merging.
 
 ## Watching a build
 
-Every log line goes to the terminal and to `$TRIAL_HOME/logs/build-<run-id>.log`, timestamped
+Every log line goes to the terminal and to `.build-logs/build-<run-id>.log` (in the repository,
+gitignored; override with `LOG_DIR`), timestamped
 and tagged with the current phase. Alongside it the script writes `build-<run-id>.status` (one
 line: the current phase) and `build-<run-id>.timing.tsv` (one row per completed phase).
 
 ```sh
-tail -f ~/intermine-build/trial_home/logs/build-*.log     # raw
+tail -f .build-logs/build-*.log                           # raw
 tools/watch-build.sh                                      # per-phase dashboard
 ```
 
 `tools/watch-build.sh` reads only those files and the phase order from `full-build.sh
 --list-phases`, so it cannot drift from the build or affect it. It takes `--run-id`, `--once`
-and `--interval N`. If it cannot find the logs (different `$HOME`, a mirrored directory), set
-`LOG_DIR=/path/to/logs` directly rather than fighting `TRIAL_HOME` resolution.
+and `--interval N`. Because the logs live in the repository, the same command works from a host
+terminal watching a build that runs in a sandbox sharing the checkout. If the build used a
+different `LOG_DIR`, set the same one when you watch.
 
 Every run ends by printing its own phase timings, longest first.
 

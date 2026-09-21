@@ -27,6 +27,12 @@
     <reference name="organism" referenced-type="Organism"/>
     <collection name="reactions" referenced-type="PathwayReaction" reverse-reference="pathway"/>
     <collection name="dataSets" referenced-type="DataSet"/>
+    <!-- the other end of Gene.pathways above, copied verbatim from reactome_additions.xml: without
+         it bio-source-humanmine-items' isolated mergeModels fails ("Unable to find named reverse
+         reference 'genes' in class Pathway while processing Gene.pathways"). A full mine gets it
+         from the stock reactome additions, which is why nothing else ever noticed - and why
+         phase 5 of a from-scratch full-build.sh was the first thing to fail on it. -->
+    <collection name="genes" referenced-type="Gene" reverse-reference="pathways"/>
   </class>
   <class name="PathwayReaction" is-interface="true">
     <attribute name="identifier" type="java.lang.String"/>

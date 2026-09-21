@@ -12,22 +12,14 @@
 #   --once        Render one frame and exit, instead of looping (for logging/CI use).
 #   --interval N  Seconds between refreshes (default 3).
 #
-# TRIAL_HOME must match what full-build.sh used (same default resolution: $TRIAL_HOME env,
-# else .trial-home, else ~/intermine-build/trial_home) - this is usually a path private to
-# wherever full-build.sh actually runs (e.g. $HOME differs between a sandbox and a host watching
-# it over a shared mount), so if this script can't see the logs, set LOG_DIR directly instead of
-# fighting TRIAL_HOME/$HOME resolution: LOG_DIR=/path/to/mirrored/logs tools/watch-build.sh.
+# Logs default to .build-logs/ in this repository, which full-build.sh also defaults to - so this
+# works unchanged from a host terminal watching a build running in a sandbox that shares the
+# checkout. If the build used a different LOG_DIR, set the same one here.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 
-LOG_DIR=${LOG_DIR:-}
-if [ -z "$LOG_DIR" ]; then
-  TRIAL_HOME=${TRIAL_HOME:-}
-  if [ -z "$TRIAL_HOME" ] && [ -f "$HERE/.trial-home" ]; then TRIAL_HOME=$(cat "$HERE/.trial-home"); fi
-  TRIAL_HOME=${TRIAL_HOME:-"$HOME/intermine-build/trial_home"}
-  LOG_DIR="$TRIAL_HOME/logs"
-fi
+LOG_DIR=${LOG_DIR:-"$HERE/.build-logs"}    # same default as full-build.sh
 
 RUN_ID=""
 ONCE=0
@@ -46,7 +38,7 @@ done
 
 if [ -z "$RUN_ID" ]; then
   latest=$(ls -t "$LOG_DIR"/build-*.status 2>/dev/null | head -1 || true)
-  [ -n "$latest" ] || { echo "no build-*.status file under $LOG_DIR - is full-build.sh running (with a matching TRIAL_HOME)?" >&2; exit 1; }
+  [ -n "$latest" ] || { echo "no build-*.status file under $LOG_DIR - is full-build.sh running (with a matching LOG_DIR)?" >&2; exit 1; }
   RUN_ID=$(basename "$latest" .status); RUN_ID=${RUN_ID#build-}
 fi
 

@@ -19,7 +19,8 @@ def _plan(tmp_path, *args):
     """Returns the dry-run log, or None if this machine can't pass check_prereqs."""
     if not shutil.which("bash"):
         return None
-    env = dict(os.environ, TRIAL_HOME=str(tmp_path / "trial_home"), RUN_ID="test")
+    env = dict(os.environ, TRIAL_HOME=str(tmp_path / "trial_home"), RUN_ID="test",
+               LOG_DIR=str(tmp_path / "logs"))
     r = subprocess.run(["bash", "tools/full-build.sh", "--dry-run", *args], cwd=ROOT, env=env,
                        capture_output=True, text=True)
     out = r.stdout + r.stderr
@@ -118,3 +119,29 @@ def test_reactome_download_is_cached_and_restorable(tmp_path):
     assert any("cache save reactome-uniprot-map /micklem/data/reactome/current" in c for c in f)
     assert not any("curl" in c and "UniProt2Reactome" in c for c in r)
     assert any("cache restore reactome-uniprot-map /micklem/data/reactome/current" in c for c in r)
+
+
+def test_logs_default_to_the_repository_so_a_host_can_watch_them(tmp_path):
+    """A build in a sandbox logged under the sandbox's private $HOME, which a host terminal could not
+    see ("no logfile at /home/agent/... for run fresh3"). The repository is the shared directory."""
+    if not shutil.which("bash"):
+        return
+    env = {k: v for k, v in os.environ.items() if k != "LOG_DIR"}
+    env.update(TRIAL_HOME=str(tmp_path / "trial_home"), RUN_ID="test-default-logdir")
+    logs = os.path.join(ROOT, ".build-logs")
+    mine = os.path.join(logs, "build-test-default-logdir")
+    try:
+        r = subprocess.run(["bash", "tools/full-build.sh", "--dry-run", "--only", "stage_src_data"], cwd=ROOT,
+                           env=env, capture_output=True, text=True)
+        if r.returncode != 0 and "[check_prereqs] FATAL" in r.stdout + r.stderr:
+            return
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert os.path.exists(mine + ".log") and os.path.exists(mine + ".status")
+        assert not os.path.exists(tmp_path / "trial_home" / "logs")
+        w = subprocess.run(["bash", "tools/watch-build.sh", "--run-id", "test-default-logdir", "--once"], cwd=ROOT,
+                           env=env, capture_output=True, text=True)
+        assert w.returncode == 0 and ".build-logs" in w.stdout, w.stdout + w.stderr
+    finally:
+        for ext in (".log", ".status", ".timing.tsv"):
+            if os.path.exists(mine + ext):
+                os.unlink(mine + ext)

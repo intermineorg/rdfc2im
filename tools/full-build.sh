@@ -31,6 +31,9 @@
 # command sequence, not a separate code path that could drift from what actually executes.
 #
 # Environment (all overridable; defaults match this project's own trial setup):
+#   LOG_DIR           Where build-<run-id>.{log,status,timing.tsv} go. Default: .build-logs/ in
+#                     this repo (gitignored), so a host or second terminal sharing the checkout
+#                     can run tools/watch-build.sh without any setup.
 #   TRIAL_HOME        Scratch directory for the humanmine/humanmine-bio-sources checkouts and
 #                     gradle build outputs. Not the rdfc2im repo - keep build noise separate.
 #                     Default: ~/intermine-build/trial_home (matches .trial-home if present).
@@ -109,7 +112,10 @@ declare -A SCOPE_MODE=(
   [pubmed]=pmid
 )
 
-LOG_DIR="$TRIAL_HOME/logs"
+# In the repository (gitignored), not under $TRIAL_HOME: TRIAL_HOME is usually inside a sandbox's or
+# build machine's private home, and the repository is the one directory a person watching from
+# another machine or a host terminal shares with the build - `tools/watch-build.sh` there just works.
+LOG_DIR=${LOG_DIR:-"$HERE/.build-logs"}
 RUN_ID=${RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}
 LOGFILE="$LOG_DIR/build-$RUN_ID.log"
 TIMING_TSV="$LOG_DIR/build-$RUN_ID.timing.tsv"
@@ -168,7 +174,7 @@ phase_end() {
 }
 
 # ============================================================== arg parsing
-usage() { sed -n '2,46p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,50p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in

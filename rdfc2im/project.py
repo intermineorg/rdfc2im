@@ -515,6 +515,49 @@ def _carry_missing_definitions(model: InterMineModel, writers: Dict[str, List[st
 
 
 # ------------------------------------------------------------------- check
+def unresolved_reverse_references(model: InterMineModel, additions_path: str) -> List[str]:
+    """Reverse ends that `bio-source-<type>`'s isolated mergeModels cannot find.
+
+    That merge sees only the core bio-model plus this one additions file - not the live HumanMine
+    model, and not the additions of any other source, including a stock one loaded alongside.
+    So a `reverse-reference="r"` on a field pointing at class T needs T.r declared either in the
+    additions file itself or in the core model. A field copied verbatim from a stock source's
+    additions without the other end it points at passes every other check here and in a full mine
+    (where that source's own additions supply the other end) but stops the loader jar building:
+    "Unable to find named reverse reference 'genes' in class Pathway while processing
+    Gene.pathways" - which is what ended the first fresh full-build.sh run, in phase 5.
+    """
+    if not os.path.exists(additions_path):
+        return []
+    root = etree.parse(additions_path).getroot()
+    declared: Dict[str, set] = {}
+    for c in root.iter("class"):
+        declared.setdefault(c.get("name"), set()).update(
+            f.get("name") for f in c if isinstance(f.tag, str) and f.get("name"))
+
+    def provided(cls: str, fld: str) -> bool:
+        for k in [cls] + model.ancestors(cls):
+            if fld in declared.get(k, ()):
+                return True
+            fd = model.classes[k].fields.get(fld) if k in model.classes else None
+            if fd is not None and _is_core(fd.source_file or ""):
+                return True
+        return False
+
+    out = []
+    for c in root.iter("class"):
+        for f in c:
+            if not isinstance(f.tag, str) or not f.get("reverse-reference"):
+                continue
+            tgt, rev = f.get("referenced-type"), f.get("reverse-reference")
+            if not provided(tgt, rev):
+                out.append(f"{c.get('name')}.{f.get('name')} has reverse-reference '{rev}', but {tgt}.{rev} "
+                           f"is declared neither in {os.path.basename(additions_path)} nor in the core model - "
+                           f"the loader's isolated mergeModels fails with \"Unable to find named reverse "
+                           f"reference '{rev}' in class {tgt}\"; declare that end too")
+    return out
+
+
 def check_project(out_root: str, project_out: str, model: InterMineModel, type_name: str,
                   humanmine_project: Optional[str], sources_cfg: dict, log=print) -> int:
     hard, soft = [], []
@@ -621,6 +664,8 @@ def check_project(out_root: str, project_out: str, model: InterMineModel, type_n
                                 f"sources.yaml with the reason they are not a loss")
         for key in sorted(set(accepted) - used):
             soft.append(f"{name}: accepted_gaps entry {key} matches no gap - remove it")
+    hard.extend(unresolved_reverse_references(
+        model, os.path.join(project_out, f"{type_name}_additions.xml")))
     hard, soft = list(dict.fromkeys(hard)), list(dict.fromkeys(soft))
     for h in hard:
         log("HARD  " + h)
