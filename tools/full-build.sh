@@ -108,9 +108,9 @@ TIMING_TSV="$LOG_DIR/build-$RUN_ID.timing.tsv"
 STATUS_FILE="$LOG_DIR/build-$RUN_ID.status"   # one line, current phase - `watch cat` this for a live view
 
 PHASES=(check_prereqs fetch_inputs rdfc2im_pipeline rdfc2im_project build_humanmine_items
-        prepare_mine_checkout stage_src_data start_databases build_dbmodel integrate_sources
-        postprocess build_webapp resolve_bluegenes_deps stage_artifacts start_mine_stack
-        apply_templates verify)
+        build_reactome_source prepare_mine_checkout stage_src_data start_databases build_dbmodel
+        integrate_sources postprocess build_webapp resolve_bluegenes_deps stage_artifacts
+        start_mine_stack apply_templates verify)
 
 # ============================================================== logging & timing
 # Every log line goes to both the terminal and $LOGFILE, timestamped, so `tail -f "$LOGFILE"`
@@ -229,9 +229,17 @@ phase_check_prereqs() {
   # death-spiral, burning CPU with no forward progress, rather than exiting. GRADLE_USER_HOME's
   # own gradle.properties (default ~/.gradle) applies to every daemon Gradle starts from here,
   # across both the humanmine and humanmine-bio-sources checkouts.
+  # file.encoding=UTF-8: the daemon's own default (US-ASCII) comes from this sandbox having no
+  # LANG/LC_ALL set at all, which Java's platform-default-charset detection falls back to
+  # US-ASCII for. Harmless for plain ASCII data, but confirmed live to actively corrupt real
+  # data: reactome's own UniProt2Reactome.txt has non-ASCII bytes (Greek letters in pathway
+  # names, normal UTF-8), and BioFileConverter reads files via a platform-default-charset
+  # Reader (no explicit UTF-8) - under US-ASCII those bytes get mis-decoded, and one specific
+  # mis-decode produced a literal NUL byte, which Postgres's COPY then rejected outright:
+  # "invalid byte sequence for encoding UTF8: 0x00".
   local gradle_props="$HOME/.gradle/gradle.properties"
   if ! grep -q "^org.gradle.jvmargs" "$gradle_props" 2>/dev/null; then
-    write_file "$gradle_props" "org.gradle.jvmargs=-Xmx4096m"
+    write_file "$gradle_props" "org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8"
   fi
   log "prerequisites OK"
 }
@@ -320,6 +328,86 @@ project(':bio-source-humanmine-items').projectDir = new File('$HERE/humanmine-it
 GRADLE"
   fi
   run_in "$bio" "${GRADLE_ENV[@]}" ./gradlew :bio-source-humanmine-items:install
+}
+
+phase_build_reactome_source() {
+  # Stock reactome (type="reactome", org.intermine:bio-source-reactome) - our own
+  # humanmine-reactome only maps Pathway.description, no participants (unmapped/pruned
+  # pathwayComponent link - sources.yaml's own note), so without this alongside source Pathway
+  # never connects to any Protein or Gene. Its jar is equally dead on JCenter/Maven Central
+  # (confirmed: 403 / 404) but unlike the ~39 sources dropped in phase_prepare_mine_checkout,
+  # this one is worth building from the local source make-inputs.sh already cloned
+  # (in/.upstream/intermine/bio/sources/reactome) - same "isolated standalone build, not the
+  # whole dead-JCenter-riddled intermine/bio umbrella" trick as bio-source-humanmine-items.
+  local src="$UPSTREAM_CACHE/intermine/bio/sources/reactome"
+  local build="$TRIAL_HOME/reactome-source"
+  [ -d "$build" ] || run mkdir -p "$build"
+  run cp -r "$src/src" "$build/src"
+  run cp -r "$src/libs" "$build/libs"
+  run cp "$src/reactome.properties" "$build/reactome.properties"
+  # group/version match exactly what IntegratePlugin.groovy resolves for a project.xml
+  # <source type="reactome"> entry with no explicit version="..." attribute: "bio-source-" +
+  # type, at bioVersion (5.0.8, confirmed live - the same version already resolved and cached
+  # for bio-model/intermine-integrate elsewhere in this build).
+  write_file "$build/build.gradle" "$(cat <<'GRADLE'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'org.intermine'
+version = '5.0.8'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        // ReactomePostProcess.java needs org.intermine.model.bio.Pathway - a class InterMine
+        // generates fresh per mine from its own merged model (dbmodel:generateModel), not
+        // something a standalone build of this one source can produce or depend on. Harmless to
+        // drop: phase_postprocess never runs source-specific postprocessors (no `do-sources`
+        // task), so this class would never be loaded anyway - only the converter
+        // (ReactomeConverter, needs no generated model classes) actually gets used.
+        java { srcDirs = ['src/main/java']; exclude '**/postprocess/**' }
+        resources { srcDirs = ['src/main/resources'] }
+    }
+}
+
+processResources {
+    from('.') { include('*.properties') }
+}
+
+dependencies {
+    // bio-core provides org.intermine.bio.util.*/BioFileConverter - not in reactome's own
+    // build.gradle dependencies block (confirmed live: compileJava failed without it, "package
+    // org.intermine.bio.util does not exist") because intermine/bio's real root build.gradle
+    // applies it to every bio/sources/* subproject via its own subprojects{} block; this
+    // standalone build has no such parent, so it's declared explicitly here instead.
+    compile group: 'org.intermine', name: 'bio-core', version: '5.0.8', transitive: false
+    compile group: 'org.intermine', name: 'bio-model', version: '5.0.8', transitive: false
+    compile group: 'org.intermine', name: 'intermine-integrate', version: '5.0.+'
+    runtime fileTree(dir: 'libs', include: '*.jar')
+}
+GRADLE
+)"
+  write_file "$build/settings.gradle" "rootProject.name = 'bio-source-reactome'"
+  run_in "$build" "${GRADLE_ENV[@]}" "$GRADLE49" install
+
+  # Data: reactome's own project.xml entry expects a plain UniProt-to-pathway mapping file
+  # under src.data.dir (a directory, not a single named file - have.file.custom.tgt processes
+  # whatever it finds there). ReactomeConverter.java confirms the exact 6-column tab-delimited
+  # shape (accession, pathway id, url, pathway name, evidence code, organism name) this is -
+  # Reactome's own public UniProt2Reactome mapping, not a full BioPAX dump. Fetched once, not
+  # re-fetched on a --from resume - confirmed live: ~325k rows total, ~55k human, a few seconds
+  # to download, not worth repeating.
+  local dest_dir="/micklem/data/reactome/current"
+  run mkdir -p "$dest_dir"
+  if [ "$DRY_RUN" -eq 1 ] || [ ! -s "$dest_dir/UniProt2Reactome.txt" ]; then
+    run curl -fsSL -o "$dest_dir/UniProt2Reactome.txt" https://reactome.org/download/current/UniProt2Reactome.txt
+  fi
 }
 
 # Writes $2 to file $1, or just logs the intent under --dry-run - a real dry run must not touch
@@ -426,7 +514,19 @@ phase_prepare_mine_checkout() {
   # share one `type`, set once in rdfc2im.yaml) - the same reduction LOAD-TRIAL.md's own
   # "Reducing a mine" section describes doing by hand for the original go-only trial ("project.xml
   # lists only humanmine-go"), generalised to all 9 and finally scripted instead of manual.
-  run python3 tools/reduce_mine.py sources "$mine/project.xml" humanmine-items
+  # "reactome" (stock, type="reactome") is kept alongside our own humanmine-reactome by exact
+  # name, not by type: sources.yaml's own `alongside: [reactome]` already declares it a real
+  # dependency, not an unused extra - our own reactome source maps Pathway.description only, no
+  # participants (the pathwayComponent link is unmapped/pruned - see sources.yaml's own note),
+  # so without the stock source Pathway never connects to any Protein or Gene at all. Its own
+  # jar (org.intermine:bio-source-reactome) is equally dead on JCenter/Maven Central, but unlike
+  # the ~39 sources dropped above, this one is worth building from local source and keeping -
+  # see phase_build_humanmine_items' sibling handling of the same JCenter problem.
+  run python3 tools/reduce_mine.py sources "$mine/project.xml" humanmine-items reactome
+  # Restrict to human only, matching the rest of this build - rdfc2im's own generated project.xml
+  # carries this source's original "9606 10090" (human+mouse) value untouched.
+  run sed -i 's|<property name="reactome.organisms" value="9606 10090"/>|<property name="reactome.organisms" value="9606"/>|' \
+    "$mine/project.xml"
   # HumanMine's own priorities file, merged with our sources (rdfc2im project already did the
   # merge; this just deploys it) - re-syncing after adding a source is required, not optional
   # (confirmed live, LOAD-TRIAL.md's hgnc section, finding 3).
@@ -571,11 +671,18 @@ phase_integrate_sources() {
   # Load order matters for `alongside` sources (uniprot, reactome): each must integrate after
   # the stock source it supplements, or it duplicates instead of merging (confirmed live,
   # commit 323e6fe). rdfc2im's own generated project.xml already encodes the correct order and
-  # `check` already validated it - read it back rather than re-deciding the order here.
+  # `check` already validated it - read it back rather than re-deciding the order here. Matches
+  # ANY source name, not just humanmine-* ones: confirmed live that restricting to
+  # "humanmine-[a-z]+" silently skipped the stock "reactome" alongside source entirely (added
+  # back into project.xml by phase_prepare_mine_checkout's reduce_mine.py call, but this regex
+  # predates that and was never updated) - integrate_sources ran all 9 of our own sources with
+  # no error, reactome's own real data just never made it into the database, only found by
+  # checking for pathway-protein rows after a "successful" build. project.xml is already
+  # trimmed to exactly the sources we want by this point, so no prefix filter is needed at all.
   local order
-  order=$(grep -oP '(?<=<source name=")humanmine-[a-z]+(?=")' "$mine/project.xml" 2>/dev/null || true)
+  order=$(grep -oP '(?<=<source name=")[A-Za-z0-9_-]+(?=")' "$mine/project.xml" 2>/dev/null || true)
   if [ -z "$order" ] && [ "$DRY_RUN" -eq 1 ]; then
-    order="humanmine-$(echo "$SOURCES" | sed 's/ /\nhumanmine-/g')"  # placeholder so dry-run still shows the loop shape
+    order="reactome humanmine-$(echo "$SOURCES" | sed 's/ /\nhumanmine-/g')"  # placeholder so dry-run still shows the loop shape
     log "note: $mine/project.xml does not exist yet in this dry run - showing SOURCES as a stand-in for the real (project.xml-derived) load order"
   fi
   for src in $order; do

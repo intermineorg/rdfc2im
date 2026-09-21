@@ -2,12 +2,20 @@
 <!-- Schema extensions approved in SPECIFICATION_15sep26.md section 8 (that document is not in this
      repo; see SPEC-DECISIONS.md), kept out of the per-source additions so they survive
      regeneration.  Unioned into humanmine-items_additions.xml by `rdfc2im project`.  Only the
-     *delta* to the live model is listed (Pathway.identifier/name/shortName/curated and
-     Gene/Protein.pathways already exist in reactome_additions.xml). -->
+     *delta* to the live model is listed (Pathway.identifier/name/shortName/curated). -->
 <classes>
   <!-- gene loader: D1 side-stepped - typeOfGene lives here, not in ncbi-gene/human-gene -->
+  <!-- pathways: this note used to say Gene/Protein.pathways "already exist in
+       reactome_additions.xml" and could be skipped - true for a full HumanMine deployment, but
+       not for bio-source-humanmine-items' own ISOLATED mergeModels check (see Allele.diseases
+       above for why), and we now actually RUN stock reactome ourselves. Confirmed live:
+       ReactomeConverter.java calls protein.addToCollection("pathways", ...), and without this
+       field declared, the converter's own retrieveSingleSource step fails outright: `class
+       "org.intermine.model.bio.Protein" has no "pathways" collection`. Both copied verbatim
+       from reactome_additions.xml. -->
   <class name="Gene" is-interface="true">
     <attribute name="typeOfGene" type="java.lang.String"/>
+    <collection name="pathways" referenced-type="Pathway" reverse-reference="genes"/>
   </class>
   <!-- reactome Phase 1. dataSets copied verbatim from stock reactome's own reactome_additions.xml
        - declared there with NO reverse-reference (one-way), unlike Disease.dataSets above, so it

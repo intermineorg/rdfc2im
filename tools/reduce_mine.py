@@ -88,12 +88,17 @@ def resolve_path(classes, extends, start_class, path):
 
 
 def cmd_sources(args):
-    path, keep_type = args
+    # Extra positional args (beyond path/keep_type) are exact source names to keep in addition
+    # to the type match - e.g. "reactome", the stock alongside source sources.yaml's own
+    # `alongside: [reactome]` declares as a real dependency of our humanmine-reactome (Pathway
+    # merges onto it by identifier; without it Pathway has no protein/gene participants at all).
+    path, keep_type = args[0], args[1]
+    keep_names = set(args[2:])
     t = ET.parse(path)
     sources = t.getroot().find("sources")
     kept, dropped = [], []
     for src in list(sources):
-        if src.get("type") == keep_type:
+        if src.get("type") == keep_type or src.get("name") in keep_names:
             kept.append(src.get("name"))
         else:
             dropped.append(src.get("name"))
