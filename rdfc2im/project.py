@@ -51,7 +51,8 @@ def _prop(name: str, value: Optional[str] = None, location: Optional[str] = None
 def gen_project(out_root: str, project_out: str, model: InterMineModel, type_name: str,
                 src_data_dir: str, humanmine_project: Optional[str], sources_cfg: dict,
                 extensions_xml: Optional[str], source_version: Optional[str] = None,
-                priorities: Optional[str] = None, log=print) -> dict:
+                priorities: Optional[str] = None,
+                priorities_override: Optional[str] = None, log=print) -> dict:
     os.makedirs(project_out, exist_ok=True)
     report: List[str] = []
     new_sources: List[etree._Element] = []
@@ -238,7 +239,7 @@ def gen_project(out_root: str, project_out: str, model: InterMineModel, type_nam
             replaced_by.setdefault(r, []).append(f"humanmine-{src}")
     text = merge_priorities(priorities if priorities and os.path.exists(priorities) else None,
                             writers, replaced_by, alongside, alongside_fields)
-    text = _apply_priority_overrides(text, "curation/priorities_override.properties")
+    text = _apply_priority_overrides(text, priorities_override)
     with open(os.path.join(project_out, "genomic_priorities.properties"), "w") as fh:
         fh.write(text)
     with open(os.path.join(project_out, "links_report.txt"), "w") as fh:
@@ -257,7 +258,7 @@ def _parse_priority(line: str):
     return key.strip(), [v.strip() for v in val.split(",") if v.strip()]
 
 
-def _apply_priority_overrides(text: str, path: str) -> str:
+def _apply_priority_overrides(text: str, path: Optional[str]) -> str:
     """Replace merge_priorities()'s generated ordering for specific fields, from a small
     hand-curated file (same role as curation/extra_allow.txt / extensions_additions.xml: a
     human override that survives regeneration, rather than hand-editing generated output).
@@ -274,7 +275,11 @@ def _apply_priority_overrides(text: str, path: str) -> str:
     of guessing at a general heuristic that could as easily get some other field wrong the other
     way.
     """
-    if not os.path.exists(path):
+    # Path comes from the workspace (rdfc2im.yaml's priorities_override), not a hardcoded
+    # relative one: a CWD-relative default silently applied the real repo's overrides to any
+    # caller with its own synthetic workspace - confirmed live, it leaked into a unit test
+    # building its own tmp_path mine and changed that test's generated ordering.
+    if not path or not os.path.exists(path):
         return text
     overrides = {}
     for ln in open(path, encoding="utf-8").read().splitlines():

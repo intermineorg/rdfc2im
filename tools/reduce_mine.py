@@ -35,6 +35,7 @@ Subcommands:
 Every subcommand edits in place and prints a one-line summary of what it removed, so the effect
 is visible in the calling script's own log rather than silent.
 """
+import os
 import re
 import sys
 import lxml.etree as ET
@@ -138,7 +139,15 @@ def cmd_priorities(args):
 
 
 def cmd_objectstoresummary(args):
-    path, model_xml = args
+    """<config> <genomic_model.xml> [<override.properties>]
+
+    Trims class-keyed entries for classes absent from the model, then merges any override file
+    on top (replacing a key that exists, appending one that does not). Override LAST on purpose:
+    the trim can only remove entries for classes the model lacks, so a curated addition for a
+    class that IS present can never be silently stripped by it, whatever order the files are in.
+    """
+    path, model_xml = args[0], args[1]
+    override = args[2] if len(args) > 2 else None
     classes, _ = load_model_classes(model_xml)
     with open(path, encoding="utf-8") as fh:
         lines = fh.readlines()
@@ -167,13 +176,54 @@ def cmd_objectstoresummary(args):
             kept.append(line)
         else:
             dropped.append(cls)
+    added, replaced = [], []
+    if override and os.path.exists(override):
+        over = {}
+        for ln in open(override, encoding="utf-8").read().splitlines():
+            s2 = ln.strip()
+            if not s2 or s2.startswith("#") or "=" not in s2:
+                continue
+            k, _, v = s2.partition("=")
+            over[k.strip()] = v.strip()
+        seen = set()
+        for i, ln in enumerate(kept):
+            k = ln.split("=", 1)[0].strip() if "=" in ln and not ln.lstrip().startswith("#") else None
+            if k in over:
+                kept[i] = f"{k} = {over[k]}\n"
+                replaced.append(k)
+                seen.add(k)
+        for k, v in over.items():
+            if k not in seen:
+                kept.append(f"{k} = {v}\n")
+                added.append(k)
     with open(path, "w", encoding="utf-8") as fh:
         fh.writelines(kept)
+    if added or replaced:
+        names = sorted(n.rsplit(".", 1)[0].rsplit(".", 1)[-1] for n in added + replaced)
+        print(f"reduce_mine objectstoresummary: override applied "
+              f"({len(added)} added, {len(replaced)} replaced): {', '.join(names)}")
     print(f"reduce_mine objectstoresummary: dropped {len(dropped)} line(s) for absent classes"
           + (": " + ", ".join(sorted(set(dropped))) if dropped else ""))
 
 
 WIDGET_PATH_ATTRS = ["views", "enrich", "enrichIdentifier", "constraints", "pathStrings"]
+
+# A `constraints` entry is an EXPRESSION, not a bare path: "organism.name=[Organism]",
+# "organism.taxonId = [list]", "primaryIdentifier != null". Only the left-hand side is a path.
+# Splitting on the operator is what makes constraint-bearing widgets resolvable at all - without
+# it every such widget is a false positive, because "organism.name=[Organism]" is obviously not a
+# field. Confirmed live: the unfixed version flagged 10 widgets where the webapp's own validator
+# (InterMine's WebConfig) reports exactly 5, and the 5 extras were all constraint-only
+# false positives - including pathway_enrichment, which is genuinely valid now that Gene.pathways
+# exists. Deleting those would have removed working UI features.
+CONSTRAINT_OP_RE = re.compile(r"\s*(!=|>=|<=|=|>|<|\bIS NOT\b|\bIS\b|\bLIKE\b|\bNOT IN\b|\bIN\b)\s*",
+                              re.IGNORECASE)
+
+
+def constraint_path(expr: str) -> str:
+    """Left-hand path of a webconfig `constraints` expression; the whole string if there is no
+    operator (some entries really are bare paths)."""
+    return CONSTRAINT_OP_RE.split(expr.strip(), maxsplit=1)[0].strip()
 
 
 def cmd_webconfig(args):
@@ -213,6 +263,9 @@ def cmd_webconfig(args):
                     if not val:
                         continue
                     paths = [p.strip() for p in val.split(",") if p.strip()]
+                    if attr == "constraints":
+                        paths = [constraint_path(p) for p in paths]
+                        paths = [p for p in paths if p]
                     if not all(resolve_path(classes, extends, start, p) for p in paths):
                         ok = False
                         break

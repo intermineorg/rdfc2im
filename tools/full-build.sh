@@ -705,8 +705,18 @@ phase_build_dbmodel() {
            "$mine/dbmodel/build/resources/main/objectstoresummary.config.properties"; do
     [ -f "$f" ] || continue
     run python3 tools/reduce_mine.py objectstoresummary "$f" \
-      "$mine/dbmodel/build/resources/main/genomic_model.xml"
+      "$mine/dbmodel/build/resources/main/genomic_model.xml" \
+      "$HERE/curation/autocomplete_override.properties"
   done
+  # webconfig-model.xml is the remaining "Reducing a mine" file, and its failure is NOT cosmetic:
+  # widgets whose paths no longer resolve make InterMine's WebConfig reject the whole file, so
+  # every classic-UI page renders an error banner AND logs a full Struts/Tiles stack trace. That
+  # log storm filled the container's writable layer (localhost.log reached 2.3GB, ddi-ws.log
+  # 1.3GB) until /var/lib/docker hit 100% and took Postgres down mid-WAL-redo. Trimming the
+  # widgets that cannot work (they reference data this build does not load) is what stops it.
+  run python3 tools/reduce_mine.py webconfig \
+    "$mine/webapp/src/main/webapp/WEB-INF/webconfig-model.xml" \
+    "$mine/dbmodel/build/resources/main/genomic_model.xml"
 }
 
 phase_integrate_sources() {

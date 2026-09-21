@@ -74,6 +74,19 @@ services:
         condition: service_started
     environment:
       CATALINA_OPTS: "-Xmx3g -Djava.awt.headless=true"
+    # Tomcat's own log directory, size-capped. Tomcat's juli FileHandler rotates daily but has
+    # no size limit, so a per-request error (one bad webconfig-model.xml makes EVERY classic-UI
+    # page log a full Struts/Tiles stack trace, and every failing DWR call logs another) grows
+    # these files without bound inside the container's writable layer. Confirmed live and
+    # destructive: localhost.<date>.log reached 2.3GB and ddi-ws.log 1.3GB, /var/lib/docker hit
+    # 100%, and Postgres died mid-WAL-redo with "could not extend file: No space left on
+    # device". A tmpfs makes that structurally impossible - writes fail at the cap instead of
+    # eating the host disk, and the database can no longer be collateral damage. 512m is large
+    # enough to keep a session's logs readable for debugging (they are still `docker exec cat`-
+    # able while the container runs); they are deliberately not durable across a restart, which
+    # is the right trade for a trial stack whose whole point is being rebuilt from scratch.
+    tmpfs:
+      - /usr/local/tomcat/logs:size=512m
     volumes:
       # exploded webapp; its two properties files are patched at stage time to point
       # at the `postgres` service rather than the host's published port

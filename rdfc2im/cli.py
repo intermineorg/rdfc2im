@@ -42,6 +42,8 @@ DEFAULTS = dict(
     live_model="in/humanmine_model.xml",
     project_xml="in/humanmine_project.xml",
     priorities="in/humanmine_priorities.properties",   # merged into out/_mine/genomic_priorities.properties
+    priorities_override="curation/priorities_override.properties",  # hand-curated order fixes
+
     config_root="in/rdf-config-config-only/config",
     out="out",
     sources=None,                 # None = every source listed in sources.yaml with scope good/structural
@@ -269,7 +271,8 @@ def run(a, ws) -> int:
     def do_project(m):
         return gen_project(out, os.path.join(out, "_mine"), m, ws["type"], ws["src_data_dir"],
                            ws.get("project_xml"), sources_cfg, ws.get("extensions"),
-                           ws.get("source_version"), ws.get("priorities"))
+                           ws.get("source_version"), ws.get("priorities"),
+                           ws.get("priorities_override"))
 
     def do_check(m):
         return check_project(out, os.path.join(out, "_mine"), m, ws["type"], ws.get("project_xml"), sources_cfg)
