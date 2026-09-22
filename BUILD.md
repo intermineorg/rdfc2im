@@ -342,6 +342,36 @@ then resumed, or on a workspace already in the right state:
 Reusing the fetched data: the same phase 3 with `--use-cached-data` took **73 s instead of 530 s**,
 made no network requests, and produced items files byte-identical to the fresh fetch's (all nine).
 
+### A third run: one command, start to finish, entirely from the cache
+
+Every run above was assembled from `--from`/`--only` segments, resumed after each fix - useful for
+isolating a bug, but not proof the *whole* script runs clean in one go. On 2026-09-22, a single
+`tools/full-build.sh --use-cached-data` (no `--from`/`--only`, a brand new `TRIAL_HOME`) went from
+nothing to a verified mine in **12 min 5 s**, all fetched data restored from `cached_raw_data/`
+with no network requests beyond `fetch_inputs`' git pulls and the live model, and passed all 17
+`make test-live` checks with the same counts as the from-scratch run above:
+
+```
+354s  postprocess           24s  build_dbmodel          3s  stage_artifacts
+229s  integrate_sources     14s  build_humanmine_items   2s  start_mine_stack
+ 64s  rdfc2im_pipeline       9s  build_webapp             1s  each: build_reactome_source,
+ 12s  fetch_inputs           6s  verify                     resolve_bluegenes_deps, start_databases
+  4s  rdfc2im_project        1s  prepare_mine_checkout      0s  each: check_prereqs, stage_src_data,
+                                                               apply_templates
+```
+
+One real bug surfaced getting here, worth recording because it can recur whenever a cache's `--meta`
+contract changes: `cached_raw_data/reactome-uniprot-map/` had been saved by an earlier commit,
+before `--meta levels=...` existed. The very first single-command attempt died in phase 6 -
+`rdfc2im cache: reactome-uniprot-map: cached data was fetched for levels=None, but this build needs
+levels='default' - refusing to restore it` - correct behaviour (the recorded meta genuinely didn't
+say what level it was), but with no migration path for a cache saved before the key existed. Since
+`cached_raw_data/` is gitignored and local to each sandbox, this cannot affect a fresh clone (every
+future save already includes `levels`) - only this one already-fetched entry needed a one-time fix:
+its `META.json` was hand-edited to add `"levels": "default"`, true of the data it actually held (its
+own recorded `url` ends in `UniProt2Reactome.txt`, the default file), then `rdfc2im cache verify`
+confirmed the entry still checksums correctly before trusting it.
+
 ### Disk
 
 Budget **5 GB**, and leave real headroom on whichever filesystem holds `/var/lib/docker`.
@@ -452,9 +482,12 @@ same; see `RESTART.md`.
 
 **`--use-cached-data` stops with `cached data ... refusing to restore it`, `... is corrupt in the
 cache`, or `no cached data for ...`.** Working as intended: the cache was fetched for a different gene
-panel, taxon or scope than this build needs, a cached file no longer matches its `MD5SUMS`, or nothing
-was cached yet. `python3 -m rdfc2im cache list` and `cache verify` show what is there. Run once without
-the option to fetch afresh (which re-saves).
+panel, taxon, scope or `--reactome-levels` than this build needs, a cached file no longer matches its
+`MD5SUMS`, or nothing was cached yet. `python3 -m rdfc2im cache list` and `cache verify` show what is
+there. Run once without the option to fetch afresh (which re-saves) - or, if the entry's actual data is
+right and only its recorded `META.json` predates a newer `--meta` key rdfc2im/rawcache.py now checks
+(confirmed live for `levels`, see "A third run" above), edit `META.json`'s `meta` object by hand to add
+the missing key with its true value, then confirm with `cache verify` before trusting it.
 
 **Something reported success but the data is not there.** Assume this is happening rather than
 assume it is not - it was the single most common failure of the first real build. Run
