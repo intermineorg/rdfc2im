@@ -137,7 +137,7 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "D7 homologene `todo`; D12 GWAS year is a `guess` with a `regex` transform; D13 ClinVar coordinates are `link` rows (blank nodes) not mapped; "
           "D14 resolved (2026-09-17) - `Gene.key_secondaryidentifier_org` ambiguity fixed, see LOAD-TRIAL.md.",
           "", FINDINGS, "",
-          "## Where this stands (2026-09-18)",
+          "## Where this stands (2026-09-22)",
           "",
           "A demonstration HumanMine was built end to end - 9 sources, a 113-gene food/drug-metabolism panel, served live "
           "with BlueGenes in containers - and written up as a BH26JP BioHackrXiv report (`report/` submodule; the finished "
@@ -163,8 +163,11 @@ def _write_status(ddir, per, ws, sources_cfg, out):
           "fixed ~30 bugs that no offline test could have caught, several of them in rdfc2im itself rather than the "
           "script. A second, from-scratch run in a fresh sandbox found and fixed ten more (BUILD.md, \"A second, "
           "from-scratch run\") and then passed all 17 `make test-live` checks; `--use-cached-data` reuses the "
-          "fetched RDF Portal data from `cached_raw_data/` (73 s instead of 530 s, byte-identical items). What "
-          "remains is breadth (item 5), not the script.",
+          "fetched RDF Portal data from `cached_raw_data/` (73 s instead of 530 s, byte-identical items). Two "
+          "more one-command, cache-only runs the same day (BUILD.md, \"A third run\" and \"A fourth run\") found "
+          "zero further bugs - 12 m 5 s with a brand-new `TRIAL_HOME` and cold Docker/Gradle caches, 5 m 18 s once "
+          "those caches were warm - and both passed all 17 `make test-live` checks too. What remains is breadth "
+          "(item 5), not the script.",
           "2. **Re-load `ncbigene` with the D14 fix applied** and confirm live that the 255-gene ambiguity is actually "
           "resolved in a running mine, not just in the regenerated items file - the fix was verified offline but never "
           "re-integrated into the demo mine, to avoid disturbing an already-stable build.",

@@ -4,8 +4,10 @@ Runs the real script against a scratch copy of the repo's structural bits (a git
 tree, a fake cached_raw_data/) so the assertions exercise the actual bash, not a description of it.
 """
 import os
+import pathlib
 import shutil
 import subprocess
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(ROOT, "tools", "session-status.sh")
@@ -159,9 +161,27 @@ def test_never_writes_anything_under_the_repo_or_deletes_containers(tmp_path):
 
 
 def test_reports_cache_health_when_a_cache_and_venv_are_present(tmp_path):
+    """The fake .venv must actually work, not just exist: session-status.sh sources
+    .venv/bin/activate and then relies on whatever 'python3' that puts on PATH to have
+    pyyaml. An empty activate file is a no-op, so this only ever passed by accident - when
+    the *ambient* python3 already had pyyaml (e.g. a real venv already active in the shell
+    running the tests, or a stray user-site install under the real $HOME). Under
+    tests/run.py's bare `python3`, with `_run` pointing $HOME at an empty scratch dir, there
+    is no such fallback and the cache-health check failed with a missing-dependency message
+    instead of 'ok'. Rebuild a minimal real venv here - pyvenv.cfg plus a same-depth
+    bin/python3 symlink (chaining through another symlink defeats Python's pyvenv.cfg
+    lookup) - sharing this repo's real venv site-packages, so activation is genuine."""
     repo = _repo(tmp_path)
-    (repo / ".venv" / "bin").mkdir(parents=True)
-    (repo / ".venv" / "bin" / "activate").write_text("")
+    real_venv = pathlib.Path(ROOT) / ".venv"
+    py_ver = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    venv_bin = repo / ".venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    (repo / ".venv" / "lib" / py_ver).mkdir(parents=True)
+    (repo / ".venv" / "lib" / py_ver / "site-packages").symlink_to(
+        real_venv / "lib" / py_ver / "site-packages")
+    (venv_bin / "python3").symlink_to((real_venv / "bin" / "python3").resolve())
+    shutil.copy(real_venv / "pyvenv.cfg", repo / ".venv" / "pyvenv.cfg")
+    (venv_bin / "activate").write_text(f'export PATH="{venv_bin}:$PATH"\n')
     shutil.copytree(os.path.join(ROOT, "rdfc2im"), repo / "rdfc2im")
     (repo / "cached_raw_data" / "go" / "data").mkdir(parents=True)
     (repo / "cached_raw_data" / "go" / "data" / "a.tsv").write_bytes(b"x")

@@ -20,6 +20,13 @@ def _dry_run(target, py="python3"):
                           text=True, check=True).stdout
 
 
+def _has_pytest(py="python3"):
+    """Mirrors the Makefile's own HAVE_PYTEST check: decided by importing it under the same
+    `py`, not by whether pytest happens to be installed for whatever interpreter is running
+    this test itself."""
+    return subprocess.run([py, "-c", "import pytest"], capture_output=True).returncode == 0
+
+
 def test_test_targets_do_not_retry_under_another_runner_on_failure():
     for target in ("test", "test-live"):
         out = _dry_run(target)
@@ -34,4 +41,9 @@ def test_only_test_live_opts_in_to_live_checks():
         return
     assert "RDFC2IM_LIVE=1" not in plain
     assert "RDFC2IM_LIVE=1" in live
-    assert "test_live_mine.py" in live
+    # test_live_mine.py is only named when the `python3` HAVE_PYTEST checked has pytest -
+    # otherwise both targets fall back to the plain `tests/run.py` runner (see module docstring).
+    if _has_pytest("python3"):
+        assert "test_live_mine.py" in live
+    else:
+        assert "tests/run.py" in live

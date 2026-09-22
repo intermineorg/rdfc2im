@@ -99,8 +99,10 @@ below; STATUS.md is regenerated from `rdfc2im/docs.py`, which is where that text
    `--only` and a live dashboard (`tools/watch-build.sh`). First real execution fixed ~30
    genuine bugs; `make test-live` now checks the result against the running system. See
    `BUILD.md`. A second run from scratch in a fresh sandbox (same day) found ten more, then passed
-   17/17 live checks - BUILD.md, "A second, from-scratch run". What remains here is breadth, not
-   the script: it has been run in two sandboxes, and only for the 9-source demo panel.
+   17/17 live checks - BUILD.md, "A second, from-scratch run". Two more one-command, cache-only
+   runs the same day found zero further bugs (BUILD.md, "A third run" and "A fourth run" - 12m5s
+   cold, 5m18s once Docker/Gradle caches were warm). What remains here is breadth, not the script:
+   it has been run in two sandboxes, four times total, and only for the 9-source demo panel.
 2. Re-integrate `ncbigene` (with the D14 key-ambiguity fix) into a live mine and confirm the fix
    holds under a real load, not just in the regenerated items file.
 3. Give `GWASResult` a real integration key; review the DRAFT keys on `Pathway` and `MeshTerm`.
@@ -135,3 +137,25 @@ below; STATUS.md is regenerated from `rdfc2im/docs.py`, which is where that text
   chasing one source's problem but written to fix the general mechanism, because the same
   underlying assumption was wrong everywhere, not just for that one source. When you find a bug,
   ask whether it's really source-specific before writing a source-specific fix.
+- **A test that shells out to a bare `python3` is only as reliable as whatever happens to be
+  first on `PATH`, not the repo's own `.venv`.** `make test`/`make test-live`'s `HAVE_PYTEST`
+  check (Makefile) runs `$(PY) -c 'import pytest'` with `PY` defaulting to plain `python3`; two
+  tests (`test_makefile.py::test_only_test_live_opts_in_to_live_checks`,
+  `test_session_status.py::test_reports_cache_health_when_a_cache_and_venv_are_present`) silently
+  assumed that bare `python3` would have `pytest`/`pyyaml` available - true only when a real venv
+  happened to already be active in the shell running the tests. Under `tests/run.py`'s own
+  fallback runner (invoked by exactly this kind of bare `python3`), both failed. Fixed by making
+  each test check the same dependency the production code checks, the same way, rather than
+  assuming the ambient environment matches whatever shell the last person ran it in.
+- **`gradle --stop` can report success while the daemon is still alive.** After a build, `gradle
+  --stop` printed "1 Daemon stopped" and exited 0, but the ~4 GB `GradleDaemon` process was still
+  running seconds later and ignored a plain `kill` (`SIGTERM`) too - only `kill -9` ended it. When
+  closing out a session, verify with `ps aux | grep GradleDaemon` rather than trusting the exit
+  code. See BUILD.md, "A fourth run, same day, warm caches".
+- **Closing a session cleanly is `docker compose ... down -v` (containers *and* named volumes,
+  `rdfc2im-pgdata`/`rdfc2im-solrdata`) plus removing `~/intermine-build`, `/micklem`,
+  `.trial-home`, `trial/artifacts/`, `trial/docker-compose.local.yml` and `.build-logs/*`.** All
+  of those are gitignored/regenerated-on-next-build; `cached_raw_data/`, `in/` and `out/` are not
+  session scratch and must survive a cleanup (they are what makes `--use-cached-data` and a
+  future `git diff` meaningful). `make session-status` before and after is the way to confirm the
+  sandbox is actually clean rather than assuming it.

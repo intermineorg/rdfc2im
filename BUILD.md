@@ -372,6 +372,25 @@ its `META.json` was hand-edited to add `"levels": "default"`, true of the data i
 own recorded `url` ends in `UniProt2Reactome.txt`, the default file), then `rdfc2im cache verify`
 confirmed the entry still checksums correctly before trusting it.
 
+### A fourth run, same day, warm caches
+
+Immediately after the run above, another single `tools/full-build.sh --use-cached-data` (fresh
+`TRIAL_HOME` again, same sandbox) went from nothing to a verified mine in **5 min 18 s** - about
+44% of the third run's time - with zero fixes needed. The difference is caches, not the script:
+the Docker images, the Gradle 4.9 dependency cache (`~/.gradle`) and the JDK were already warm from
+the run immediately before it, whereas the third run's 12 m 5 s included their one-time download
+cost. Slowest phases: `integrate_sources` 109 s, `postprocess` 67 s, `rdfc2im_pipeline` 57 s (all
+nine sources restored from `cached_raw_data/`), `build_dbmodel` 14 s; everything else finished in
+9 s or less. All 17 `make test-live` checks passed again.
+
+One thing this run's cleanup surfaced, worth recording since it looks like success but isn't:
+`gradle --stop` (the standalone Gradle 4.9 launcher, not a project's own `./gradlew`) printed "1
+Daemon stopped" and exited 0, but the daemon process (`ps aux | grep GradleDaemon`) was still
+running several seconds later and did not respond to `kill` (`SIGTERM`) either - only `kill -9`
+actually ended it. If you need a build's Gradle daemon gone (freeing its ~4 GB heap, or before
+removing the `TRIAL_HOME`/launcher it was started from), verify with `ps`, don't trust the exit
+code.
+
 ### Disk
 
 Budget **5 GB**, and leave real headroom on whichever filesystem holds `/var/lib/docker`.
