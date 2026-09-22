@@ -73,6 +73,14 @@ early rather than rediscovering the hard way:
   the checkout. Everything tracked reached `origin/main` (push from the clone, pull in the root);
   what does not travel through git is the gitignored data (`out/*/raw`, `in/`, `.build-logs/`),
   so check for that before deleting such a clone.
+- **Check `make session-status` (`tools/session-status.sh`) early in a new session.** Docker
+  containers, `TRIAL_HOME`-shaped scratch trees, and gitignored `out/` data all live in the sandbox
+  VM, not in any one session, and persist until the sandbox itself is destroyed. Two real bugs came
+  from exactly that: `make test` failing against a mine an unrelated earlier session left running
+  (fixed by making the live tests opt-in, `tests/test_live_gating.py`), and `rdfc2im project`
+  picking up an earlier session's translate output for sources outside the current panel (fixed by
+  scoping it to `--sources`, `tests/test_check.py`). The script only reports - never deletes or
+  stops anything itself.
 - **`cached_raw_data/` holds what the last build fetched** (gitignored, in the repo root, so it is
   on the host side of the workspace mount and outlives the sandbox). `tools/full-build.sh
   --use-cached-data` restores it instead of re-querying RDF Portal (about a quarter of an hour);

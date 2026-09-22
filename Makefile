@@ -8,7 +8,7 @@ SRC     ?=
 SRCFLAG  = $(foreach s,$(SRC),--source $(s))
 GUESS   ?=            # set to --no-guess to exclude guess rows
 
-.PHONY: inputs up down restart status logs trial-stage trial-destroy all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
+.PHONY: inputs up down restart status logs session-status trial-stage trial-destroy all allow translate fetch fetch-dry tsv items project check linkml docs test fork-sync clean
 
 inputs:     ; sh tools/make-inputs.sh
 
@@ -23,6 +23,9 @@ down:          ; $(COMPOSE) down
 restart:       ; $(COMPOSE) restart $(SVC)
 status:        ; $(COMPOSE) ps
 logs:          ; $(COMPOSE) logs --tail 40 $(SVC)
+# Read-only report on what an earlier session left running/behind (containers, TRIAL_HOME scratch
+# trees, stale out/ dirs, the raw-data cache, git). Never changes anything - see the script header.
+session-status: ; sh tools/session-status.sh
 trial-destroy: ; $(COMPOSE) down -v
 all:        ; $(PY) -m rdfc2im all --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG) $(GUESS) $(if $(FETCH),--fetch,)
 allow:      ; $(PY) -m rdfc2im allow
