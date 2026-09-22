@@ -153,6 +153,7 @@ Useful options:
 | `--skip-templates` | Do not apply `curation/demo_public_templates.sql` |
 | `--use-cached-data` | Restore the fetched raw data from `cached_raw_data/` instead of fetching it again (see below) |
 | `--cache-dir DIR` | Use `DIR` instead of `cached_raw_data/` |
+| `--reactome-levels default\|all` | Which of Reactome's own two files to load (see below); default `default` |
 
 `--from` and `--only` always run `check_prereqs` first regardless, because that phase is what
 sets the `JAVA_HOME` override the Gradle calls need.
@@ -162,7 +163,29 @@ the upstream checkouts and Gradle output, default `~/intermine-build/trial_home`
 `UPSTREAM_CACHE` (default `in/.upstream`), `JAVA8_HOME`, `GRADLE49`, `COMPOSE`, `PG_PORT`,
 `BG_PORT`, `SOLR_PORT`, `MINE_TITLE`.
 
-### Caching the fetched data
+### Reactome pathway levels
+
+The stock reactome source (phase 6/11/12 - see "What you get") reads one of Reactome's own two
+published UniProt-to-pathway files:
+
+- **`default`** (`UniProt2Reactome.txt`) - a protein is listed only against the specific, lowest-
+  level pathway it participates in. A broad pathway like "Metabolism" gets no direct protein or
+  gene participants of its own unless something happens to be annotated at that exact level - most
+  of the demo panel's own pathway hits are on much more specific pathways (e.g. "Aspirin ADME"),
+  which is why this is the default.
+- **`all`** (`UniProt2Reactome_All_Levels.txt`, via `--reactome-levels all`) - every ancestor
+  pathway also carries its descendants' proteins and genes, matching how a pathway's "Proteins"
+  tab looks on reactome.org itself. The file is larger, `Gene.pathways` and `Pathway.proteins` fan
+  out a lot more (a top-level pathway can have thousands of participants), and Reactome
+  postprocessing and search indexing take longer.
+
+Only one of the two files is ever present under `/micklem/data/reactome/current/` at a time - the
+stock converter processes every file it finds there, so both together would double-count. Switching
+`--reactome-levels` between runs removes the other one first. The cache
+(`cached_raw_data/reactome-uniprot-map/`) records which level was fetched and refuses to restore it
+for a build that asked for the other one.
+
+## Caching the fetched data
 
 The slow, remote part of a build is the SPARQL extraction (phase 3) plus one download (phase 6).
 Every normal run saves what it fetched to `cached_raw_data/` (gitignored, in the repository root -

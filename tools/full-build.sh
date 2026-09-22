@@ -24,6 +24,10 @@
 #                       taxon or source scope is refused. Without this option the data is fetched
 #                       and then saved there, so the next build can reuse it.
 #   --cache-dir DIR     Where that cache lives (default: cached_raw_data/ in this repo).
+#   --reactome-levels L  "default" (the lowest-level UniProt2Reactome.txt Reactome publishes -
+#                       leaf pathways only) or "all" (UniProt2Reactome_All_Levels.txt: every
+#                       ancestor pathway also gets its descendants' proteins/genes, matching how
+#                       reactome.org itself presents a pathway). Default: default.
 #   -h, --help          This text.
 #
 # Every side-effecting external command (gradle, docker, psql, curl) is emitted through `run`,
@@ -97,6 +101,7 @@ TAXON=${TAXON:-9606}
 SKIP_TEMPLATES=0
 USE_CACHED_DATA=0
 RAW_CACHE_DIR=${RAW_CACHE_DIR:-"$HERE/cached_raw_data"}
+REACTOME_LEVELS=${REACTOME_LEVELS:-default}
 DRY_RUN=0
 FROM_PHASE=""
 ONLY_PHASE=""
@@ -188,11 +193,17 @@ while [ $# -gt 0 ]; do
     --skip-templates) SKIP_TEMPLATES=1 ;;
     --use-cached-data) USE_CACHED_DATA=1 ;;
     --cache-dir) RAW_CACHE_DIR=$2; shift ;;
+    --reactome-levels) REACTOME_LEVELS=$2; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage; exit 2 ;;
   esac
   shift
 done
+
+case "$REACTOME_LEVELS" in
+  default|all) ;;
+  *) echo "unknown --reactome-levels '$REACTOME_LEVELS' - must be 'default' or 'all'" >&2; exit 2 ;;
+esac
 
 mkdir -p "$LOG_DIR"
 : > "$TIMING_TSV" 2>/dev/null || true
@@ -479,17 +490,38 @@ phase_build_reactome_source() {
   # Reactome's own public UniProt2Reactome mapping, not a full BioPAX dump. Fetched once, not
   # re-fetched on a --from resume - confirmed live: ~325k rows total, ~55k human, a few seconds
   # to download, not worth repeating.
+  # REACTOME_LEVELS picks which of Reactome's own two published files: "default" is
+  # UniProt2Reactome.txt (leaf pathways only - a protein appears only against the specific
+  # pathway it participates in); "all" is UniProt2Reactome_All_Levels.txt (every ancestor
+  # pathway too, matching how reactome.org's own website presents a pathway's contents - a
+  # top-level pathway like "Metabolism" then has real Gene.pathways/Pathway.proteins rows, at
+  # the cost of a much bigger file and heavier Gene.pathways fan-out). The loader's own fileset
+  # scan (FileConverterTask) processes every file it finds under src.data.dir, so the two must
+  # never coexist there - `rm -f` before writing whichever one this run wants.
+  local fname="UniProt2Reactome.txt"
+  [ "$REACTOME_LEVELS" = "all" ] && fname="UniProt2Reactome_All_Levels.txt"
+  local other_fname="UniProt2Reactome_All_Levels.txt"
+  [ "$REACTOME_LEVELS" = "all" ] && other_fname="UniProt2Reactome.txt"
   local dest_dir="/micklem/data/reactome/current"
   run mkdir -p "$dest_dir"
+  # Clear the OTHER level's file unconditionally (rm -f is a no-op if it never existed) - never
+  # the one this run wants, which stays as a resume optimisation (see below). Deterministic on the
+  # two filenames rather than a glob over dest_dir's real contents, so it appears in --dry-run's
+  # plan the same way whether or not an earlier run actually left one (mkdir above is also only a
+  # `run` no-op under --dry-run, so dest_dir may not even exist yet to glob).
+  run rm -f "$dest_dir/$other_fname"
   source "$HERE/.venv/bin/activate"   # `rdfc2im cache` below needs pyyaml/lxml (imported by the CLI)
   if [ "$USE_CACHED_DATA" -eq 1 ]; then
-    run python3 -m rdfc2im cache restore reactome-uniprot-map "$dest_dir" --cache-dir "$RAW_CACHE_DIR"
+    run python3 -m rdfc2im cache restore reactome-uniprot-map "$dest_dir" --cache-dir "$RAW_CACHE_DIR" \
+      --meta levels="$REACTOME_LEVELS"
   else
-    if [ "$DRY_RUN" -eq 1 ] || [ ! -s "$dest_dir/UniProt2Reactome.txt" ]; then
-      run curl -fsSL -o "$dest_dir/UniProt2Reactome.txt" https://reactome.org/download/current/UniProt2Reactome.txt
+    # Fetched once, not re-fetched on a --from resume: confirmed live, ~325k rows (default) / much
+    # larger (all-levels), a few seconds to tens of seconds to download, not worth repeating.
+    if [ "$DRY_RUN" -eq 1 ] || [ ! -s "$dest_dir/$fname" ]; then
+      run curl -fsSL -o "$dest_dir/$fname" "https://reactome.org/download/current/$fname"
     fi
     run python3 -m rdfc2im cache save reactome-uniprot-map "$dest_dir" --cache-dir "$RAW_CACHE_DIR" \
-      --meta url=https://reactome.org/download/current/UniProt2Reactome.txt
+      --meta levels="$REACTOME_LEVELS" --meta url="https://reactome.org/download/current/$fname"
   fi
 }
 

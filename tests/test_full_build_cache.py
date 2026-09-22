@@ -191,3 +191,55 @@ def test_build_webapp_gives_copywebappcontent_a_history_before_building_the_war(
     prime = next(i for i, c in enumerate(gradle) if ":webapp:copyWebappContent" in c)
     war = next(i for i, c in enumerate(gradle) if ":webapp:war" in c)
     assert prime < war, gradle
+
+
+# ------------------------------------------------------------------ --reactome-levels
+
+def test_default_reactome_levels_fetches_the_lowest_level_file(tmp_path):
+    plan = _plan(tmp_path, "--only", "build_reactome_source")
+    if plan is None:
+        return
+    cmds = _cmds(plan)
+    assert any("curl" in c and c.endswith("UniProt2Reactome.txt") for c in cmds), cmds
+    assert not any("curl" in c and "All_Levels" in c for c in cmds), cmds
+    assert any(c.startswith("rm -f ") and c.endswith("UniProt2Reactome_All_Levels.txt") for c in cmds), cmds
+    assert any("cache save reactome-uniprot-map " in c and "levels=default" in c for c in cmds), cmds
+
+
+def test_all_levels_option_fetches_the_all_levels_file_instead(tmp_path):
+    plan = _plan(tmp_path, "--only", "build_reactome_source", "--reactome-levels", "all")
+    if plan is None:
+        return
+    cmds = _cmds(plan)
+    assert any("curl" in c and c.endswith("UniProt2Reactome_All_Levels.txt") for c in cmds), cmds
+    assert not any("curl" in c and c.endswith(" UniProt2Reactome.txt") for c in cmds), cmds
+    assert any(c.startswith("rm -f ") and c.endswith("/UniProt2Reactome.txt") for c in cmds), cmds
+    assert any("cache save reactome-uniprot-map " in c and "levels=all" in c for c in cmds), cmds
+
+
+def test_switching_levels_clears_the_other_levels_file_first(tmp_path):
+    """The converter reads every file the fileset finds under src.data.dir - if a build
+    previously fetched one level and is now asked for the other, both files must not coexist
+    there, or Reactome's pathway/protein data would be double-counted."""
+    plan = _plan(tmp_path, "--only", "build_reactome_source", "--reactome-levels", "all")
+    if plan is None:
+        return
+    cmds = _cmds(plan)
+    rm = next(i for i, c in enumerate(cmds) if c.startswith("rm -f ") and "UniProt2Reactome" in c)
+    curl = next(i for i, c in enumerate(cmds) if "curl" in c)
+    assert rm < curl, cmds
+
+
+def test_use_cached_data_with_all_levels_restores_the_all_levels_group(tmp_path):
+    plan = _plan(tmp_path, "--only", "build_reactome_source", "--use-cached-data", "--reactome-levels", "all")
+    if plan is None:
+        return
+    cmds = _cmds(plan)
+    assert any("cache restore reactome-uniprot-map " in c and "levels=all" in c for c in cmds), cmds
+    assert not any("curl" in c for c in cmds), cmds
+
+
+def test_reactome_levels_rejects_an_unknown_value(tmp_path):
+    r = subprocess.run(["bash", "tools/full-build.sh", "--dry-run", "--reactome-levels", "bogus"],
+                       cwd=ROOT, capture_output=True, text=True)
+    assert r.returncode != 0 and "reactome-levels" in (r.stdout + r.stderr)
