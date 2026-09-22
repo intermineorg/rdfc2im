@@ -80,6 +80,13 @@ echo "Each is safe to 'rm -rf' - full-build.sh recreates whichever one it's poin
 hr
 
 echo "## out/<source> directories outside the current demo panel ($SOURCES)"
+# out/<source> mixes derived output (columns.tsv, raw/, items/, ...) with tracked, hand-curated
+# state in the SAME directory: .gitignore negates mapping_subjects.tsv, mapping_predicates.sssom.tsv
+# and their .base snapshots back into version control (they ARE the curation work). A flat
+# `rm -rf out/<source>` deletes both alike - confirmed live: it took real, uncommitted curation
+# work with it, recovered only because it had not been committed yet. `git clean -fdx` is the safe
+# primitive instead: it only ever removes untracked/ignored files and refuses tracked content by
+# construction, whatever the source directory holds.
 stale=0
 for d in out/*/; do
   s=$(basename "$d")
@@ -87,11 +94,19 @@ for d in out/*/; do
   case " $SOURCES " in *" $s "*) continue ;; esac
   [ -f "$d/columns.tsv" ] || continue      # only translate output counts, not an empty/tracked-only dir
   stale=1
-  printf '  %-20s %6s\n' "$s" "$(du -sh "$d" 2>/dev/null | cut -f1)"
+  tracked=""
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && [ -n "$(git ls-files "$d")" ]; then
+    tracked=" (also holds tracked curation files - see below)"
+  fi
+  printf '  %-20s %6s%s\n' "$s" "$(du -sh "$d" 2>/dev/null | cut -f1)" "$tracked"
 done
 [ "$stale" -eq 1 ] && echo "Gitignored derived output (translate/fetch/tsv/items) from a session that built a wider source
 list. Doesn't break a scoped build (rdfc2im project/fetch/items take --source), but 'rdfc2im docs'
-scans every out/ dir, so it will show up there too. Safe to remove per-source: rm -rf out/<source>" \
+scans every out/ dir, so it will show up there too. Some of these directories may ALSO hold
+mapping_subjects.tsv/mapping_predicates.sssom.tsv - tracked, hand-curated mapping state, not
+derived output. NEVER 'rm -rf out/<source>' - use 'git clean -ndx out/<source>' to preview and
+'git clean -fdx out/<source>' to actually remove: it only touches untracked/ignored files and
+leaves any tracked curation work in place." \
   || echo "(none)"
 hr
 

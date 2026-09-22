@@ -171,3 +171,46 @@ def test_reports_cache_health_when_a_cache_and_venv_are_present(tmp_path):
     (repo / "cached_raw_data" / "go" / "META.json").write_text('{"meta": {}, "files": 1, "bytes": 1, "saved_at": "x"}\n')
     out = _run(repo, tmp_path / "home", extra_env={"PYTHONPATH": str(repo)})
     assert "ok  go:" in out
+
+
+def test_out_dir_cleanup_advice_never_suggests_rm_rf(tmp_path):
+    """This ran for real: a session-status report said 'Safe to remove per-source: rm -rf
+    out/<source>' for a directory that ALSO held out/<source>/mapping_subjects.tsv and
+    mapping_predicates.sssom.tsv - the tracked, hand-curated mapping state (.gitignore negates
+    exactly those two files, plus their .base snapshots, back into version control). Following
+    that advice deleted real curation work, recovered only because it was still uncommitted.
+    The suggested command must never be able to touch a tracked file - `git clean -fdx` is safe
+    (it refuses tracked content by construction); a blanket `rm -rf` is not."""
+    repo = _repo(tmp_path)
+    d = repo / "out" / "uberon"
+    d.mkdir(parents=True)
+    (d / "columns.tsv").write_text("derived\n")                 # untracked/derived
+    (d / "mapping_subjects.tsv").write_text("curated\n")        # tracked curation state
+    subprocess.run(["git", "add", "out/uberon/mapping_subjects.tsv"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "curated mapping"], cwd=repo, check=True)
+    out = _run(repo, tmp_path / "home")
+    section = out.split("outside the current demo panel")[1].split("cached_raw_data")[0]
+    assert "git clean -fdx" in section
+    # "rm -rf" may appear only inside an explicit warning not to use it - never as the suggested command
+    for line in section.splitlines():
+        if "rm -rf" in line:
+            assert "never" in line.lower(), f"rm -rf suggested without a warning: {line!r}"
+    assert "mapping_subjects.tsv" in section or "tracked" in section.lower()
+
+
+def test_out_dir_cleanup_command_actually_preserves_tracked_files(tmp_path):
+    """Not just the wording - the literal command the report suggests, run for real, must leave
+    the tracked curation files behind and remove only the derived ones."""
+    repo = _repo(tmp_path)
+    d = repo / "out" / "uberon"
+    d.mkdir(parents=True)
+    (d / "mapping_subjects.tsv").write_text("curated\n")
+    subprocess.run(["git", "add", "out/uberon/mapping_subjects.tsv"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "curated mapping"], cwd=repo, check=True)
+    (d / "columns.tsv").write_text("derived\n")
+    (d / "raw").mkdir()
+    (d / "raw" / "main.tsv").write_text("derived\n")
+    subprocess.run(["git", "clean", "-fdx", "out/uberon"], cwd=repo, check=True)
+    assert (d / "mapping_subjects.tsv").exists()
+    assert not (d / "columns.tsv").exists()
+    assert not (d / "raw").exists()
