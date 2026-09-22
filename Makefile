@@ -25,7 +25,7 @@ status:        ; $(COMPOSE) ps
 logs:          ; $(COMPOSE) logs --tail 40 $(SVC)
 # Read-only report on what an earlier session left running/behind (containers, TRIAL_HOME scratch
 # trees, stale out/ dirs, the raw-data cache, git). Never changes anything - see the script header.
-session-status: ; sh tools/session-status.sh
+session-status: ; bash tools/session-status.sh
 trial-destroy: ; $(COMPOSE) down -v
 all:        ; $(PY) -m rdfc2im all --limit $(LIMIT) --iterate $(ITERATE) --sleep $(SLEEP) $(SRCFLAG) $(GUESS) $(if $(FETCH),--fetch,)
 allow:      ; $(PY) -m rdfc2im allow
